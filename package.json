@@ -1,0 +1,40 @@
+{
+  "name": "bedoc",
+  "version": "1.0.0",
+  "description": "Pluggable documentation engine for any language and format",
+  "main": "src/core/engine.js",
+  "bin": {
+    "bedoc": "./src/cli.js"
+  },
+  "scripts": {
+    "test": "mocha",
+    "build": "tsc",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "commander": "^9.0.0"
+  },
+  "devDependencies": {
+    "mocha": "^10.0.0",
+    "vsce": "^2.15.0"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "bedoc.generate",
+        "title": "Generate Documentation"
+      }
+    ]
+  },
+  "keywords": [
+    "documentation",
+    "plugin",
+    "parser",
+    "printer"
+  ],
+  "author": "gesslar",
+  "license": "Unlicense"
+}
