@@ -49,7 +49,6 @@ const patterns = {
   commentStart: /^\s*\/\*\*(.*)$/, // Match start of a docblock
   commentEnd: /^\s*\*\/\s*$/, // Match end of a docblock
   commentContinuation: /^\s*\*\s?(?<content>.*)$/, // Match continuation of a docblock
-  // function: /^\s*(?:public|protected|private)?\s*(?:nomask|varargs)?\s*(?:nomask|varargs)?\s*(?:int|float|void|string|object|mixed|mapping|array|buffer|function)\s*\*?\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/,
   functionPattern: /^\s*(?<access>public|protected|private)?\s*(?<modifier1>nomask|varargs)?\s*(?<modifier2>nomask|varargs)?\s*(?<type>int|float|void|string|object|mixed|mapping|array|buffer|function)\s*\*?\s*(?<name>[a-zA-Z_][a-zA-Z0-9_]*)\s*\((?<arglist>.*)\)\s*\{$/,
   blankLine: /^\s*$/, // Match blank lines
   argArray: /\w+(\s*\[\s *\]\s *)?/,
