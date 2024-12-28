@@ -63,6 +63,11 @@ class Logger {
    * @param {string} message
    */
   error(message) {
+    let stack;
+    try{ throw new Error(); } catch(e) { stack = e.stack; }
+
+    // console.log(stack);
+
     console.error(this._compose("error", message));
     this.vscodeError && this.vscodeError(JSON.stringify(message));
   }

@@ -1,5 +1,3 @@
-const path = require('path');
-
 /**
  * The meta information for this parser.
  */
@@ -8,8 +6,8 @@ const meta = {
   language: "lpc",
   languageExtension: ".c",
   // Printer information
-  format: "text",
-  formatExtension: ".txt",
+  format: "markdown",
+  formatExtension: ".md",
 };
 
 class Printer {
@@ -18,30 +16,126 @@ class Printer {
   }
 
   /**
+   * Wraps text to a specified width
+   * @param {string} str The text to wrap
+   * @param {number} wrapAt The column at which to wrap the text
+   * @param {number} indentAt The number of spaces to indent wrapped lines
+   * @returns {string} The wrapped text
+   */
+  wrap(str, wrapAt = 80, indentAt = 0) {
+    const sections = str.split('\n').map(section => {
+      let parts = section.split(' ');
+      let inCodeBlock = false;
+      let isStartOfLine = true;  // Start of each section is start of line
+
+      // Preserve leading space if it existed
+      if (section[0] === ' ') {
+        parts = ['', ...parts];
+      }
+
+      let running = 0;
+
+      parts = parts.map(part => {
+        // Only check for code block if we're at start of line
+        if (isStartOfLine && /^```(?:\w+)?$/.test(part)) {
+          inCodeBlock = !inCodeBlock;
+          running += (part.length + 1);
+          isStartOfLine = false;
+          return part;
+        }
+
+        if (part[0] === '\n') {
+          running = 0;
+          isStartOfLine = true;  // Next part will be at start of line
+          return part;
+        }
+
+        running += (part.length + 1);
+        isStartOfLine = false;   // No longer at start of line
+
+        if (!inCodeBlock && running >= wrapAt) {
+          running = part.length + indentAt;
+          isStartOfLine = true;  // After newline, next part will be at start
+          return '\n' + ' '.repeat(indentAt) + part;
+        }
+
+        return part;
+      });
+
+      return parts.join(' ')
+        .split('\n')
+        .map(line => line.trimEnd())
+        .join('\n');
+    });
+
+    return sections.join('\n');
+  }
+
+  /**
    * @param {string} module
    * @param {Object} content
    */
   async print(module, content) {
+    const work = content.funcs.sort((a, b) => a.name.localeCompare(b.name));
+    const output = work.map(func => {
+      const {name, description, param, return: returns, example, meta} = func;
+
+      // First the function name
+      const outputName = `## ${name}`;
+
+      // Then the description
+      const outputDescription = description?.length
+        ? this.wrap(description.map(line => line.trim()).join('\n'))
+        : '';
+
+      // Then the parameters
+      const outputParams = param.map(param => {
+        const isOptional = param.content.some(line => line.toLowerCase().includes('(optional)'));
+
+        const content = param.content
+          .map(line => line.replace(/\s*\(optional\)\s*/gi, '').trim()) // Remove "(optional)" from content
+          .join(' ') // Flatten multiline descriptions into one line
+          .replace(/\s+/g, ' '); // Ensure clean spacing
+
+        const optionalTag = param.optional || isOptional ? ', *optional*' : '';
+        return this.wrap(
+          `- **\`${param.name}\`** (\`${param.type}\`${optionalTag}): ${content}`,
+          undefined,
+          2
+        );
+      }).join('\n');
+
+      // Then the returns
+      const outputReturns = returns
+        ? `### Returns\n\n${this.wrap(
+          returns.content
+            ? `- **\`${returns.type}\`**: ${returns.content}`
+            : `- **\`${returns.type}\`**`,
+          undefined,
+          2
+        )}`
+        : '';
+
+
+      // Then the example
+      const outputExample = example?.length
+        ? "### Example\n\n" + this.wrap(example.join('\n'))
+        : '';
+
+      return `${outputName}` +
+             `${outputDescription.length ? `\n${outputDescription}\n` : ''}` +
+             `${outputParams.length ? `\n${outputParams}\n` : ''}` +
+             `${outputReturns.length ? `\n${outputReturns}\n` : ''}` +
+             `${outputExample.length ? `\n${outputExample}\n` : ''}`;
+    });
+
     return {
       status: 'success',
       message: 'File printed successfully',
       destFile: `${module}${meta.formatExtension}`,
-      content: JSON.stringify(content, null, 2),
+      content: output.join('\n\n'),
     }
   }
-};
-
-/**
- * A class that represents a function and all of its documentation.
- */
-class Func {
-  constructor() {}
-
-  param = [];
-  return = [];
-  description = [];
-  example = [];
-  meta = [];
 };
 
 // TODO: add pattern for optional @meta checking
@@ -58,7 +152,7 @@ const patterns = {
 
 const tags = {
   all: new Set(["brief", "description", "param", "returns?", "example", "meta", "name"]),
-  multiline: new Set(["description", "example"]),
+  singletons: new Set(["name", "return", "description", "example", "meta"]),
   convert: { returns: "return" },
   normalize: tag => {
     // Convert 'returns' to 'return' if needed
@@ -84,8 +178,7 @@ class Parser {
     this.regex = {
       ...patterns,
       tag: new RegExp(`^\\s*\\*\\s+@(?<tag>${[...tags.all].join('|')})\\s?(?<content>.*)$`),
-    },
-    this.multilineTags = tags.multiline;
+    };
   }
 
   _resetState() {
@@ -94,26 +187,37 @@ class Parser {
     this.currentTag = null;
   }
 
+  _getStack() {
+    let stack;
+    try{ throw new Error(); } catch(e) { stack = e.stack; }
+    // we don't need the first two lines of the stack, cos they'll just be the
+    // error message and the file name
+    return stack.split('\n');//.slice(2);
+  }
+
   /**
    * @param {Object} content
    */
   parse(file, content) {
     this._resetState();
+    const result = {
+      file,
+      raw: content,
+      funcs: [],
+    };
 
     try {
       const lines = content.split(/\r?\n/);
-      const funcs = {};
+      const funcs = [];
       let func = null;
-      const result = {};
       let position = 0, length = lines.length;
 
       for(position; position < length; position++) {
         const line = lines[position];
         const lineTrimmed = line.trim();
 
-        // Skip empty lines unless we're processing a multiline tag, which
-        // might have them for formatting reasons.
-        if(!this.processingMultiline && !lineTrimmed.length)
+        // Skip empty lines unless we're processing a comment
+        if(!this.processingComment && !lineTrimmed.length)
           continue;
 
         // Check for start of doc comment block
@@ -124,16 +228,17 @@ class Parser {
           this._resetState();
           continue;
         } else if(this.isFunctionLine(lineTrimmed)) {
-          const {success, message} = this.determineFunctionName(lineTrimmed);
-          if(success)
-            funcs[message] = func;
+          const {success, message: functionName} = this.determineFunctionName(lineTrimmed);
+          if(success) {
+            funcs.push({...func, name: functionName});
+          }
           else
-            return {success: false, error: true, file, line, lineNumber: position+1, message};
+            return { success: false, error: true, file, line, lineNumber: position + 1, functionName };
           continue;
         }
 
         if(this.processingComment) {
-          const processed = this.processLine(line, func);
+          const processed = this.processLine({line, func, file, position});
           const {success, message} = processed;
           if(!success)
             return {success: false, error: true, file, line, lineNumber: position+1, message};
@@ -144,7 +249,6 @@ class Parser {
 
       return {success: true, result};
     } catch(e) {
-      console.log(e);
       return {success: false, error: true, file, line: null, lineNumber: null, message: e.message};
     }
   }
@@ -170,18 +274,32 @@ class Parser {
   newFunction() {
     this._resetState();
     this.processingComment = true;
-    return new Func();
+    return {};
+  }
+
+  /**
+   * @param {string} message - The message to log
+   * @param {string} func - The function name that generated the message
+   * @param {string} file - The file name that generated the message
+   * @param {number} position - The line number in the source file
+   * @param {string} line - The line of code in the source file
+   * @returns {string} - The formatted message
+   */
+  generateMessage(message, func, file, position, line) {
+    return `[${__filename}:${func}] ${message}: ${file}:${position+1} - ${line}`;
   }
 
   /**
    * @param {string} line
-   * @param {Func} func
+   * @param {Object} func
    */
-  processLine(line, func) {
+  processLine({line, func, file, position}) {
     const lineTrimmed = line.trim();
+    const msg = this.generateMessage;
+
 
     if(!func)
-      return {success: false, message: 'No function context'};
+      return {success: false, message: msg('No function context', "processLine", file, position, line)};
 
     /*
     // TO COME BACK TO
@@ -195,60 +313,95 @@ class Parser {
 
     const tagMatches = this.regex.tag.exec(line);
     if(tagMatches) {
-      // We found a new tag while processing a multiline tag, so we need to
-      // reset the state. If we encounter a new multiline tag, it will be
-      // set to the new tag.
-      this.processingMultiline = false;
-
       const {tag, content} = tagMatches.groups;
-      func[tag] = func[tag] || [];
+      if(!tags.isValid(tag))
+        return {success: false, message: msg(`Invalid tag: ${tag}`, "processLine", file, position, line)};
+
+      const singleton = tags.singletons.has(tag);
+      if(singleton) {
+        if(func[tag])
+          return {success: false, message: msg(`Singleton tag already exists: ${tag}`, "processLine", file, position, line)};
+        func[tag] = null;
+      } else {
+        func[tag] = func[tag] || [];
+      }
 
       this.currentTag = tag;
+      this.section = null;
 
-      if(tags.multiline.has(tag)) {
-        this.processingMultiline = true;
-        // Multiline tags may include information on the same line as the tag,
-        // but it also might not.
-        if(content)
-          func[tag].push(content);
-      } else {
-        if(tag === 'return') {
-          const tagContentMatches = this.regex.returnContent.exec(content);
-          if(tagContentMatches) {
-            const {type, content} = tagContentMatches.groups;
-            if(!type)
-              return {success: false, message: `Missing return type`};
-            func[tag].push({type, content});
-          } else
-            return {success: false, message: `Failed to parse return tag`};
-        } else {
-          const tagContentMatches = this.regex.tagContent.exec(content);
-          if(tagContentMatches) {
-            const {type, name, content} = tagContentMatches.groups;
-            if(!type)
-              return {success: false, message: `Missing tag type`};
-            if(!name)
-              return {success: false, message: `Missing tag name`};
-            func[tag].push({type, name, content});
+      if(tag === 'return') {
+        this.section = {tag, name: null};
+        const tagContentMatches = this.regex.returnContent.exec(content);
+        if(tagContentMatches) {
+          const {type, content} = tagContentMatches.groups;
+          if(!type)
+            return {success: false, message: msg(`Missing return type: ${tag}`, "processLine", file, position, line)};
+          if(!content) {
+            this.core.logger.warn(msg(`Missing return content: ${tag}`, "processLine", file, position, line));
+            singleton ? func[tag] = { type, content: [] } : func[tag].push({ type, content: [] });
           } else {
-            func[tag].push(content);
+            singleton ? func[tag] = { type, content: [content] } : func[tag].push({type, content: [content]});
+          }
+        } else
+          return {success: false, message: msg('Failed to parse return tag', "processLine", file, position, line)};
+      } else {
+        const tagContentMatches = this.regex.tagContent.exec(content);
+        if(tagContentMatches) {
+          const {type, name, content} = tagContentMatches.groups;
+          if(!type)
+            return {success: false, message: msg('Missing tag type', "processLine", file, position, line)};
+          if(!name)
+            return {success: false, message: msg('Missing tag name', "processLine", file, position, line)};
+          this.section = {tag,name};
+          singleton ? func[tag] = { type, name, content: [content] } : func[tag].push({type, name, content: [content]});
+        } else {
+          // This is probably a singleton
+          if(tags.singletons.has(tag)) {
+            this.section = {tag, name: null};
+            func[tag] = [];
+          } else {
+            return {success: false, message: msg('Failed to parse tag', "processLine", file, position, line)};
           }
         }
       }
       return {success: true, message: 'Processed tag'};
     }
 
-    // Process multiline content(for tags like @example)
+    // Process multiline content
     if(this.currentTag) {
-      const currentTag = this.currentTag;
+      if(this.section?.name) {
+        const currentTag = this.currentTag;
+        const {tag, name} = this.section;
 
-      func[currentTag] = func[currentTag] || [];
+        const index = name ? func[tag].findIndex(item => item.name === name) : null;
+        const tagMatch = this.regex.commentContinuation.exec(lineTrimmed);
 
-      const tagMatch = this.regex.commentContinuation.exec(lineTrimmed);
-      if(tagMatch && tagMatch.groups?.content) {
-        func[currentTag].push(tagMatch.groups.content);
+        if(tagMatch && tagMatch.groups?.content) {
+          if(index > -1) {
+            func[currentTag][index].content.push(tagMatch.groups.content);
+          } else {
+            func[currentTag].content.push(tagMatch.groups.content);
+          }
+        } else {
+          if(index)
+            func[currentTag][index].content.push("");
+          else
+            func[currentTag].content.push("");
+        }
       } else {
-        func[currentTag].push("");
+        const {tag} = this.section;
+        const commentMatch = this.regex.commentContinuation.exec(lineTrimmed);
+        if(commentMatch && commentMatch.groups?.content) {
+          if(func[tag].content)
+            func[tag].content.push(commentMatch.groups.content);
+          else
+            func[tag].push(commentMatch.groups.content);
+        } else {
+          if(func[tag].content)
+            func[tag].content.push("");
+          else
+            func[tag].push("");
+        }
       }
       return {success: true, message: 'Processed tag continuation'};
     }
@@ -256,9 +409,11 @@ class Parser {
     // If not a special tag, treat as description
     const descMatch = this.regex.commentContinuation.exec(lineTrimmed);
     if(descMatch && descMatch.groups?.content) {
+      func.description = func.description || [];
       func.description.push(descMatch.groups.content);
       return {success: true, message: 'Processed description'};
     } else {
+      func.description = func.description || [];
       func.description.push("");
       return {success: true, message: 'Processed description'};
     }
@@ -273,7 +428,7 @@ class Parser {
 
   /**
    * @param {string} line
-   * @param {Func} func
+   * @param {Object} func
    */
   determineFunctionName(line) {
     const match = this.regex.functionPattern.exec(line);

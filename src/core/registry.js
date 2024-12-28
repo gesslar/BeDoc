@@ -32,10 +32,10 @@ class Registry {
     this._validateInput(parser, 'class');
 
     if(this.parsers[meta.language]) {
-      throw new Error(`Parser for language "${meta.language}" is already registered.`);
+      throw new Error(`[registerParser] Parser for language "${meta.language}" is already registered.`);
     }
     this.parsers[meta.language] = parser;
-    this.logger.debug(`Registered parser for language "${meta.language}".`);
+    this.logger.debug(`[registerParser] Registered parser for language "${meta.language}".`);
   }
 
   // Register a printer for a specific format
@@ -43,10 +43,10 @@ class Registry {
     this._validateInput(printer, 'class');
 
     if(this.printers[meta.format]) {
-      throw new Error(`Printer for format "${meta.format}" is already registered.`);
+      throw new Error(`[registerPrinter] Printer for format "${meta.format}" is already registered.`);
     }
     this.printers[meta.format] = printer;
-    this.logger.debug(`Registered printer for format "${meta.format}".`);
+    this.logger.debug(`[registerPrinter] Registered printer for format "${meta.format}".`);
   }
 
   // Retrieve a parser for a specific language

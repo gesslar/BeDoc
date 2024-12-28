@@ -80,10 +80,10 @@ class Core {
       const fileNames = fs.readdirSync(dirPath).filter(
         file => file.endsWith(extension)
       );
-      this.logger.debug(`Found ${fileNames.length} files in ${dirPath} with extension "${extension}".`);
+      this.logger.debug(`[getFiles] Found ${fileNames.length} files in ${dirPath} with extension "${extension}".`);
       return fileNames;
     } catch(error) {
-      this.logger.error(`Failed to read directory ${dirPath}: ${error.message}`);
+      this.logger.error(`[getFiles] Failed to read directory ${dirPath}: ${error.message}`);
       throw error;
     }
   }
@@ -97,10 +97,10 @@ class Core {
   async readFile(filePath) {
     try {
       const content = await fs.readFile(filePath, 'utf8');
-      this.logger.debug(`Successfully read file: ${filePath}`);
+      this.logger.debug(`[readFile] Successfully read file: ${filePath}`);
       return content;
     } catch(error) {
-      this.logger.error(`Failed to read file: ${filePath}`);
+      this.logger.error(`[readFile] Failed to read file: ${filePath}`);
       throw error;
     }
   }
@@ -122,9 +122,7 @@ class Core {
       const isValid = this.reader.validFile(content, filePath);
       return isValid !== undefined ? isValid : true; // Default to true if no result
     } catch(error) {
-      this.logger.error(
-        `Error validating file "${filePath}": ${error.message}`
-      );
+      this.logger.error(`[validFile] Error validating file "${filePath}": ${error.message}`);
       return false; // Treat as invalid if validation fails
     }
   }
@@ -139,12 +137,12 @@ class Core {
     const files = this.getFiles(directory, extension);
 
     if(!files.length) {
-      this.logger.warn(`No files found in ${directory} with extension "${extension}".`);
+      this.logger.warn(`[processDirectory] No files found in ${directory} with extension "${extension}".`);
       return;
     }
 
     const results = await this.processFiles(options, files);
-    this.logger.debug(`Processed ${results.length} files.`);
+    this.logger.debug(`[processDirectory] Processed ${results.length} files.`);
     return results;
   }
 
@@ -157,24 +155,24 @@ class Core {
     const {input = [], language, format} = options;
 
     if(!files.length && !input.length)
-      throw new Error('No files or input provided');
+      this.logger.error(`[processFiles] No files or input provided`);
     else if(files.length && input.length)
-      throw new Error('Cannot process both files and input');
+      this.logger.error(`[processFiles] Cannot process both files and input`);
     else if(!input.length)
       input.push(...files);
 
     const parserEngine = this.registry.getParser(language);
     if(!parserEngine)
-      throw new Error(`No parser registered for language: ${language}`);
+      this.logger.error(`[processFiles] No parser registered for language: ${language}`);
 
     const printerEngine = this.registry.getPrinter(format);
     if(!printerEngine)
-      throw new Error(`No printer registered for format: ${format}`);
+      this.logger.error(`[processFiles] No printer registered for format: ${format}`);
 
     const parser = new parserEngine(this);
     const printer = new printerEngine(this);
 
-    this.logger.debug(this.options);
+    this.logger.debug(`[processFiles] Options: ${JSON.stringify(this.options)}`);
 
     const fileObjects = input.map(file => this.resolveFile(options.directory, file));
     const filePromises = fileObjects.map(async file => {
@@ -184,21 +182,21 @@ class Core {
         const parseResponse = parser.parse(path, content);
         if(!parseResponse.success) {
           const {file, line, lineNumber, message} = parseResponse;
-          throw new Error(`Activity: Parse\nFile: ${file}, Line: ${lineNumber}\nContext: ${line}\nError: ${message}`);
+          this.logger.error(`[processFiles] Activity: Parse\nFile: ${file}, Line: ${lineNumber}\nContext: ${line}\nError: ${message}`);
         }
         const printResponse = await printer.print(module, parseResponse.result);
         if(printResponse.status !== 'success') {
           const {file, line, message} = printResponse;
-          throw new Error(`Activity: Print\nFile: ${file}\nContext: ${line}\nError: ${message}`);
+          this.logger.error(`[processFiles] Activity: Print\nFile: ${file}\nContext: ${line}\nError: ${message}`);
         }
 
         const {destFile, content: printedContent} = printResponse;
         const writeResult = await this.outputFile(options.output, destFile, printedContent);
 
-        this.logger.debug(`Processed file: ${name}`);
+        this.logger.debug(`[processFiles] Processed file: ${name}`);
         return {file, destFile: writeResult.destFile, status: writeResult.status, message: writeResult.message, content: printedContent};
       } catch(error) {
-        this.logger.error(`Failed to process file ${name}\n${error.message}`);
+        this.logger.error(`[processFiles] Failed to process file ${name}\n${error.message}\n${error.stack}`);
         return {file, destFile: null, status: 'error', message: error.message, stack: error.stack};
       }
     });
@@ -214,12 +212,11 @@ class Core {
    * @returns {Promise<void>}
    */
   async outputFile(output, destFile, content) {
-    console.log(output, destFile, content);
     try {
       if(this.options.env === Environment.CLI && !output) {
         // Print to stdout if no output file is specified in CLI mode
         process.stdout.write(content + '\n');
-        this.logger.debug('Output written to stdout.');
+        this.logger.debug('[outputFile] Output written to stdout.');
         return {
           destFile: null,
           status: 'success',
@@ -228,9 +225,8 @@ class Core {
       } else if(output && destFile) {
         // Write to a file if outputPath is specified
         const resolvedDestFile = this.resolveFile(output, destFile);
-        console.log(`resolvedDestFile: ${JSON.stringify(resolvedDestFile)}`);
         await fs.promises.writeFile(resolvedDestFile.path, content, 'utf8');
-        this.logger.debug(`Successfully wrote to output: ${resolvedDestFile}`);
+        this.logger.debug(`[outputFile] Successfully wrote to output: ${JSON.stringify(resolvedDestFile)}`);
         return {
           destFile: resolvedDestFile,
           status: 'success',
@@ -238,10 +234,10 @@ class Core {
         };
       } else {
         // For non-CLI environments, an output file must be specified
-        throw new Error('Output path and destination file is required for non-CLI environments.');
+        this.logger.error(`[outputFile] Output path and destination file is required for non-CLI environments.`);
       }
     } catch(error) {
-      this.logger.error(`Failed to write output: ${error.message}`);
+      this.logger.error(`[outputFile] Failed to write output: ${error.message}`);
       throw error;
     }
   }

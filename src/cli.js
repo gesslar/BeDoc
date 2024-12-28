@@ -40,10 +40,8 @@
       if(!Array.isArray(options.input))
         options.input = [options.input];
       const result = await core.processFiles(options);
-      console.info(result);
     } else if(options.directory) {
       const result = await core.processDirectory(options);
-      console.info(result);
     } else {
       throw new Error('No input or directory specified');
     }

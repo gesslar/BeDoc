@@ -35,7 +35,7 @@ class Discovery {
             discovered.parsers.push([meta, Parser]);
         });
       } catch(error) {
-        console.error(`Error discovering modules in ${modulesPath}: ${error.message}`);
+        this.core.logger.error(`[discoverModules] Error discovering modules in ${modulesPath}: ${error.message}`);
         throw error;
       }
     });
@@ -62,7 +62,7 @@ class Discovery {
         if(format && Parser)
           discovered.parsers.push([meta, Parser]);
       } catch(error) {
-        console.error(`Error discovering mock modules: ${error.message}`);
+        this.core.logger.error(`[discoverMockModules] Error discovering mock modules: ${error.message}`);
         throw error;
       }
     });
