@@ -23,6 +23,9 @@ class Core {
     this.registry = new Registry(this);
     this.discovery = new Discovery(this);
 
+    this.logger.debug(`[Core] Options: ${JSON.stringify(this.options, null, 2)}`);
+
+
     this.logger.debug(`[Core] Discovering modules in ${this.options.mock}`);
     const {parsers, printers} = this.discovery.discoverModules(this.options.mock);
     this.logger.debug(`[Core] Discovered ${parsers.length} parsers and ${printers.length} printers`);
@@ -44,13 +47,24 @@ class Core {
   }
 
   resolveFile(_path, file) {
+    this.logger.debug(`[resolveFile] Resolving file ${file} in ${_path}`);
+
     if(!file || typeof file !== 'string')
       throw new Error('File is required');
 
+    const resolvedPath = path.resolve(_path, file);
+    this.logger.debug(`[resolveFile] Resolved file to ${resolvedPath}`);
+
+    const pathParts = path.parse(resolvedPath);
+    this.logger.debug(`[resolveFile] Path parts: ${JSON.stringify(pathParts, null, 2)}`);
+
+    const module = pathParts.name;
+    this.logger.debug(`[resolveFile] Module: ${module}`);
+
     return {
       name: file,
-      path: path.resolve(_path, file),
-      module: file.split('/').pop().split('.').shift()
+      path: resolvedPath,
+      module
     };
   }
 
@@ -186,24 +200,27 @@ class Core {
     const fileObjects = input.map(file => this.resolveFile(options.directory, file));
     const filePromises = fileObjects.map(async file => {
       const {name, path, module} = file;
+      this.logger.debug(`[processFiles] Processing file: ${JSON.stringify(file, null, 2)}`);
       try {
-        const content = await fs.promises.readFile(path, 'utf8');
-        const parseResponse = parser.parse(path, content);
+        const source = await fs.promises.readFile(path, 'utf8');
+        const parseResponse = parser.parse(path, source);
         if(!parseResponse.success) {
           const {file, line, lineNumber, message} = parseResponse;
           this.logger.error(`[processFiles] Activity: Parse\nFile: ${file}, Line: ${lineNumber}\nContext: ${line}\nError: ${message}`);
         }
+
         const printResponse = await printer.print(module, parseResponse.result);
         if(printResponse.status !== 'success') {
           const {file, line, message} = printResponse;
-          this.logger.error(`[processFiles] Activity: Print\nFile: ${file}\nContext: ${line}\nError: ${message}`);
+          throw new Error(`[processFiles] Activity: Print\nFile: ${file}\nContext: ${line}\nError: ${message}`);
         }
 
-        const {destFile, content: printedContent} = printResponse;
-        const writeResult = await this.outputFile(options.output, destFile, printedContent);
+        const {destFile, content} = printResponse;
+        this.logger.debug(`[processFiles] Print response: ${JSON.stringify(printResponse, null, 2)}`);
+        const writeResult = await this.outputFile(options.output, destFile, content);
 
         this.logger.debug(`[processFiles] Processed file: ${name}`);
-        return {file, destFile: writeResult.destFile, status: writeResult.status, message: writeResult.message, content: printedContent};
+        return {file, destFile: writeResult.destFile, status: writeResult.status, message: writeResult.message, content: content};
       } catch(error) {
         this.logger.error(`[processFiles] Failed to process file ${name}\n${error.message}\n${error.stack}`);
         return {file, destFile: null, status: 'error', message: error.message, stack: error.stack};
