@@ -13,8 +13,8 @@ class Core {
    * @param {Object} config
    */
   constructor(options) {
-    if(!options.env || typeof options.env !== 'string') throw new Error('Env is required');
-    if(options.mock && typeof options.mock !== 'string') throw new Error('Mock must be a string');
+    if(!options.env || typeof options.env !== 'string')throw new Error('Env is required');
+    if(options.mock && typeof options.mock !== 'string')throw new Error('Mock must be a string');
 
     this.options = options;
     this.logger = new Logger(this);

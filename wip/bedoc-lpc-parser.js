@@ -29,7 +29,7 @@ class Printer {
       let isStartOfLine = true;  // Start of each section is start of line
 
       // Preserve leading space if it existed
-      if (section[0] === ' ') {
+      if(section[0] === ' ') {
         parts = ['', ...parts];
       }
 
@@ -37,14 +37,14 @@ class Printer {
 
       parts = parts.map(part => {
         // Only check for code block if we're at start of line
-        if (isStartOfLine && /^```(?:\w+)?$/.test(part)) {
+        if(isStartOfLine && /^```(?:\w+)?$/.test(part)) {
           inCodeBlock = !inCodeBlock;
           running += (part.length + 1);
           isStartOfLine = false;
           return part;
         }
 
-        if (part[0] === '\n') {
+        if(part[0] === '\n') {
           running = 0;
           isStartOfLine = true;  // Next part will be at start of line
           return part;
@@ -53,7 +53,7 @@ class Printer {
         running += (part.length + 1);
         isStartOfLine = false;   // No longer at start of line
 
-        if (!inCodeBlock && running >= wrapAt) {
+        if(!inCodeBlock && running >= wrapAt) {
           running = part.length + indentAt;
           isStartOfLine = true;  // After newline, next part will be at start
           return '\n' + ' '.repeat(indentAt) + part;
@@ -189,7 +189,11 @@ class Parser {
 
   _getStack() {
     let stack;
-    try{ throw new Error(); } catch(e) { stack = e.stack; }
+    try {
+      throw new Error();
+    } catch(e) {
+      stack = e.stack;
+    }
     // we don't need the first two lines of the stack, cos they'll just be the
     // error message and the file name
     return stack.split('\n');//.slice(2);
@@ -231,8 +235,7 @@ class Parser {
           const {success, message: functionName} = this.determineFunctionName(lineTrimmed);
           if(success) {
             funcs.push({...func, name: functionName});
-          }
-          else
+          } else
             return { success: false, error: true, file, line, lineNumber: position + 1, functionName };
           continue;
         }

@@ -1,6 +1,5 @@
 const Environment = require("./env")
 const packageJson = require("../../package.json");
-const { InvalidOptionArgumentError } = require("commander");
 
 class Logger {
   /**
@@ -10,7 +9,7 @@ class Logger {
     this.core = core ;
     this.name = packageJson.name;
 
-    if(core.env === Environment.EXTENSION) {
+    if(core?.env === Environment.EXTENSION) {
       const vscode = require('vscode');
       this.vscodeError = vscode.window.showErrorMessage.bind(vscode.window);
       this.vscodeWarn = vscode.window.showWarningMessage.bind(vscode.window);
@@ -42,8 +41,9 @@ class Logger {
   /**
    * @param {any} message
    */
-  debug(message) {
-    this.core.options.debug && console.debug(this._compose("debug", message));
+  debug(message, force = false) {
+    if(this.core?.options?.debug || force)
+      console.debug(this._compose("debug", message));
   }
 
   warn(message) {
@@ -64,7 +64,11 @@ class Logger {
    */
   error(message) {
     let stack;
-    try{ throw new Error(); } catch(e) { stack = e.stack; }
+    try {
+      throw new Error();
+    } catch(e) {
+      stack = e.stack;
+    }
 
     // console.log(stack);
 
