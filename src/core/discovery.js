@@ -4,6 +4,7 @@ const path = require('path');
 class Discovery {
   constructor(core) {
     this.core = core;
+    this.logger = core.logger;
   }
 
   /**
@@ -47,23 +48,32 @@ class Discovery {
    * @param {string} mockPath
    */
   discoverMockModules(mockPath) {
+    this.logger.debug(`[Discovery] Discovering mock modules in ${mockPath}`);
+
     const discovered = {parsers: [], printers: []};
     const files = this.core.getFiles(mockPath, ".js")
       .map(file => this.core.resolveFile(mockPath, file));
 
-    files.forEach(file => {
-      try {
-        const {path: filePath} = file;
-        const {meta, Parser, Printer} = require(filePath);
-        const {language, format} = meta;
+    this.logger.debug(`[Discovery] Discovered ${files.length} files`);
 
-        if(language && Printer)
-          discovered.printers.push([meta, Printer]);
-        if(format && Parser)
-          discovered.parsers.push([meta, Parser]);
-      } catch(error) {
-        this.core.logger.error(`[discoverMockModules] Error discovering mock modules: ${error.message}`);
-        throw error;
+    files.forEach(file => {
+      this.logger.debug(`[Discovery] Processing file ${file.path}`);
+      const {path: filePath} = file;
+      const {meta, Parser, Printer} = require(filePath);
+      const {language, format} = meta;
+
+      this.logger.debug(`[Discovery] Found meta ${JSON.stringify(meta, null, 2)}`);
+      this.logger.debug(`[Discovery] meta.language: ${language}`);
+      this.logger.debug(`[Discovery] meta.format: ${format}`);
+
+      if(language && Parser) {
+        this.logger.debug(`[Discovery] Found parser for language ${language}`);
+        discovered.parsers.push([meta, Parser]);
+      }
+
+      if(format && Printer) {
+        this.logger.debug(`[Discovery] Found printer for format ${format}`);
+        discovered.printers.push([meta, Printer]);
       }
     });
 

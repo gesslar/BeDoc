@@ -2,9 +2,6 @@
  * The meta information for this parser.
  */
 const meta = {
-  // Parser information
-  language: "lpc",
-  languageExtension: ".c",
   // Printer information
   format: "markdown",
   formatExtension: ".md",
@@ -137,3 +134,5 @@ class Printer {
     }
   }
 };
+
+module.exports = { meta, Printer };

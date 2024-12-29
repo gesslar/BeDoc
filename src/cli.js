@@ -45,24 +45,25 @@ Arguments:
     program.parse();
 
     const options = program.opts();
+    logger.debug(`Options passed: ${JSON.stringify(options, null, 2)}`, options.debug);
     const trailingArgs = program.args; // Files provided as trailing arguments
+    logger.debug(`Trailing arguments: ${JSON.stringify(trailingArgs, null, 2)}`, options.debug);
 
-    let config = {};
+    let finalConfig = {};
+
     if(options.config) {
       try {
-        const configContent = fs.readFileSync(options.config, 'utf8');
-        config = JSON.parse(configContent);
-        logger.debug(`[CLI] Loaded configuration from ${options.config}`, config.debug);
+        options.config = path.resolve(options.config);
+        const config = require(options.config);
+        finalConfig = { ...config, ...options };
+        logger.debug(`Loaded configuration from ${options.config}`, config.debug);
       } catch(err) {
-        logger.error(`[CLI] Failed to load config: ${err.message}`);
+        logger.error(`Failed to load config: ${err.message}`);
         process.exit(1);
       } finally {
         config = {};
       }
     }
-
-    // Merge CLI options (CLI flags override config file)
-    const finalOptions = { ...config, ...options };
 
     // Validate trailing arguments
     if(trailingArgs.length > 0) {
@@ -72,19 +73,19 @@ Arguments:
           throw new Error(`File does not exist: ${file}`);
         }
       });
-      finalOptions.input = resolvedFiles;
+      finalConfig.input = resolvedFiles;
     }
 
     // Validate mutual exclusivity of -d and trailing files
-    if(finalOptions.directory && finalOptions.input) {
+    if(finalConfig.directory && finalConfig.input) {
       throw new Error('You cannot specify both a directory (-d) and individual files.');
     }
 
     // Log all options
-    if(finalOptions.debug) logger.debug(`[CLI] Final Options: ${JSON.stringify(finalOptions, null, 2)}`, finalOptions.debug);
+    logger.debug(`Final Options: ${JSON.stringify(finalConfig, null, 2)}`, finalConfig.debug);
 
     try {
-      Object.entries(finalOptions).forEach(([key, value]) => {
+      Object.entries(finalConfig).forEach(([key, value]) => {
         if(ConfigurationParameters.has(key)) {
           const parameter = ConfigurationParameters.get(key);
           const [_, type, array] = /^(\w+)(\[\])?$/.exec(parameter.type);
@@ -118,7 +119,7 @@ Arguments:
             }
           }
 
-          finalOptions[key] = value;
+          finalConfig[key] = value;
         } else {
           logger.warn(`[CLI] Unknown option: ${key}`);
         }
@@ -128,18 +129,19 @@ Arguments:
       process.exit(1);
     }
 
+    logger.debug(`Final configuration (resolved): ${JSON.stringify(finalConfig, null, 2)}`, finalConfig.debug);
     // Validate input options
-    if(!finalOptions.input && !finalOptions.directory) {
+    if(!finalConfig.input && !finalConfig.directory) {
       throw new Error('You must specify either a directory (-d) or trailing file arguments.');
     }
 
-    finalOptions.env = Environment.CLI;
-    const core = new Core(finalOptions);
+    finalConfig.env = Environment.CLI;
+    const core = new Core(finalConfig);
 
-    if(finalOptions.input) {
-      const result = await core.processFiles(finalOptions);
-    } else if(finalOptions.directory) {
-      const result = await core.processDirectory(finalOptions);
+    if(finalConfig.input) {
+      const result = await core.processFiles(finalConfig);
+    } else if(finalConfig.directory) {
+      const result = await core.processDirectory(finalConfig);
     }
   } catch(e) {
     console.error(`Error: ${e.message}`);

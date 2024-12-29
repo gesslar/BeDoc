@@ -13,15 +13,24 @@ class Core {
    * @param {Object} config
    */
   constructor(options) {
-    if(!options.env || typeof options.env !== 'string')throw new Error('Env is required');
-    if(options.mock && typeof options.mock !== 'string')throw new Error('Mock must be a string');
+    if(!options.env || typeof options.env !== 'string')
+      throw new Error('Env is required');
+    if(options.mock && typeof options.mock !== 'string')
+      throw new Error('Mock must be a string');
 
     this.options = options;
     this.logger = new Logger(this);
     this.registry = new Registry(this);
     this.discovery = new Discovery(this);
 
+    this.logger.debug(`[Core] Discovering modules in ${this.options.mock}`);
     const {parsers, printers} = this.discovery.discoverModules(this.options.mock);
+    this.logger.debug(`[Core] Discovered ${parsers.length} parsers and ${printers.length} printers`);
+
+    if(!parsers.length)
+      throw new Error(`[Core] No parsers found in ${this.options.mock}`);
+    if(!printers.length)
+      throw new Error(`[Core] No printers found in ${this.options.mock}`);
 
     parsers.forEach(([meta, parser]) => this.registry.registerParser(meta, parser));
     printers.forEach(([meta, printer]) => this.registry.registerPrinter(meta, printer));

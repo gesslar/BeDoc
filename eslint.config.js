@@ -27,6 +27,7 @@ module.exports = [
           "switch": { "after": false },
           "case": { "after": false },
           "default": { "after": false },
+          "throw": { "before": true, "after": false },
 
           // Exception handling
           "catch": { "before" : true, "after": false },

@@ -29,22 +29,24 @@ class Registry {
 
   // Register a parser for a specific language
   registerParser(meta, parser) {
+    this.logger.debug(`Registering parser for language "${meta.language}"`);
     this._validateInput(parser, 'class');
 
-    if(this.parsers[meta.language]) {
+    if(this.parsers[meta.language])
       throw new Error(`[registerParser] Parser for language "${meta.language}" is already registered.`);
-    }
+
     this.parsers[meta.language] = parser;
     this.logger.debug(`[registerParser] Registered parser for language "${meta.language}".`);
   }
 
   // Register a printer for a specific format
   registerPrinter(meta, printer) {
+    this.logger.debug(`Registering printer for format "${meta.format}"`);
     this._validateInput(printer, 'class');
 
-    if(this.printers[meta.format]) {
+    if(this.printers[meta.format])
       throw new Error(`[registerPrinter] Printer for format "${meta.format}" is already registered.`);
-    }
+
     this.printers[meta.format] = printer;
     this.logger.debug(`[registerPrinter] Registered printer for format "${meta.format}".`);
   }
