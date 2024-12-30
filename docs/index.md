@@ -1,4 +1,10 @@
-# Welcome to the BeDoc Documentation Hub
+---
+layout: bedoc
+title: BeDoc
+nav_exclude: true
+---
+
+# Welcome to BeDoc
 
 BeDoc is a comprehensive and adaptable documentation engine that integrates effortlessly with any programming language or file format. Built on a robust modular design, BeDoc enables developers to efficiently parse and generate documentation through custom parsers and printers. Whether you are using the command line, a VS Code extension, or a GitHub Action, BeDoc provides an intuitive and powerful solution.
 

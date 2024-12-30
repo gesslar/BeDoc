@@ -26,9 +26,10 @@ baseurl: "/BeDoc" # the subpath of your site, e.g. /blog
 url: "https://gesslar.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 github_username:  gesslar
 
-theme: minima
+theme: jekyll-theme-hacker
 plugins:
 - jekyll-feed
+- jekyll-sitemap
 
 markdown: kramdown
 kramdown:
