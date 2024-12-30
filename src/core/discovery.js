@@ -15,6 +15,7 @@ class Discovery {
     if(mockPath)
       return this.discoverMockModules(mockPath);
 
+    // TODO: Need to use workspace path instead of __dirname
     const localModulesPath = path.resolve(__dirname, '../../node_modules');
     const globalNodeModules = execSync('npm root -g').toString().trim();
 
