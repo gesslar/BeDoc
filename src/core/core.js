@@ -1,9 +1,9 @@
 const fs = require('fs');
-const path = require('path');
 const Environment = require('./env');
 const Logger = require('./logger');
 const Registry = require('./registry');
 const Discovery = require('./discovery');
+const Util = require('./util');
 
 /**
  * @class BeDocEngine
@@ -22,6 +22,7 @@ class Core {
     this.logger = new Logger(this);
     this.registry = new Registry(this);
     this.discovery = new Discovery(this);
+    this.util = Util;
 
     this.logger.debug(`[Core] Options: ${JSON.stringify(this.options, null, 2)}`);
 
@@ -37,35 +38,6 @@ class Core {
 
     parsers.forEach(([meta, parser]) => this.registry.registerParser(meta, parser));
     printers.forEach(([meta, printer]) => this.registry.registerPrinter(meta, printer));
-  }
-
-  resolvePath(_path = null) {
-    if(!_path)
-      throw new Error('Path is required');
-
-    return path.resolve(process.cwd(), _path);
-  }
-
-  resolveFile(_path, file) {
-    this.logger.debug(`[resolveFile] Resolving file ${file} in ${_path}`);
-
-    if(!file || typeof file !== 'string')
-      throw new Error('File is required');
-
-    const resolvedPath = path.resolve(_path, file);
-    this.logger.debug(`[resolveFile] Resolved file to ${resolvedPath}`);
-
-    const pathParts = path.parse(resolvedPath);
-    this.logger.debug(`[resolveFile] Path parts: ${JSON.stringify(pathParts, null, 2)}`);
-
-    const module = pathParts.name;
-    this.logger.debug(`[resolveFile] Module: ${module}`);
-
-    return {
-      name: file,
-      path: resolvedPath,
-      module
-    };
   }
 
   /**
@@ -197,7 +169,7 @@ class Core {
 
     this.logger.debug(`[processFiles] Options: ${JSON.stringify(this.options)}`);
 
-    const fileObjects = input.map(file => this.resolveFile(options.directory, file));
+    const fileObjects = input.map(file => Util.resolveFile(options.directory, file));
     const filePromises = fileObjects.map(async file => {
       const {name, path, module} = file;
       this.logger.debug(`[processFiles] Processing file: ${JSON.stringify(file, null, 2)}`);
@@ -250,7 +222,7 @@ class Core {
         };
       } else if(output && destFile) {
         // Write to a file if outputPath is specified
-        const resolvedDestFile = this.resolveFile(output, destFile);
+        const resolvedDestFile = Util.resolveFile(output, destFile);
         await fs.promises.writeFile(resolvedDestFile.path, content, 'utf8');
         this.logger.debug(`[outputFile] Successfully wrote to output: ${JSON.stringify(resolvedDestFile)}`);
         return {

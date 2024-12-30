@@ -13,61 +13,6 @@ class Printer {
   }
 
   /**
-   * Wraps text to a specified width
-   * @param {string} str The text to wrap
-   * @param {number} wrapAt The column at which to wrap the text
-   * @param {number} indentAt The number of spaces to indent wrapped lines
-   * @returns {string} The wrapped text
-   */
-  wrap(str, wrapAt = 80, indentAt = 0) {
-    const sections = str.split('\n').map(section => {
-      let parts = section.split(' ');
-      let inCodeBlock = false;
-      let isStartOfLine = true;  // Start of each section is start of line
-
-      // Preserve leading space if it existed
-      if(section[0] === ' ') {
-        parts = ['', ...parts];
-      }
-
-      let running = 0;
-
-      parts = parts.map(part => {
-        // Only check for code block if we're at start of line
-        if(isStartOfLine && /^```(?:\w+)?$/.test(part)) {
-          inCodeBlock = !inCodeBlock;
-          running += (part.length + 1);
-          isStartOfLine = false;
-          return part;
-        }
-
-        if(part[0] === '\n') {
-          running = 0;
-          isStartOfLine = true;  // Next part will be at start of line
-          return part;
-        }
-
-        running += (part.length + 1);
-        isStartOfLine = false;   // No longer at start of line
-
-        if(!inCodeBlock && running >= wrapAt) {
-          running = part.length + indentAt;
-          isStartOfLine = true;  // After newline, next part will be at start
-          return '\n' + ' '.repeat(indentAt) + part;
-        }
-
-        return part;
-      });
-
-      return parts.join(' ')
-        .split('\n')
-        .map(line => line.trimEnd())
-        .join('\n');
-    });
-
-    return sections.join('\n');
-  }
-
   /**
    * @param {string} module
    * @param {Object} content
@@ -82,7 +27,7 @@ class Printer {
 
       // Then the description
       const outputDescription = description?.length
-        ? this.wrap(description.map(line => line.trim()).join('\n'))
+        ? this.core.util.wrap(description.map(line => line.trim()).join('\n'))
         : '';
 
       // Then the parameters
@@ -95,7 +40,7 @@ class Printer {
           .replace(/\s+/g, ' '); // Ensure clean spacing
 
         const optionalTag = param.optional || isOptional ? ', *optional*' : '';
-        return this.wrap(
+        return this.core.util.wrap(
           `- **\`${param.name}\`** (\`${param.type}\`${optionalTag}): ${content}`,
           undefined,
           2
@@ -104,7 +49,7 @@ class Printer {
 
       // Then the returns
       const outputReturns = returns
-        ? `### Returns\n\n${this.wrap(
+        ? `### Returns\n\n${this.core.util.wrap(
           returns.content
             ? `- **\`${returns.type}\`**: ${returns.content}`
             : `- **\`${returns.type}\`**`,
@@ -116,7 +61,7 @@ class Printer {
 
       // Then the example
       const outputExample = example?.length
-        ? "### Example\n\n" + this.wrap(example.join('\n'))
+        ? "### Example\n\n" + this.core.util.wrap(example.join('\n'))
         : '';
 
       return `${outputName}` +

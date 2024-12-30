@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const Util = require('./util');
 
 class Discovery {
   constructor(core) {
@@ -52,7 +53,7 @@ class Discovery {
 
     const discovered = {parsers: [], printers: []};
     const files = this.core.getFiles(mockPath, ".js")
-      .map(file => this.core.resolveFile(mockPath, file));
+      .map(file => Util.resolveFile(mockPath, file));
 
     this.logger.debug(`[Discovery] Discovered ${files.length} files`);
 
