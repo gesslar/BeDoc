@@ -30,6 +30,10 @@ theme: minima
 plugins:
 - jekyll-feed
 
+markdown: kramdown
+kramdown:
+  input: GFM
+
 # Exclude from processing.
 # The following items will not be processed, by default.
 # Any item listed under the `exclude:` key here will be automatically added to
@@ -49,3 +53,8 @@ plugins:
 #   - vendor/cache/
 #   - vendor/gems/
 #   - vendor/ruby/
+
+# Custom replacements
+repo: https://github.com/gesslar/BeDoc
+issues: https://github.com/gesslar/BeDoc/issues
+wiki: https://github.com/gesslar/BeDoc/wiki
