@@ -1,8 +1,9 @@
 {
   "language": "lpc",
-  "format": "wikitext",
+  "format": "markdown",
   "mock": "./wip",
-  "output": "./output",
-  "input": ["./wip/sample/arrays.c"],
-  "debug": true
+  "output": "./output/",
+  "input" : "./wip/sample/**/*.c",
+  "hooks": "./wip/my_custom_hooks.js",
+  "debug": false
 }

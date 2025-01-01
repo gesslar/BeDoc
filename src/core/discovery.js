@@ -11,9 +11,11 @@ class Discovery {
   /**
    * @param {string} path
    */
-  discoverModules(mockPath) {
-    if(mockPath)
-      return this.discoverMockModules(mockPath);
+  async discoverModules(mockPath) {
+    if(mockPath) {
+      this.logger.debug(`[discoverModules] Discovering mock modules in ${mockPath}`);
+      return await this.discoverMockModules(mockPath);
+    }
 
     // TODO: Need to use workspace path instead of __dirname
     const localModulesPath = path.resolve(__dirname, '../../node_modules');
@@ -22,25 +24,20 @@ class Discovery {
     const discovered = {parsers: [], printers: []};
 
     [localModulesPath, globalNodeModules].forEach((modulesPath) => {
-      try {
-        const modules = fs
-          .readdirSync(modulesPath)
-          .filter((name) => name.startsWith('bedoc-'));
+      const modules = fs
+        .readdirSync(modulesPath)
+        .filter((name) => name.startsWith('bedoc-'));
 
-        modules.forEach((moduleName) => {
-          const modulePath = path.join(modulesPath, moduleName);
-          const {meta, Parser, Printer} = require(modulePath);
-          const {language, format} = meta;
+      modules.forEach((moduleName) => {
+        const modulePath = path.join(modulesPath, moduleName);
+        const {meta, Parser, Printer} = require(modulePath);
+        const {language, format} = meta;
 
-          if(language && Printer)
-            discovered.printers.push([meta, Printer]);
-          if(format && Parser)
-            discovered.parsers.push([meta, Parser]);
-        });
-      } catch(error) {
-        this.core.logger.error(`[discoverModules] Error discovering modules in ${modulesPath}: ${error.message}`);
-        throw error;
-      }
+        if(language && Printer)
+          discovered.printers.push([meta, Printer]);
+        if(format && Parser)
+          discovered.parsers.push([meta, Parser]);
+      });
     });
 
     return discovered;
@@ -48,36 +45,48 @@ class Discovery {
 
   /**
    * @param {string} mockPath
+   * @returns {Map<string, Map<string, [meta, Parser | Printer]>>}
    */
-  discoverMockModules(mockPath) {
-    this.logger.debug(`[Discovery] Discovering mock modules in ${mockPath}`);
+  async discoverMockModules(mockPath) {
+    this.logger.debug(`[discoverMockModules] Discovering mock modules in ${mockPath}`);
 
-    const discovered = {parsers: [], printers: []};
-    const files = this.core.getFiles(mockPath, ".js")
-      .map(file => Util.resolveFile(mockPath, file));
+    const files = await Util.getFiles(
+      [`${mockPath}/bedoc-*-printer.js`, `${mockPath}/bedoc-*-parser.js`]
+    );
+    const resolvedFiles = new Set();
 
-    this.logger.debug(`[Discovery] Discovered ${files.length} files`);
+    this.logger.debug(`[discoverMockModules] Files: ${JSON.stringify([...files], null, 2)}`);
 
-    files.forEach(file => {
-      this.logger.debug(`[Discovery] Processing file ${file.path}`);
-      const {path: filePath} = file;
-      const {meta, Parser, Printer} = require(filePath);
+    const discovered = new Map([
+      ['parsers', new Map()],
+      ['printers', new Map()],
+    ]);
+
+    for(const file of files) {
+      const resolvedFile = await Util.resolveFile(file);
+      this.logger.debug(`[discoverMockModules] Resolved file ${resolvedFile.get('path')}`);
+
+      this.logger.debug(`[discoverMockModules] Processing file ${resolvedFile.get('path')}`);
+      const {meta, Parser, Printer} = require(resolvedFile.get('path'));
       const {language, format} = meta;
 
-      this.logger.debug(`[Discovery] Found meta ${JSON.stringify(meta, null, 2)}`);
-      this.logger.debug(`[Discovery] meta.language: ${language}`);
-      this.logger.debug(`[Discovery] meta.format: ${format}`);
+      this.logger.debug(`[discoverMockModules] Found meta ${JSON.stringify(meta, null, 2)}`);
+      this.logger.debug(`[discoverMockModules] meta.language: ${language}`);
+      this.logger.debug(`[discoverMockModules] meta.format: ${format}`);
 
       if(language && Parser) {
-        this.logger.debug(`[Discovery] Found parser for language ${language}`);
-        discovered.parsers.push([meta, Parser]);
+        this.logger.debug(`[discoverMockModules] Found parser for language ${language}`);
+        discovered.get('parsers').set(language, new Map([["meta", meta], ["parser", Parser]]));
       }
 
       if(format && Printer) {
-        this.logger.debug(`[Discovery] Found printer for format ${format}`);
-        discovered.printers.push([meta, Printer]);
+        this.logger.debug(`[discoverMockModules] Found printer for format ${format}`);
+        discovered.get('printers').set(format, new Map([["meta", meta], ["printer", Printer]]));
       }
-    });
+    }
+
+    this.logger.debug(`[discoverMockModules] Discovered ${resolvedFiles.size} files`);
+
 
     return discovered;
   }

@@ -1,11 +1,11 @@
 /**
  * The meta information for this printer.
  */
-const meta = {
+const meta = Object.freeze({
   // Printer information
   format: "wikitext",
   formatExtension: ".wikitext",
-};
+});
 
 class Printer {
   constructor(core) {

@@ -1,11 +1,11 @@
 /**
  * The meta information for this parser.
  */
-const meta = {
+const meta = Object.freeze({
   // Parser information
   language: "lpc",
   languageExtension: ".c",
-};
+});
 
 // TODO: add pattern for optional @meta checking
 const patterns = {

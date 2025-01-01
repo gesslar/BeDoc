@@ -1,8 +1,8 @@
 const fs = require('fs');
 const Environment = require('./env');
 const Logger = require('./logger');
-const Registry = require('./registry');
 const Discovery = require('./discovery');
+const HookManager = require('./hook_manager');
 const Util = require('./util');
 
 /**
@@ -13,31 +13,63 @@ class Core {
    * @param {Object} config
    */
   constructor(options) {
-    if(!options.env || typeof options.env !== 'string')
+    if(!options.env || typeof options.env !== 'string') {
       throw new Error('Env is required');
-    if(options.mock && typeof options.mock !== 'string')
+    }
+    if(options.mock && typeof options.mock !== 'string') {
       throw new Error('Mock must be a string');
+    }
 
     this.options = options;
-    this.logger = new Logger(this);
-    this.registry = new Registry(this);
-    this.discovery = new Discovery(this);
-    this.util = Util;
+    this.data = null; // Marker for initialization
+  }
 
-    this.logger.debug(`[Core] Options: ${JSON.stringify(this.options, null, 2)}`);
+  static async new(options) {
+    const instance = new Core(options);
 
+    instance.logger = new Logger(instance);
+    instance.discovery = new Discovery(instance);
+    instance.util = Util;
 
-    this.logger.debug(`[Core] Discovering modules in ${this.options.mock}`);
-    const {parsers, printers} = this.discovery.discoverModules(this.options.mock);
-    this.logger.debug(`[Core] Discovered ${parsers.length} parsers and ${printers.length} printers`);
+    instance.logger.debug(`[New] Discovering modules in ${options.mock}`);
+    const discovered = await instance.discovery.discoverModules(options.mock);
+    instance.logger.debug(`[New] Discovered ${discovered.get('parsers').size} parsers and ${discovered.get('printers').size} printers`);
 
-    if(!parsers.length)
-      throw new Error(`[Core] No parsers found in ${this.options.mock}`);
-    if(!printers.length)
-      throw new Error(`[Core] No printers found in ${this.options.mock}`);
+    const parsers = discovered.get('parsers');
+    if(!parsers.size)
+      throw new Error(`[New] No parsers found in ${options.mock}`);
 
-    parsers.forEach(([meta, parser]) => this.registry.registerParser(meta, parser));
-    printers.forEach(([meta, printer]) => this.registry.registerPrinter(meta, printer));
+    const printers = discovered.get('printers');
+    if(!printers.size)
+      throw new Error(`[New] No printers found in ${options.mock}`);
+
+    const selectedParser = discovered.get('parsers').get(instance.options.language);
+    if(!selectedParser)
+      throw new Error(`[New] No parser found for language ${instance.options.language}`);
+
+    const selectedPrinter = discovered.get('printers').get(instance.options.format);
+    if(!selectedPrinter)
+      throw new Error(`[New] No printer found for format ${instance.options.format}`);
+
+    const parserClass = selectedParser.get('parser');
+    const parser = new parserClass(instance);
+    const printerClass = selectedPrinter.get('printer');
+    const printer = new printerClass(instance);
+
+    // We need to initialize the hook manager after the parser and printer
+    // are registered, since the hook manager injects hooks into the parser
+    // and printer.
+    const hookManager = new HookManager(instance);
+    await hookManager.load();
+    hookManager.attachHooks(parser);
+    hookManager.attachHooks(printer);
+
+    instance.hookManager = hookManager;
+    instance.printer = printer;
+    instance.parser = parser;
+
+    instance.data = true; // Mark as initialized
+    return instance;
   }
 
   /**
@@ -65,42 +97,6 @@ class Core {
   }
 
   /**
-   * Retrieve all files matching a specific extension in a directory.
-   * @param {string} dirPath - The directory to search.
-   * @param {string} extension - The file extension to filter by.
-   * @returns {string[]} Array of file paths.
-   */
-  getFiles(dirPath, extension) {
-    try {
-      const fileNames = fs.readdirSync(dirPath).filter(
-        file => file.endsWith(extension)
-      );
-      this.logger.debug(`[getFiles] Found ${fileNames.length} files in ${dirPath} with extension "${extension}".`);
-      return fileNames;
-    } catch(error) {
-      this.logger.error(`[getFiles] Failed to read directory ${dirPath}: ${error.message}`);
-      throw error;
-    }
-  }
-
-  /**
-   * Reads the content of a file asynchronously.
-   * @param {string} filePath
-   * @returns {Promise<string>}
-   * @throws {Error}
-   */
-  async readFile(filePath) {
-    try {
-      const content = await fs.readFile(filePath, 'utf8');
-      this.logger.debug(`[readFile] Successfully read file: ${filePath}`);
-      return content;
-    } catch(error) {
-      this.logger.error(`[readFile] Failed to read file: ${filePath}`);
-      throw error;
-    }
-  }
-
-  /**
    * Determines if a file is valid for processing (language-specific logic).
    * @param {string} content
    * @param {string} filePath
@@ -123,59 +119,40 @@ class Core {
   }
 
   /**
-   * Processes all files matching the given extension in a directory.
-   * @param {Object} options
-   * @returns {Promise<Array>}
-   */
-  async processDirectory(options) {
-    const {directory, extension, language, format} = options;
-    const files = this.getFiles(directory, extension);
-
-    if(!files.length) {
-      this.logger.warn(`[processDirectory] No files found in ${directory} with extension "${extension}".`);
-      return;
-    }
-
-    const results = await this.processFiles(options, files);
-    this.logger.debug(`[processDirectory] Processed ${results.length} files.`);
-    return results;
-  }
-
-  /**
    * Processes files and generates documentation.
    * @param {Object} options
    * @returns {Promise<Array>}
    */
-  async processFiles(options, files = []) {
-    const {input = [], language, format} = options;
+  async processFiles(options) {
+    const {input, language, format} = options;
 
-    if(!files.length && !input.length)
-      this.logger.error(`[processFiles] No files or input provided`);
-    else if(files.length && input.length)
-      this.logger.error(`[processFiles] Cannot process both files and input`);
-    else if(!input.length)
-      input.push(...files);
+    this.logger.debug(`[processFiles] Input: ${JSON.stringify(input, null, 2)}`);
+    this.logger.debug(`[processFiles] Language: ${JSON.stringify(language, null, 2)}`);
+    this.logger.debug(`[processFiles] Format: ${JSON.stringify(format, null, 2)}`);
 
-    const parserEngine = this.registry.getParser(language);
-    if(!parserEngine)
-      this.logger.error(`[processFiles] No parser registered for language: ${language}`);
+    const resolvedFiles = await Util.getFiles(input);
+    this.logger.debug(`[processFiles] Resolved Files: ${JSON.stringify(resolvedFiles, null, 2)}`);
 
-    const printerEngine = this.registry.getPrinter(format);
-    if(!printerEngine)
-      this.logger.error(`[processFiles] No printer registered for format: ${format}`);
-
-    const parser = new parserEngine(this);
-    const printer = new printerEngine(this);
+    const {parser, printer} = this;
+    if(!parser)
+      throw new Error(`[processFiles] No parser registered for language: ${language}`);
+    if(!printer)
+      throw new Error(`[processFiles] No printer registered for format: ${format}`);
 
     this.logger.debug(`[processFiles] Options: ${JSON.stringify(this.options)}`);
 
-    const fileObjects = input.map(file => Util.resolveFile(options.directory, file));
-    const filePromises = fileObjects.map(async file => {
-      const {name, path, module} = file;
-      this.logger.debug(`[processFiles] Processing file: ${JSON.stringify(file, null, 2)}`);
+    for(const file of resolvedFiles) {
+      const fileMap = await Util.resolveFile(file);
+
+      const name = fileMap.get('name');
+      const path = fileMap.get('path');
+      const module = fileMap.get('module');
+
+      this.logger.debug(`[processFiles] Processing file: ${JSON.stringify(fileMap, null, 2)}`);
       try {
-        const source = await fs.promises.readFile(path, 'utf8');
-        const parseResponse = parser.parse(path, source);
+        this.logger.debug("Path", path);
+        const source = await Util.readFile(path);
+        const parseResponse = await parser.parse(path, source);
         if(!parseResponse.success) {
           const {file, line, lineNumber, message} = parseResponse;
           this.logger.error(`[processFiles] Activity: Parse\nFile: ${file}, Line: ${lineNumber}\nContext: ${line}\nError: ${message}`);
@@ -197,9 +174,9 @@ class Core {
         this.logger.error(`[processFiles] Failed to process file ${name}\n${error.message}\n${error.stack}`);
         return {file, destFile: null, status: 'error', message: error.message, stack: error.stack};
       }
-    });
+    }
 
-    return Promise.all(filePromises);
+    return result;
   }
 
   /**
@@ -210,6 +187,7 @@ class Core {
    * @returns {Promise<void>}
    */
   async outputFile(output, destFile, content) {
+    this.logger.debug(`[outputFile] Output: ${output}, DestFile: ${destFile}, Content length: ${content.length}`);
     try {
       if(this.options.env === Environment.CLI && !output) {
         // Print to stdout if no output file is specified in CLI mode
@@ -222,8 +200,9 @@ class Core {
         };
       } else if(output && destFile) {
         // Write to a file if outputPath is specified
-        const resolvedDestFile = Util.resolveFile(output, destFile);
-        await fs.promises.writeFile(resolvedDestFile.path, content, 'utf8');
+        const outputPath = await Util.resolvePath(output);
+        const resolvedDestFile = `${outputPath}/${destFile}`;
+        await fs.promises.writeFile(resolvedDestFile, content, 'utf8');
         this.logger.debug(`[outputFile] Successfully wrote to output: ${JSON.stringify(resolvedDestFile)}`);
         return {
           destFile: resolvedDestFile,

@@ -1,0 +1,189 @@
+== array_fill ==
+
+Returns an array filled with the specified value. If no array
+is provided, an empty array is created. If no value is
+provided, 0 is used as the value to fill the array with. If no
+start index is provided, the array is filled from the end.
+
+=== Parameters ===
+
+* '''arr''' (mixed*): The array to fill.
+* '''value''' (mixed): The value to fill the array with.
+* '''start_index''' (int, ''optional''): The index at which to start filling the array.
+
+=== Returns ===
+
+* '''mixed''': The filled array.
+
+== array_merge ==
+
+Merges two arrays into a single array.
+
+=== Parameters ===
+
+* '''arr1''' (mixed[]): The first array to merge.
+* '''arr2''' (mixed[]): The second array to merge.
+
+=== Returns ===
+
+* '''mixed[]''': A new array with elements from both input arrays.
+
+== array_pad ==
+
+Returns a new array of the specified size, filled with the
+specified value. If the array is larger than the specified size,
+the array is truncated to the specified size.
+
+=== Parameters ===
+
+* '''arr''' (mixed*): The array to pad.
+* '''size''' (int): The size of the array to create.
+* '''value''' (mixed): The value to fill the array with.
+* '''beginning''' (int, ''optional''): Whether to fill the array from the beginning.
+
+=== Returns ===
+
+* '''mixed''': The padded array.
+
+== array_slice ==
+
+Returns a new array containing the elements of the input array
+from the start index to the end index. If the end index is
+negative, it will start from the end of the array.
+
+=== Parameters ===
+
+* '''arr''' (mixed[]): The array to slice.
+* '''start''' (int): The starting index of the slice.
+* '''end''' (int): The ending index of the slice.
+
+=== Returns ===
+
+* '''mixed[]''': A new array with the specified elements.
+
+== distinct_array ==
+
+Returns a new array containing the distinct elements of the input
+array.
+
+=== Parameters ===
+
+* '''arr''' (mixed[]): An array of mixed types.
+
+=== Returns ===
+
+* '''mixed[]''': A new array with distinct elements from the input array.
+
+== pop ==
+
+Removes and returns the last element of the array.
+
+=== Parameters ===
+
+* '''arr''' (mixed[]): The array from which to pop an element.
+
+=== Returns ===
+
+* '''mixed''': The last element of the array.
+
+== push ==
+
+Adds a new element to the end of the array and returns the new
+size of the array.
+
+=== Parameters ===
+
+* '''arr''' (mixed[]): The array to which to push an element.
+* '''value''' (mixed): The element to push onto the array.
+
+=== Returns ===
+
+* '''int''': The new size of the array.
+
+== remove_array_element ==
+
+Returns a new array containing the elements of the input array
+from index 0 to start-1, and from end+1 to the end of the input
+array. If start is greater than end, the new array will contain
+all the elements of the input array.
+
+=== Parameters ===
+
+* '''arr''' (mixed[]): The input array.
+* '''start''' (int): The starting index of elements to be removed.
+* '''end''' (int): The ending index of elements to be removed. Defaults to start if not specified.
+
+=== Returns ===
+
+* '''mixed[]''': A new array with specified elements removed.
+
+== reverse_array ==
+
+Returns a new array with the elements of the input array in
+reverse order.
+
+=== Parameters ===
+
+* '''arr''' (mixed[]): The input array.
+
+=== Returns ===
+
+* '''mixed[]''': A new array with elements in reverse order.
+
+== shift ==
+
+Removes and returns the first element of the array.
+
+=== Parameters ===
+
+* '''arr''' (mixed[]): The array from which to shift an element.
+
+=== Returns ===
+
+* '''mixed''': The first element of the array.
+
+== splice ==
+
+Modifies the content of an array by removing existing elements
+and/or adding new elements. Returns a new array with the
+modifications.
+
+=== Parameters ===
+
+* '''arr''' (mixed[]): The array from which elements will be removed and to which new elements may be added.
+* '''start''' (int): The zero-based index at which to start changing the array. If negative, it will begin that many elements from the end.
+* '''delete_count''' (int): The number of elements to remove from the array, starting from the index specified by start. If delete_count is 0, no elements are removed.
+* '''items_to_add''' (mixed[]): An array of elements to add to the array at the start index. Can be omitted or passed as null if no elements are to be added.
+
+=== Returns ===
+
+* '''mixed[]''': A new array reflecting the desired modifications.
+
+== uniform_array ==
+
+Checks if all elements in the input array are of the specified
+type. If the array is of size 0, it is considered uniform.
+
+=== Parameters ===
+
+* '''type''' (string): The type to check for.
+* '''arr''' (mixed*): The array to check.
+
+=== Returns ===
+
+* '''int''': Returns 1 if all elements are of the specified type, 0
+otherwise.
+
+== unshift ==
+
+Adds a new element to the beginning of the array and returns
+the new size of the array.
+
+=== Parameters ===
+
+* '''arr''' (mixed[]): The array to which to unshift an element.
+* '''value''' (mixed): The element to unshift onto the array.
+
+=== Returns ===
+
+* '''int''': The new size of the array.

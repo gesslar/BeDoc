@@ -1,4 +1,11 @@
 const ConfigurationParameters = new Map([
+  ["input", {
+    short: "i",
+    param: "file",
+    description: "Comma-separated glob patterns to match files",
+    type: "string",
+    required: false,
+  }],
   ["language", {
     short: "l",
     param: "lang",
@@ -8,42 +15,22 @@ const ConfigurationParameters = new Map([
   }],
   ["format", {
     short: "f",
-    param: "format",
     description: "Output format",
     type: "string",
     required: true,
   }],
-  ["input", {
-    short: "i",
-    param: "file",
-    description: "Input file",
-    type: "string[]",
-    required: false,
-    subtype: {
-      path: {
-        mustExist: true,
-      }
-    }
-  }],
-  ["directory", {
-    short: "d",
-    param: "dir",
-    description: "Directory to process",
-    type: "string",
-    required: true,
-    subtype: {
-      path: {
-        mustExist: true,
-      }
-    }
-  }],
-  ["extension", {
-    short: "e",
-    param: "ext",
-    description: "File extension to filter by",
+  ["hooks", {
+    short: "k",
+    description: "Custom hooks JS file",
     type: "string",
     required: false,
     default: null,
+    subtype: {
+      path: {
+        type: "file",
+        mustExist: true,
+      }
+    }
   }],
   ["output", {
     short: "o",
@@ -54,39 +41,39 @@ const ConfigurationParameters = new Map([
     default: null,
     subtype: {
       path: {
+        type: "directory",
         mustExist: true,
       }
     }
   }],
   ["mock", {
     short: "m",
-    param: "path",
     description: "Path to mock parsers and printers",
     type: "string",
     required: false,
     default: null,
     subtype: {
       path: {
+        type: "directory",
         mustExist: true,
       }
     }
   }],
   ["config", {
     short: "c",
-    param: "file",
     description: "Use JSON config file",
     type: "string",
     required: false,
     default: null,
     subtype: {
       path: {
+        type: "file",
         mustExist: true,
       }
     }
   }],
   ["debug", {
-    short: "debug",
-    param: null,
+    short: "d",
     description: "Enable debug mode",
     type: "boolean",
     required: false,

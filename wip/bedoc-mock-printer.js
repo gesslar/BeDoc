@@ -1,7 +1,7 @@
-const meta = {
+const meta = Object.freeze({
   name: "mock",
   type: "printer",
-};
+});
 
 class Printer {
   constructor(core) {

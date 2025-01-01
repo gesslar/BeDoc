@@ -31,8 +31,6 @@ class Logger {
   }
 
   _compose(level, message) {
-    // try{ throw new Error(); } catch(e) { console.log(e.stack); }
-
     const tag = this._capitalize(level);
 
     return `[${this.name}] ${this.colors[level]}${tag}${this.colors.reset}: ${message}`;
