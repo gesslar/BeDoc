@@ -20,28 +20,37 @@ class Printer {
    */
   async print(module, content) {
     const HOOKS = this.HOOKS;
+
+    await this.hook(HOOKS.START, {module, content});
+
     const work = content.funcs.sort((a, b) => a.name.localeCompare(b.name));
+    const output = [];
 
-    const output = await Promise.all(work.map(async section => {
-      await this.hook(HOOKS.LOAD, {section, meta});
-
-      // First the function name
+    const printName = async(section) => {
       await this.hook(HOOKS.ENTER, {name:"name", section, meta});
       const outputName = `## ${section.name}`;
       await this.hook(HOOKS.EXIT, {name:"name", section, meta});
+      return outputName;
+    }
 
-      // Then the description
+    const printDescription = async(section) => {
       await this.hook(HOOKS.ENTER, {name:"description", section, meta});
       const outputDescription = section.description?.length
         ? this.util.wrap(section.description.map(line => line.trim()).join('\n'))
         : '';
       await this.hook(HOOKS.EXIT, {name:"description", section, meta});
+      return outputDescription;
+    }
 
-      // Then the parameters
-      const outputParams = section.params?.map(async param => {
-        await this.hook(HOOKS.ENTER, {name:"param", param, meta});
+    const printParams = async(section) => {
+      await this.hook(HOOKS.ENTER, {name:"param", section, meta});
+      const outputParams = [];
+
+      if(!section.param)
+        return outputParams;
+
+      for(const param of section.param || []) {
         const isOptional = param.content.some(line => line.toLowerCase().includes('(optional)'));
-
         const content = param.content
           .map(line => line.replace(/\s*\(optional\)\s*/gi, '').trim()) // Remove "(optional)" from content
           .join(' ') // Flatten multiline descriptions into one line
@@ -53,42 +62,80 @@ class Printer {
           undefined,
           2
         );
-        await this.hook(HOOKS.EXIT, {name:"param", param, meta});
-        return result;
-      }).join('\n') || '';
+        outputParams.push(result);
+      }
+      await this.hook(HOOKS.EXIT, {name:"param", section, meta});
+      return outputParams;
+    }
+
+    /*
+     *
+     *"return": {
+     *  "type": "mixed",
+     *  "content": [
+     *    "The filled array."
+     *  ]
+     * }
+     */
+    const printReturns = async(section) => {
+      await this.hook(HOOKS.ENTER, {name:"return", section, meta});
 
       // Then the returns
-      await this.hook(HOOKS.ENTER, {name:"returns", section, meta});
-      const outputReturns = section.returns
-        ? `### Returns\n\n${this.util.wrap(
-          section.returns.content
-            ? `- **\`${section.returns.type}\`**: ${section.returns.content}`
-            : `- **\`${section.returns.type}\`**`,
+      const outputReturns = section.return
+        ? `### Returns\n\n${this.core.util.wrap(
+          section.return.content
+            ? `- **\`${section.return.type}\`**: ${section.return.content}`
+            : `- **\`${section.return.type}\`**`,
           undefined,
           2
         )}`
         : '';
-      await this.hook(HOOKS.EXIT, {name:"returns", section, meta});
 
-      // Then the example
+      await this.hook(HOOKS.EXIT, {name:"return", section, meta});
+      return outputReturns;
+    }
+
+    const printExample = async(section) => {
       await this.hook(HOOKS.ENTER, {name:"example", section, meta});
       const outputExample = section.example?.length
         ? "### Example\n\n" + this.util.wrap(section.example.join('\n'))
         : '';
       await this.hook(HOOKS.EXIT, {name:"example", section, meta});
+      return outputExample;
+    }
 
-      return `${outputName}` +
+    for(const section of work) {
+      await this.hook(HOOKS.LOAD, {section, meta});
+
+      // First the function name
+      const outputName = await printName(section);
+
+      // Then the description
+      const outputDescription = await printDescription(section);
+
+      // Then the parameters
+      const outputParams = await printParams(section);
+
+      // Then the returns
+      const outputReturns = await printReturns(section);
+
+      // Then the example
+      const outputExample = await printExample(section);
+
+      output.push(`${outputName}` +
              `${outputDescription.length ? `\n${outputDescription}\n` : ''}` +
-             `${outputParams.length ? `\n${outputParams}\n` : ''}` +
+             `${outputParams.length ? `\n${outputParams.join('\n')}\n` : ''}` +
              `${outputReturns.length ? `\n${outputReturns}\n` : ''}` +
-             `${outputExample.length ? `\n${outputExample}\n` : ''}`;
-    }));
+             `${outputExample.length ? `\n${outputExample}\n` : ''}`);
+    }
+
+    await this.hook(HOOKS.END, {module, content, output});
 
     return {
       status: 'success',
       message: 'File printed successfully',
       destFile: `${module}${meta.formatExtension}`,
-      content: output.join('\n\n'),
+      content: output.join('\n'),
     }
   }
 };

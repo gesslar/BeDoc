@@ -6,10 +6,12 @@ const HOOK_TYPES = Object.freeze({
   PARSE: "parse",
 });
 
-const HOOKS = Object.freeze({
-  LOAD: "load",
+const PRINT_HOOKS = Object.freeze({
+  START: "start",
+  SECTION_LOAD: "load",
   ENTER: "enter",
   EXIT: "exit",
+  END: "end",
 });
 
 class HookManager {
@@ -42,7 +44,11 @@ class HookManager {
     if(hooks)
       that.hooks = hooks;
     that.hook = this.on;
-    that.HOOKS = Util.clone(HOOKS, true);
+    if(type === HOOK_TYPES.PRINT)
+      that.HOOKS = Util.clone(PRINT_HOOKS, true);
+    // TODO: Add parse hooks
+    // else if(type === HOOK_TYPES.PARSE)
+    //   that.HOOKS = Util.clone(PARSE_HOOKS, true);
 
     this.logger.debug(`[attachHooks] Hooks attached to object \`${type}\``);
     return this;
@@ -76,6 +82,7 @@ class HookManager {
       if(!HOOK_TYPES[type.toUpperCase()])
         throw new Error(`Unknown hook type "${type}"`);
 
+      const HOOKS = type === HOOK_TYPES.PRINT ? PRINT_HOOKS : {};
       events.forEach((handler, event) => {
         if(!HOOKS[event.toUpperCase()])
           throw new Error(`Unknown event "${event}"`);
