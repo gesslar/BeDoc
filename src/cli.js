@@ -126,12 +126,7 @@ const logger = new Logger(null);
 
     finalConfig.env = Environment.CLI;
     const core = await Core.new(finalConfig);
-
-    logger.debug(`[CLI] FINAL CONFIG`, finalConfig);
-
-    const result = await core.processFiles(finalConfig);
-
-    logger.debug(`[CLI] Result: ${JSON.stringify(result, null, 2)}`);
+    await core.processFiles(finalConfig);
   } catch(e) {
     logger.error(`Error: ${e.message}`);
     logger.error(e.stack);

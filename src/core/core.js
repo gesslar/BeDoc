@@ -150,15 +150,20 @@ class Core {
 
       this.logger.debug(`[processFiles] Processing file: ${JSON.stringify(fileMap, null, 2)}`);
       try {
-        this.logger.debug("Path", path);
+        this.logger.debug(`[processFiles] Reading file: ${path}`);
         const source = await Util.readFile(path);
+        this.logger.debug(`[processFiles] Read file: ${path}`);
+        this.logger.debug(`[processFiles] Parsing file: ${path}`);
         const parseResponse = await parser.parse(path, source);
+        this.logger.debug(`[processFiles] Parsed file: ${path}`);
         if(!parseResponse.success) {
           const {file, line, lineNumber, message} = parseResponse;
-          this.logger.error(`[processFiles] Activity: Parse\nFile: ${file}, Line: ${lineNumber}\nContext: ${line}\nError: ${message}`);
+          throw new Error(`[processFiles] Activity: Parse\nFile: ${file}, Line: ${lineNumber}\nContext: ${line}\nError: ${message}`);
         }
 
+        this.logger.debug(`[processFiles] Printing file: ${path}`);
         const printResponse = await printer.print(module, parseResponse.result);
+        this.logger.debug(`[processFiles] Printed file: ${path}`);
         if(printResponse.status !== 'success') {
           const {file, line, message} = printResponse;
           throw new Error(`[processFiles] Activity: Print\nFile: ${file}\nContext: ${line}\nError: ${message}`);

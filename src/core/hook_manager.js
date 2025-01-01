@@ -93,11 +93,20 @@ class HookManager {
    * @param {...any} args - The arguments to pass to the hook.
    * @returns {Object} - The result of the hook execution, or the default handler (which just returns the incoming context).
    */
-  on(event, ...args) {
+  async on(event, ...args) {
     const hook = this.hooks?.has(event) ? this.hooks.get(event) : null;
 
-    if(hook)
-      hook(...args);
+    if(hook) {
+      try {
+        const result = await hook(...args);
+        if(result?.status === 'error')
+          throw result.error;
+        return result;
+      } catch(error) {
+        this.logger.error(`[on] Error executing hook "${event}": ${error.message}`);
+        throw error;
+      }
+    }
   }
 }
 
