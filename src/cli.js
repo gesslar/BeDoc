@@ -1,9 +1,10 @@
 const Core = require('./core/core');
 const Logger = require('./core/logger');
-const Util = require('./core/util');
+const FileUtil = require('./core/util/file');
 
 // We need our own logger instance, because we aren't the Core object.
 const logger = new Logger(null);
+const fileUtil = new FileUtil();
 
 (async() => {
   try {
@@ -20,20 +21,20 @@ const logger = new Logger(null);
 
     // Build CLI
     ConfigurationParameters
-    .forEach((parameter, name) => {
-      let arg = parameter.short ? `-${parameter.short}, --${name}` : `--${name}`;
-      const param = parameter.param ? parameter.param : name;
-      if(param)
-        arg += parameter.required ? ` <${param}>` : ` [${param}]`;
+      .forEach((parameter, name) => {
+        let arg = parameter.short ? `-${parameter.short}, --${name}` : `--${name}`;
+        const param = parameter.param ? parameter.param : name;
+        if(param)
+          arg += parameter.required ? ` <${param}>` : ` [${param}]`;
 
-      const description = `${parameter.description} (${parameter.type})`;
-      const defaultValue = parameter.default ?? null;
+        const description = `${parameter.description} (${parameter.type})`;
+        const defaultValue = parameter.default ?? null;
 
-      if(defaultValue === null)
-        program.option(arg, description);
-      else
-        program.option(arg, description, defaultValue);
-    });
+        if(defaultValue === null)
+          program.option(arg, description);
+        else
+          program.option(arg, description, defaultValue);
+      });
 
     program.version(packageJson.version, '-v, --version', 'Output version');
     program.parse();
@@ -42,9 +43,8 @@ const logger = new Logger(null);
     logger.debug(`[CLI] Options passed: ${JSON.stringify(options, null, 2)}`, options.debug);
 
     let finalConfig = {};
-
     if(options.config) {
-      const configFile = await Util.resolveFile(options.config);
+      const configFile = await fileUtil.resolveFile(options.config);
       options.config = configFile.get('path');
 
       if(!fs.existsSync(configFile.get('path')))
@@ -80,7 +80,7 @@ const logger = new Logger(null);
           if(pathType !== "directory" && pathType !== "file")
             throw new Error(`Invalid path type: ${pathType}`);
 
-          const resolveFunction = pathType === "directory" ? Util.resolvePath : Util.resolveFile;
+          const resolveFunction = pathType === "directory" ? fileUtil.resolvePath : fileUtil.resolveFile;
           const mustExist = parameter.subtype.path.mustExist;
 
           if(Array.isArray(value)) {

@@ -6,6 +6,10 @@ module.exports = [
       sourceType: "module"
     },
     rules: {
+      "no-trailing-spaces": ["error"], // Prevent trailing spaces
+      "eol-last": ["error", "always"], // Ensure a newline at the end of files
+      "indent": ["error", 2],          // Enforce consistent indentation (e.g., 2 spaces)
+
       // No space before function parentheses
       "space-before-function-paren": ["error", "never"],
 

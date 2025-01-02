@@ -1,5 +1,4 @@
 const fs = require('fs');
-const Util = require('./util');
 
 const HOOK_TYPES = Object.freeze({
   PRINT: "print",
@@ -19,6 +18,8 @@ class HookManager {
     core.logger.debug(`[constructor] Starting HookManager`);
     this.core = core;
     this.logger = core.logger;
+    this.dataUtil = core.dataUtil;
+    this.fileUtil = core.fileUtil;
     this.hooks = new Map();
   }
 
@@ -45,10 +46,10 @@ class HookManager {
       that.hooks = hooks;
     that.hook = this.on;
     if(type === HOOK_TYPES.PRINT)
-      that.HOOKS = Util.clone(PRINT_HOOKS, true);
+      that.HOOKS = this.dataUtil.clone(PRINT_HOOKS, true);
     // TODO: Add parse hooks
     // else if(type === HOOK_TYPES.PARSE)
-    //   that.HOOKS = Util.clone(PARSE_HOOKS, true);
+    //   that.HOOKS = this.dataUtil.clone(PARSE_HOOKS, true);
 
     this.logger.debug(`[attachHooks] Hooks attached to object \`${type}\``);
     return this;
@@ -61,7 +62,7 @@ class HookManager {
    */
   async load() {
     const hooks = this.core.options.hooks;
-    const hooksFile = await Util.resolveFile(hooks);
+    const hooksFile = await this.fileUtil.resolveFile(hooks);
     if(!fs.existsSync(hooksFile.get("path")))
       throw new Error(`Hook file not found: ${hooksFile.path}`);
 
@@ -72,7 +73,6 @@ class HookManager {
     this.validateHooks(userHooks);
     this.hooks = userHooks;
     this.logger.debug(`[load] Loaded hooks from: \`${file}\``);
-    this.logger.debug(`[load] Hooks: ${Util.serializeMap(this.hooks, 2)}`);
 
     return this;
   }

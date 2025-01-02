@@ -3,7 +3,9 @@ const Environment = require('./env');
 const Logger = require('./logger');
 const Discovery = require('./discovery');
 const HookManager = require('./hook_manager');
-const Util = require('./util');
+const DataUtil = require('./util/data');
+const FileUtil = require('./util/file');
+const StringUtil = require('./util/string');
 
 /**
  * @class BeDocEngine
@@ -21,7 +23,6 @@ class Core {
     }
 
     this.options = options;
-    this.data = null; // Marker for initialization
   }
 
   static async new(options) {
@@ -29,7 +30,9 @@ class Core {
 
     instance.logger = new Logger(instance);
     instance.discovery = new Discovery(instance);
-    instance.util = Util;
+    instance.dataUtil = new DataUtil();
+    instance.fileUtil = new FileUtil();
+    instance.stringUtil = new StringUtil();
 
     instance.logger.debug(`[New] Discovering modules in ${options.mock}`);
     const discovered = await instance.discovery.discoverModules(options.mock);
@@ -68,7 +71,6 @@ class Core {
     instance.printer = printer;
     instance.parser = parser;
 
-    instance.data = true; // Mark as initialized
     return instance;
   }
 
@@ -130,7 +132,7 @@ class Core {
     this.logger.debug(`[processFiles] Language: ${JSON.stringify(language, null, 2)}`);
     this.logger.debug(`[processFiles] Format: ${JSON.stringify(format, null, 2)}`);
 
-    const resolvedFiles = await Util.getFiles(input);
+    const resolvedFiles = await this.fileUtil.getFiles(input);
     this.logger.debug(`[processFiles] Resolved Files: ${JSON.stringify(resolvedFiles, null, 2)}`);
 
     const {parser, printer} = this;
@@ -142,7 +144,7 @@ class Core {
     this.logger.debug(`[processFiles] Options: ${JSON.stringify(this.options)}`);
 
     for(const file of resolvedFiles) {
-      const fileMap = await Util.resolveFile(file);
+      const fileMap = await this.fileUtil.resolveFile(file);
 
       const name = fileMap.get('name');
       const path = fileMap.get('path');
@@ -151,7 +153,7 @@ class Core {
       this.logger.debug(`[processFiles] Processing file: ${JSON.stringify(fileMap, null, 2)}`);
       try {
         this.logger.debug(`[processFiles] Reading file: ${path}`);
-        const source = await Util.readFile(path);
+        const source = await this.fileUtil.readFile(path);
         this.logger.debug(`[processFiles] Read file: ${path}`);
         this.logger.debug(`[processFiles] Parsing file: ${path}`);
         const parseResponse = await parser.parse(path, source);
@@ -205,7 +207,7 @@ class Core {
         };
       } else if(output && destFile) {
         // Write to a file if outputPath is specified
-        const outputPath = await Util.resolvePath(output);
+        const outputPath = await this.fileUtil.resolvePath(output);
         const resolvedDestFile = `${outputPath}/${destFile}`;
         await fs.promises.writeFile(resolvedDestFile, content, 'utf8');
         this.logger.debug(`[outputFile] Successfully wrote to output: ${JSON.stringify(resolvedDestFile)}`);
@@ -222,13 +224,6 @@ class Core {
       this.logger.error(`[outputFile] Failed to write output: ${error.message}`);
       throw error;
     }
-  }
-
-  /**
-   * @param {string} message
-   */
-  reportError(message) {
-    this.logger.error(message);
   }
 }
 

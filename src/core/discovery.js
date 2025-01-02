@@ -1,11 +1,11 @@
 const fs = require('fs');
 const path = require('path');
-const Util = require('./util');
 
 class Discovery {
   constructor(core) {
     this.core = core;
     this.logger = core.logger;
+    this.fileUtil = core.fileUtil;
   }
 
   /**
@@ -50,7 +50,7 @@ class Discovery {
   async discoverMockModules(mockPath) {
     this.logger.debug(`[discoverMockModules] Discovering mock modules in ${mockPath}`);
 
-    const files = await Util.getFiles(
+    const files = await this.fileUtil.getFiles(
       [`${mockPath}/bedoc-*-printer.js`, `${mockPath}/bedoc-*-parser.js`]
     );
     const resolvedFiles = new Set();
@@ -63,7 +63,7 @@ class Discovery {
     ]);
 
     for(const file of files) {
-      const resolvedFile = await Util.resolveFile(file);
+      const resolvedFile = await this.fileUtil.resolveFile(file);
       this.logger.debug(`[discoverMockModules] Resolved file ${resolvedFile.get('path')}`);
 
       this.logger.debug(`[discoverMockModules] Processing file ${resolvedFile.get('path')}`);
