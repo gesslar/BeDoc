@@ -4,26 +4,31 @@
   "description": "Pluggable documentation engine for any language and format",
   "main": "src/core/engine.js",
   "bin": {
-    "bedoc": "./src/cli.js"
+    "bedoc": "./dist/cli.js"
   },
   "type": "module",
   "scripts": {
     "test": "nyc mocha --recursive src/**/*.test.mjs",
+    "prepare": "npm run build",
     "build": "tsc",
+    "preinstall": "npm run build",
     "package": "vsce package",
-    "mock": "bedoc -c wip/bedoc.json"
+    "mock": "npm run build && bedoc -c wip/bedoc.json"
   },
   "dependencies": {
     "commander": "^13.0.0",
-    "globby": "^14.0.2"
+    "globby": "^14.0.2",
+    "vscode": "^1.1.34"
   },
   "devDependencies": {
+    "@types/node": "^22.10.4",
     "chai": "^5.1.2",
     "chai-as-promised": "^8.0.1",
     "eslint": "^9.17.0",
+    "itypescript": "^0.4.0",
     "mocha": "^11.0.1",
     "nyc": "^17.1.0",
-    "vsce": "^1.97.0"
+    "vsce": "^2.15.0"
   },
   "engines": {
     "vscode": "^1.80.0"
@@ -43,9 +48,16 @@
     "printer"
   ],
   "nyc": {
-    "include": ["src/**/*.js"],
-    "exclude": ["src/**/*.test.js"],
-    "reporter": ["text", "html"]
+    "include": [
+      "src/**/*.js"
+    ],
+    "exclude": [
+      "src/**/*.test.js"
+    ],
+    "reporter": [
+      "text",
+      "html"
+    ]
   },
   "author": "gesslar",
   "license": "Unlicense"
