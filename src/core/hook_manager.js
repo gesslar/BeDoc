@@ -1,4 +1,7 @@
-const fs = require('fs');
+import fs from "fs";
+import Logger from "./logger.js";
+import DataUtil from "./util/data.js";
+import FileUtil from "./util/fd.js";
 
 const HOOK_TYPES = Object.freeze({
   PRINT: "print",
@@ -13,20 +16,22 @@ const PRINT_HOOKS = Object.freeze({
   END: "end",
 });
 
+const PARSE_HOOKS = Object.freeze({
+});
+
 class HookManager {
   constructor(core) {
-    core.logger.debug(`[constructor] Starting HookManager`);
     this.core = core;
-    this.logger = core.logger;
-    this.dataUtil = core.dataUtil;
-    this.fileUtil = core.fileUtil;
+    this.logger = new Logger();
+    this.dataUtil = new DataUtil();
+    this.fileUtil = new FileUtil();
     this.hooks = new Map();
   }
 
   getObjectType(that) {
-    if(that.constructor.name === 'Printer')
+    if(that.constructor.name === "Printer")
       return HOOK_TYPES.PRINT;
-    else if(that.constructor.name === 'Parser')
+    else if(that.constructor.name === "Parser")
       return HOOK_TYPES.PARSE;
     else
       throw new Error(`[attachHooks] Unknown object type: ${that.constructor.name}`);
@@ -63,33 +68,40 @@ class HookManager {
   async load() {
     const hooks = this.core.options.hooks;
     const hooksFile = await this.fileUtil.resolveFile(hooks);
-    if(!fs.existsSync(hooksFile.get("path")))
-      throw new Error(`Hook file not found: ${hooksFile.path}`);
+    const absolutePath = hooksFile.get("absolutePath");
+    const absoluteUri = hooksFile.get("absoluteUri");
+    if(!fs.existsSync(absolutePath))
+      throw new Error(`Hook file not found: ${absolutePath}`);
 
-    const file = hooksFile.get("path");
-    this.logger.debug(`[load] Loading hooks from: \`${file}\``);
-
-    const userHooks = require(file);
-    this.validateHooks(userHooks);
-    this.hooks = userHooks;
-    this.logger.debug(`[load] Loaded hooks from: \`${file}\``);
+    this.logger.debug(`[load] Loading hooks from: \`${absoluteUri}\``);
+    const {parse, print} = await import(absoluteUri);
+    parse && this.validateHooks(parse, PARSE_HOOKS);
+    print && this.validateHooks(print, PRINT_HOOKS);
+    this.hooks = new Map([
+      [HOOK_TYPES.PARSE, parse],
+      [HOOK_TYPES.PRINT, print],
+    ]);
+    this.logger.debug(`[load] Loaded hooks from: \`${absoluteUri}\``);
 
     return this;
   }
 
-  validateHooks(hooks) {
-    hooks.forEach((events, type) => {
-      if(!HOOK_TYPES[type.toUpperCase()])
-        throw new Error(`Unknown hook type "${type}"`);
+  validateHooks(events, validHooks = {}) {
+    if(!events || events.size === 0 || !validHooks || Object.keys(validHooks).length === 0)
+      return;
+console.log(events)
+    console.debug(`[validateHooks] Events: ${JSON.stringify(events, null, 2)}`);
+    console.debug(`[validateHooks] Valid hooks: ${JSON.stringify(validHooks, null, 2)}`);
 
-      const HOOKS = type === HOOK_TYPES.PRINT ? PRINT_HOOKS : {};
-      events.forEach((handler, event) => {
-        if(!HOOKS[event.toUpperCase()])
-          throw new Error(`Unknown event "${event}"`);
+    console.log(HOOK_TYPES);
+    console.log()
+    const HOOKS = Object.values(validHooks);
+    events.forEach((handler, event) => {
+      if(!HOOKS.includes(event))
+        throw new Error(`Unknown event "${event}"`);
 
-        if(typeof handler !== 'function')
-          throw new Error(`Handler for "${type} ${event}" is not a function.`);
-      });
+      if(typeof handler !== "function")
+        throw new Error(`Handler for "${type} ${event}" is not a function.`);
     });
   }
 
@@ -106,7 +118,7 @@ class HookManager {
     if(hook) {
       try {
         const result = await hook(...args);
-        if(result?.status === 'error')
+        if(result?.status === "error")
           throw result.error;
         return result;
       } catch(error) {
@@ -117,4 +129,4 @@ class HookManager {
   }
 }
 
-module.exports = HookManager;
+export default HookManager;

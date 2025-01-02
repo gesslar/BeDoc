@@ -1,7 +1,7 @@
 const Environment = {
-  EXTENSION: 'extension',
-  ACTION: 'action',
-  CLI: 'cli'
+  EXTENSION: "extension",
+  ACTION: "action",
+  CLI: "cli"
 }
 
-module.exports = Environment;
+export default Environment;

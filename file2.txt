@@ -1,0 +1,31 @@
+ Volume in drive D is Chris
+ Volume Serial Number is 88D2-F0B4
+
+ Directory of D:\git\BeDoc
+
+2025-01-02  12:02 AM    <DIR>          .
+2024-12-29  12:32 AM    <DIR>          ..
+2024-12-27  01:31 AM    <DIR>          .github
+2024-12-27  01:30 AM                48 .gitignore
+2025-01-02  12:02 AM    <DIR>          .nyc_output
+2025-01-01  10:37 PM    <DIR>          .vscode
+2024-12-31  04:59 AM             4,984 arrays.wikitext
+2024-12-31  04:59 AM               663 base64.wikitext
+2025-01-01  10:41 PM             3,534 CONTRIBUTING.md
+2025-01-01  11:28 PM    <DIR>          coverage
+2024-12-30  01:21 PM    <DIR>          docs
+2025-01-01  09:39 PM             1,395 eslint.config.js
+2025-01-02  12:02 AM             1,341 file1.txt
+2025-01-02  12:03 AM                 0 file2.txt
+2024-12-29  10:11 PM             1,211 LICENSE
+2025-01-01  11:25 PM    <DIR>          node_modules
+2025-01-01  06:36 PM    <DIR>          output
+2025-01-01  11:25 PM           301,660 package-lock.json
+2025-01-01  11:42 PM             1,057 package.json
+2024-12-24  08:23 PM                 7 README.md
+2024-12-25  11:30 PM    <DIR>          src
+2025-01-02  12:01 AM    <DIR>          test
+2025-01-01  10:50 PM               880 tree.txt
+2024-12-30  02:55 PM    <DIR>          wip
+              12 File(s)        316,780 bytes
+              12 Dir(s)  488,063,115,264 bytes free

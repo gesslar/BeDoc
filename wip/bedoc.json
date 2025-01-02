@@ -1,9 +1,10 @@
 {
   "language": "lpc",
   "format": "markdown",
-  "mock": "./wip",
-  "output": "./output/",
-  "input" : "./wip/sample/**/*.c",
-  "hooks": "./wip/my_custom_hooks.js",
-  "debug": false
+  "mock": "wip",
+  "output": "output/",
+  "input" : "wip/sample/**/*.c",
+  "hooks": "wip/my_custom_hooks.js",
+  "debug": true,
+  "debugLevel": 4
 }

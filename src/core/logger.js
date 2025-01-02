@@ -1,29 +1,42 @@
-const Environment = require("./env")
-const packageJson = require("../../package.json");
+import ModuleUtil from "./util/module.js";
+import Environment from "./env.js";
 
 class Logger {
   /**
    * @param {Object} core
    */
   constructor(core) {
-    this.core = core ;
-    this.name = packageJson.name;
+    const {name} = ModuleUtil.require("package.json");
+
+    console.log(`name: ${name}`);
+    console.log(`core:`, core);
+    console.log(`core classname: ${core?.constructor.name}`);
+
+    this.core = core;
+    this.name = name;
+    this.debugMode = core?.options?.debug;
+    this.debugLevel = core?.options?.debugLevel;
 
     if(core?.env === Environment.EXTENSION) {
-      const vscode = require('vscode');
+      const vscode = require("vscode");
       this.vscodeError = vscode.window.showErrorMessage.bind(vscode.window);
       this.vscodeWarn = vscode.window.showWarningMessage.bind(vscode.window);
       this.vscodeInfo = vscode.window.showInformationMessage.bind(vscode.window);
     }
-
   }
 
   colors = {
-    debug: `\x1b[48;5;129m`,
-    info:  `\x1b[48;5;039m`,
-    warn:  `\x1b[48;5;208m`,
-    error: `\x1b[48;5;124m`,
-    reset: `\x1b[0m`
+    debug: "\x1b[48;5;129m",
+    info:  "\x1b[48;5;039m",
+    warn:  "\x1b[48;5;208m",
+    error: "\x1b[48;5;124m",
+    reset: "\x1b[0m"
+  }
+
+  setOptions(options) {
+    this.debugMode = options.debug;
+    this.debugLevel = options.debugLevel;
+    this.name = options.name;
   }
 
   _capitalize(str) {
@@ -39,9 +52,8 @@ class Logger {
   /**
    * @param {any} message
    */
-  debug(message, force = false) {
-    if(this.core?.options?.debug || force)
-      console.debug(this._compose("debug", message));
+  debug(message, level = 4, force = false) {
+    (force || this.debugMode === true) && level <= this.debugLevel && console.debug(this._compose("debug", message));
   }
 
   warn(message) {
@@ -75,4 +87,4 @@ class Logger {
   }
 }
 
-module.exports = Logger;
+export default Logger;

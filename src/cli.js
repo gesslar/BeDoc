@@ -1,23 +1,31 @@
-const Core = require('./core/core');
-const Logger = require('./core/logger');
-const FileUtil = require('./core/util/file');
+import fs from "fs";
+import { program }from "commander";
+import Core from "./core/core.js";
+import Logger from "./core/logger.js";
+import FDUtil from "./core/util/fd.js";
+import Environment from "./core/env.js";
+import ModuleUtil from "./core/util/module.js";
+import ConfigurationParameters from "./core/configuration.js";
 
 // We need our own logger instance, because we aren't the Core object.
 const logger = new Logger(null);
-const fileUtil = new FileUtil();
+const fdUtil = new FDUtil();
 
+// Debugging levels
+// 0 - No debug
+// 1 - Minimal/Operational
+// 2 - A bit extra
+// 3 - Verbose
+// 4 - Geek mode
+
+// Main entry point
 (async() => {
   try {
-    const { program } = require('commander');
-    const fs = require('fs');
-    const path = require('path');
-    const packageJson = require('../package.json');
-    const Environment = require('./core/env');
-    const ConfigurationParameters = require('./core/configuration');
+    const packageJson = await ModuleUtil.require("package.json");
 
     program
-      .name('bedoc')
-      .description('Pluggable documentation engine for any language and format')
+      .name(packageJson.name)
+      .description(packageJson.description)
 
     // Build CLI
     ConfigurationParameters
@@ -36,34 +44,45 @@ const fileUtil = new FileUtil();
           program.option(arg, description, defaultValue);
       });
 
-    program.version(packageJson.version, '-v, --version', 'Output version');
+    program.version(packageJson.version, "-v, --version", "Output version");
     program.parse();
     const options = program.opts();
 
-    logger.debug(`[CLI] Options passed: ${JSON.stringify(options, null, 2)}`, options.debug);
+    // Set logger options
+    const {debug: debugMode, debugLevel} = options;
+    logger.setOptions({debugMode, debugLevel, name: packageJson.name});
+
+    const debug = (...args) => logger.debug(...args);
+
+    debug(`[CLI] Options passed: ${JSON.stringify(options, null, 2)}`, options.debugLevel);
 
     let finalConfig = {};
     if(options.config) {
-      const configFile = await fileUtil.resolveFile(options.config);
-      options.config = configFile.get('path');
+      debug(`[CLI] Config file: ${options.config}`, options.debugLevel);
+      const resolvedConfigFile = await fdUtil.resolveFile(options.config, logger);
+      options.config = resolvedConfigFile.get("path");
 
-      if(!fs.existsSync(configFile.get('path')))
-        throw new Error(`Config file does not exist: ${configFile.get('path')}`);
 
-      const config = require(configFile.get('path'));
-      finalConfig = { ...config, ...options };
-      logger.debug(`[CLI] Loaded configuration from ${configFile.get('path')}`, config.debug);
+      if(!fs.existsSync(resolvedConfigFile.get("path")))
+        throw new Error(`Config file does not exist: ${resolvedConfigFile.get("path")}`);
+
+      const config = await ModuleUtil.require(resolvedConfigFile.get("path"));
+      console.log(`[CLI] Loaded configuration from ${resolvedConfigFile.get("path")}`, config);
+      finalConfig = { ...options, ...config };
+      console.log(`[CLI] Loaded configuration from ${resolvedConfigFile.get("path")}`, finalConfig);
+      logger.setOptions({name: packageJson.name, debugLevel: finalConfig.debugLevel, debug: finalConfig.debug});
+      debug(`[CLI] Loaded configuration from ${resolvedConfigFile.get("path")}`, 2);
     }
 
     // Log all options
-    logger.debug(`[CLI] Final Options: ${JSON.stringify(finalConfig, null, 2)}`, finalConfig.debug);
+    debug(`[CLI] Final Options: ${JSON.stringify(finalConfig, null, 2)}`, options.debugLevel);
 
     for(const [key, value]of Object.entries(finalConfig)) {
       if(ConfigurationParameters.has(key)) {
         const parameter = ConfigurationParameters.get(key);
         const [_, type, array] = /^(\w+)(\[\])?$/.exec(parameter.type);
 
-        logger.debug(`[CLI] Parameter: ${key} = ${value}`, parameter.debug);
+        debug(`[CLI] Parameter: ${key} = ${value}`, options.debugLevel);
 
         if(array) {
           if(!Array.isArray(value)) throw new Error(`${key} must be an array`);
@@ -80,26 +99,26 @@ const fileUtil = new FileUtil();
           if(pathType !== "directory" && pathType !== "file")
             throw new Error(`Invalid path type: ${pathType}`);
 
-          const resolveFunction = pathType === "directory" ? fileUtil.resolvePath : fileUtil.resolveFile;
+          const resolveFunction = pathType === "directory" ? fdUtil.resolveDir : fdUtil.resolveFile;
           const mustExist = parameter.subtype.path.mustExist;
 
           if(Array.isArray(value)) {
-            logger.debug(`[CLI] Resolving ${pathType}s for ${key} = ${JSON.stringify(value, null, 2)}`, options.debug);
+            debug(`[CLI] Resolving ${pathType}s for ${key} = ${JSON.stringify(value, null, 2)}`, options.debugLevel);
 
             const resolvedFiles = [];
             for(const file of value) {
-              logger.debug(`[CLI] Resolving ${pathType}: ${file}`);
+              debug(`[CLI] Resolving ${pathType}: ${file}`, options.debugLevel);
               const resolvedFile = await resolveFunction(file);
-              logger.debug(`[CLI] Resolved ${pathType}: ${resolvedFile}`);
+              debug(`[CLI] Resolved ${pathType}: ${resolvedFile}`, options.debugLevel);
               resolvedFiles.push(resolvedFile);
             }
 
-            logger.debug(`[CLI] Resolved paths for ${key} = ${JSON.stringify(resolvedFiles, null, 2)}`, options.debug);
+            debug(`[CLI] Resolved paths for ${key} = ${JSON.stringify(resolvedFiles, null, 2)}`, options.debugLevel);
             finalConfig[key] = resolvedFiles;
           } else {
-            logger.debug(`[CLI] Resolving ${pathType} for ${key} = ${value}`, options.debug);
+            debug(`[CLI] Resolving ${pathType} for ${key} = ${value}`, options.debugLevel);
             const resolvedFile = await resolveFunction(value);
-            logger.debug(`[CLI] Resolved ${pathType} for ${key} = ${JSON.stringify(resolvedFile, null, 2)}`, options.debug);
+            debug(`[CLI] Resolved ${pathType} for ${key} = ${resolvedFile.get("uri")}`, options.debugLevel);
             finalConfig[key] = resolvedFile;
           }
 
@@ -114,14 +133,14 @@ const fileUtil = new FileUtil();
 
         finalConfig[key] = value;
       } else {
-        logger.warn(`[CLI] Unknown option: ${key}`);
+        warn(`[CLI] Unknown option: ${key}`);
       }
     }
 
-    logger.debug(`[CLI] Final configuration (resolved): ${JSON.stringify(finalConfig, null, 2)}`, finalConfig.debug);
+    debug(`[CLI] Final configuration (resolved): ${JSON.stringify(finalConfig, null, 2)}`, finalConfig.debugLevel, finalConfig.debug);
     // Validate input options
     if(!finalConfig.input && !finalConfig.directory) {
-      throw new Error('You must specify either a directory (-d) or trailing file arguments.');
+      throw new Error("You must specify either a directory (-d) or trailing file arguments.");
     }
 
     finalConfig.env = Environment.CLI;

@@ -1,4 +1,4 @@
-module.exports = [
+export default[
   {
     files: ["**/*.js"],
     languageOptions: {
@@ -6,6 +6,7 @@ module.exports = [
       sourceType: "module"
     },
     rules: {
+      "quotes": ["error", "double", { "avoidEscape": true, "allowTemplateLiterals": true }],
       "no-trailing-spaces": ["error"], // Prevent trailing spaces
       "eol-last": ["error", "always"], // Ensure a newline at the end of files
       "indent": ["error", 2],          // Enforce consistent indentation (e.g., 2 spaces)

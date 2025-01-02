@@ -18,7 +18,4 @@ class Printer {
   }
 };
 
-module.exports = {
-  meta,
-  Printer,
-};
+export { meta, Printer };

@@ -1,4 +1,4 @@
-module.exports = class StringUtil {
+export default class StringUtil {
   /**
    * Wraps text to a specified width with optional indentation
    * @param {string} str - The text to wrap
@@ -7,14 +7,14 @@ module.exports = class StringUtil {
    * @returns {string} The wrapped text
    */
   static wrap(str, wrapAt = 80, indentAt = 0) {
-    const sections = str.split('\n').map(section => {
-      let parts = section.split(' ');
+    const sections = str.split("\n").map(section => {
+      let parts = section.split(" ");
       let inCodeBlock = false;
       let isStartOfLine = true;  // Start of each section is start of line
 
       // Preserve leading space if it existed
-      if(section[0] === ' ') {
-        parts = ['', ...parts];
+      if(section[0] === " ") {
+        parts = ["", ...parts];
       }
 
       let running = 0;
@@ -28,7 +28,7 @@ module.exports = class StringUtil {
           return part;
         }
 
-        if(part[0] === '\n') {
+        if(part[0] === "\n") {
           running = 0;
           isStartOfLine = true;  // Next part will be at start of line
           return part;
@@ -40,19 +40,19 @@ module.exports = class StringUtil {
         if(!inCodeBlock && running >= wrapAt) {
           running = part.length + indentAt;
           isStartOfLine = true;  // After newline, next part will be at start
-          return '\n' + ' '.repeat(indentAt) + part;
+          return "\n" + " ".repeat(indentAt) + part;
         }
 
         return part;
       });
 
-      return parts.join(' ')
-        .split('\n')
+      return parts.join(" ")
+        .split("\n")
         .map(line => line.trimEnd())
-        .join('\n');
+        .join("\n");
     });
 
-    return sections.join('\n');
+    return sections.join("\n");
   }
 
   /**
@@ -72,5 +72,4 @@ module.exports = class StringUtil {
   static uncapitalize(str) {
     return str.charAt(0).toLowerCase() + str.slice(1);
   }
-
 }

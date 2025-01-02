@@ -1,75 +1,88 @@
-const fs = require('fs');
-const Environment = require('./env');
-const Logger = require('./logger');
-const Discovery = require('./discovery');
-const HookManager = require('./hook_manager');
-const DataUtil = require('./util/data');
-const FileUtil = require('./util/file');
-const StringUtil = require('./util/string');
+import fs from "fs";
+import Environment from "./env.js";
+import Logger from "./logger.js";
+import Discovery from "./discovery.js";
+import HookManager from "./hook_manager.js";
+import FDUtil from "./util/fd.js";
+import DataUtil from "./util/data.js";
+import ModuleUtil from "./util/module.js";
+import StringUtil from "./util/string.js";
+import ValidUtil from "./util/valid.js";
+
 
 /**
  * @class BeDocEngine
  */
-class Core {
+export default class Core {
   /**
-   * @param {Object} config
+   * @param {Object} options
    */
   constructor(options) {
-    if(!options.env || typeof options.env !== 'string') {
-      throw new Error('Env is required');
+    if(!options.env || typeof options.env !== "string") {
+      throw new Error("Env is required");
     }
-    if(options.mock && typeof options.mock !== 'string') {
-      throw new Error('Mock must be a string');
+    if(options.mock && typeof options.mock !== "string") {
+      throw new Error("Mock must be a string");
     }
 
     this.options = options;
+    console.log(`[Core.Constructor] options`, options);
   }
 
+  /**
+   * @param {Object} options
+   * @returns {Promise<Core>}
+   */
   static async new(options) {
     const instance = new Core(options);
+    const logger = new Logger(instance);
+    instance.logger = logger;
+    const fdUtil = new FDUtil(instance);
+    instance.fdUtil = fdUtil;
 
-    instance.logger = new Logger(instance);
-    instance.discovery = new Discovery(instance);
-    instance.dataUtil = new DataUtil();
-    instance.fileUtil = new FileUtil();
-    instance.stringUtil = new StringUtil();
+    // Utilities
+    instance.string = StringUtil;
+    instance.valid = ValidUtil;
+    instance.module = ModuleUtil;
+    instance.data = DataUtil;
 
-    instance.logger.debug(`[New] Discovering modules in ${options.mock}`);
-    const discovered = await instance.discovery.discoverModules(options.mock);
-    instance.logger.debug(`[New] Discovered ${discovered.get('parsers').size} parsers and ${discovered.get('printers').size} printers`);
+    const discovery = new Discovery(instance);
+    logger.debug(`[New] Discovering modules in ${options.mock}`, 4);
+    const discovered = await discovery.discoverModules(options.mock);
+    logger.debug(`[New] Discovered ${discovered.get("parsers").size} parsers and ${discovered.get("printers").size} printers`);
 
-    const parsers = discovered.get('parsers');
+    const parsers = discovered.get("parsers");
     if(!parsers.size)
       throw new Error(`[New] No parsers found in ${options.mock}`);
 
-    const printers = discovered.get('printers');
+    const printers = discovered.get("printers");
     if(!printers.size)
       throw new Error(`[New] No printers found in ${options.mock}`);
 
-    const selectedParser = discovered.get('parsers').get(instance.options.language);
+    const selectedParser = discovered.get("parsers").get(instance.options.language);
     if(!selectedParser)
       throw new Error(`[New] No parser found for language ${instance.options.language}`);
 
-    const selectedPrinter = discovered.get('printers').get(instance.options.format);
+    const selectedPrinter = discovered.get("printers").get(instance.options.format);
     if(!selectedPrinter)
       throw new Error(`[New] No printer found for format ${instance.options.format}`);
 
-    const parserClass = selectedParser.get('parser');
+    const parserClass = selectedParser.get("parser");
     const parser = new parserClass(instance);
-    const printerClass = selectedPrinter.get('printer');
+    const printerClass = selectedPrinter.get("printer");
     const printer = new printerClass(instance);
+
+    instance.parser = parser;
+    instance.printer = printer;
 
     // We need to initialize the hook manager after the parser and printer
     // are registered, since the hook manager injects hooks into the parser
     // and printer.
     const hookManager = new HookManager(instance);
     await hookManager.load();
+
     hookManager.attachHooks(parser);
     hookManager.attachHooks(printer);
-
-    instance.hookManager = hookManager;
-    instance.printer = printer;
-    instance.parser = parser;
 
     return instance;
   }
@@ -81,7 +94,7 @@ class Core {
    **/
   validateConfig(config) {
     if(!config)
-      throw new Error('Config is required');
+      throw new Error("Config is required");
 
     const have = Object.keys(config).filter((key) =>
       Configuration.required.includes(key)
@@ -92,7 +105,7 @@ class Core {
 
     if(have.length !== Configuration.required.length)
       throw new Error(
-        `Config is missing required fields: ${haveNot.join(', ')}`
+        `Config is missing required fields: ${haveNot.join(", ")}`
       );
 
     return true;
@@ -105,7 +118,7 @@ class Core {
    * @returns {boolean}
    */
   validFile(content, filePath) {
-    if(!this.reader || typeof this.reader.validFile !== 'function') {
+    if(!this.reader || typeof this.reader.validFile !== "function") {
       // No reader or no validFile method, assume file is valid
       return true;
     }
@@ -122,17 +135,18 @@ class Core {
 
   /**
    * Processes files and generates documentation.
-   * @param {Object} options
-   * @returns {Promise<Array>}
+   * @returns {Promise<Object>}
    */
-  async processFiles(options) {
-    const {input, language, format} = options;
+  async processFiles() {
+    const {input, language, format, output} = this.options;
+
+    console.log(this.options);
 
     this.logger.debug(`[processFiles] Input: ${JSON.stringify(input, null, 2)}`);
     this.logger.debug(`[processFiles] Language: ${JSON.stringify(language, null, 2)}`);
     this.logger.debug(`[processFiles] Format: ${JSON.stringify(format, null, 2)}`);
 
-    const resolvedFiles = await this.fileUtil.getFiles(input);
+    const resolvedFiles = await this.fdUtil.getFiles(input);
     this.logger.debug(`[processFiles] Resolved Files: ${JSON.stringify(resolvedFiles, null, 2)}`);
 
     const {parser, printer} = this;
@@ -144,42 +158,42 @@ class Core {
     this.logger.debug(`[processFiles] Options: ${JSON.stringify(this.options)}`);
 
     for(const file of resolvedFiles) {
-      const fileMap = await this.fileUtil.resolveFile(file);
+      const fileMap = await this.fdUtil.resolveFile(file);
 
-      const name = fileMap.get('name');
-      const path = fileMap.get('path');
-      const module = fileMap.get('module');
+      const name = fileMap.get("name");
+      const absoluteUri = fileMap.get("absoluteUri");
+      const module = fileMap.get("module");
 
-      this.logger.debug(`[processFiles] Processing file: ${JSON.stringify(fileMap, null, 2)}`);
+      this.logger.debug(`[processFiles] Processing file: ${absoluteUri}`);
       try {
-        this.logger.debug(`[processFiles] Reading file: ${path}`);
-        const source = await this.fileUtil.readFile(path);
-        this.logger.debug(`[processFiles] Read file: ${path}`);
-        this.logger.debug(`[processFiles] Parsing file: ${path}`);
-        const parseResponse = await parser.parse(path, source);
-        this.logger.debug(`[processFiles] Parsed file: ${path}`);
+        this.logger.debug(`[processFiles] Reading file: ${absoluteUri}`);
+        const source = await this.fdUtil.readFile(fileMap);
+        this.logger.debug(`[processFiles] Read file: ${absoluteUri}`);
+        this.logger.debug(`[processFiles] Parsing file: ${absoluteUri}`);
+        const parseResponse = await parser.parse(absoluteUri, source);
+        this.logger.debug(`[processFiles] Parsed file: ${absoluteUri}`);
         if(!parseResponse.success) {
           const {file, line, lineNumber, message} = parseResponse;
           throw new Error(`[processFiles] Activity: Parse\nFile: ${file}, Line: ${lineNumber}\nContext: ${line}\nError: ${message}`);
         }
 
-        this.logger.debug(`[processFiles] Printing file: ${path}`);
+        this.logger.debug(`[processFiles] Printing file: ${absoluteUri}`);
         const printResponse = await printer.print(module, parseResponse.result);
-        this.logger.debug(`[processFiles] Printed file: ${path}`);
-        if(printResponse.status !== 'success') {
+        this.logger.debug(`[processFiles] Printed file: ${absoluteUri}`);
+        if(printResponse.status !== "success") {
           const {file, line, message} = printResponse;
           throw new Error(`[processFiles] Activity: Print\nFile: ${file}\nContext: ${line}\nError: ${message}`);
         }
 
         const {destFile, content} = printResponse;
         this.logger.debug(`[processFiles] Print response: ${JSON.stringify(printResponse, null, 2)}`);
-        const writeResult = await this.outputFile(options.output, destFile, content);
+        const writeResult = await this.outputFile(output, destFile, content);
 
         this.logger.debug(`[processFiles] Processed file: ${name}`);
         return {file, destFile: writeResult.destFile, status: writeResult.status, message: writeResult.message, content: content};
       } catch(error) {
         this.logger.error(`[processFiles] Failed to process file ${name}\n${error.message}\n${error.stack}`);
-        return {file, destFile: null, status: 'error', message: error.message, stack: error.stack};
+        return {file, destFile: null, status: "error", message: error.message, stack: error.stack};
       }
     }
 
@@ -195,36 +209,30 @@ class Core {
    */
   async outputFile(output, destFile, content) {
     this.logger.debug(`[outputFile] Output: ${output}, DestFile: ${destFile}, Content length: ${content.length}`);
-    try {
-      if(this.options.env === Environment.CLI && !output) {
-        // Print to stdout if no output file is specified in CLI mode
-        process.stdout.write(content + '\n');
-        this.logger.debug('[outputFile] Output written to stdout.');
-        return {
-          destFile: null,
-          status: 'success',
-          message: 'Output written to stdout.',
-        };
-      } else if(output && destFile) {
-        // Write to a file if outputPath is specified
-        const outputPath = await this.fileUtil.resolvePath(output);
-        const resolvedDestFile = `${outputPath}/${destFile}`;
-        await fs.promises.writeFile(resolvedDestFile, content, 'utf8');
-        this.logger.debug(`[outputFile] Successfully wrote to output: ${JSON.stringify(resolvedDestFile)}`);
-        return {
-          destFile: resolvedDestFile,
-          status: 'success',
-          message: `Output written to file ${resolvedDestFile.path}`,
-        };
-      } else {
-        // For non-CLI environments, an output file must be specified
-        this.logger.error(`[outputFile] Output path and destination file is required for non-CLI environments.`);
-      }
-    } catch(error) {
-      this.logger.error(`[outputFile] Failed to write output: ${error.message}`);
-      throw error;
+    if(this.options.env === Environment.CLI && !output) {
+      // Print to stdout if no output file is specified in CLI mode
+      process.stdout.write(content + "\n");
+      this.logger.debug("[outputFile] Output written to stdout.");
+      return {
+        destFile: null,
+        status: "success",
+        message: "Output written to stdout.",
+      };
+    } else if(output && destFile) {
+      // Write to a file if outputPath is specified
+      const outputPath = await this.fdUtil.resolveDir(output);
+      const destFileMap = await this.fdUtil.composeFile(outputPath.get("path"), destFile);
+      this.logger.debug(`[outputFile] Resolved Dest File: ${destFileMap.get("path")}`);
+      this.fdUtil.writeFile(destFileMap, content);
+      this.logger.debug(`[outputFile] Successfully wrote to output: ${JSON.stringify(destFileMap)}`);
+      return {
+        destFile: destFileMap.get("path"),
+        status: "success",
+        message: `Output written to file ${destFileMap.get("path")}`,
+      };
+    } else {
+      // For non-CLI environments, an output file must be specified
+      this.logger.error("[outputFile] Output path and destination file is required for non-CLI environments.");
     }
   }
 }
-
-module.exports = Core;

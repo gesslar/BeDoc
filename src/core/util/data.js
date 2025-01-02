@@ -1,4 +1,4 @@
-module.exports = class DataUtil {
+export default class DataUtil {
 
   /**
   * Checks if all elements in an array are of a specified type

@@ -1,4 +1,4 @@
-const ConfigurationParameters = new Map([
+export default new Map([
   ["input", {
     short: "i",
     param: "file",
@@ -21,6 +21,7 @@ const ConfigurationParameters = new Map([
   }],
   ["hooks", {
     short: "k",
+    param: "file",
     description: "Custom hooks JS file",
     type: "string",
     required: false,
@@ -48,6 +49,7 @@ const ConfigurationParameters = new Map([
   }],
   ["mock", {
     short: "m",
+    param: "dir",
     description: "Path to mock parsers and printers",
     type: "string",
     required: false,
@@ -61,6 +63,7 @@ const ConfigurationParameters = new Map([
   }],
   ["config", {
     short: "c",
+    param: "file",
     description: "Use JSON config file",
     type: "string",
     required: false,
@@ -79,6 +82,12 @@ const ConfigurationParameters = new Map([
     required: false,
     default: false,
   }],
+  ["debugLevel", {
+    short: "D",
+    param: "level",
+    description: "Debug level",
+    type: "number",
+    required: false,
+    default: 4,
+  }],
 ]);
-
-module.exports = ConfigurationParameters;

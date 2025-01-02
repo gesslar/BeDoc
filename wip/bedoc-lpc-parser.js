@@ -46,7 +46,7 @@ class Parser {
     this.core = core;
     this.regex = {
       ...patterns,
-      tag: new RegExp(`^\\s*\\*\\s+@(?<tag>${[...tags.all].join('|')})\\s?(?<content>.*)$`),
+      tag: new RegExp(`^\\s*\\*\\s+@(?<tag>${[...tags.all].join("|")})\\s?(?<content>.*)$`),
     };
   }
 
@@ -65,7 +65,7 @@ class Parser {
     }
     // we don't need the first two lines of the stack, cos they'll just be the
     // error message and the file name
-    return stack.split('\n');//.slice(2);
+    return stack.split("\n");//.slice(2);
   }
 
   /**
@@ -171,7 +171,7 @@ class Parser {
 
 
     if(!func)
-      return {success: false, message: msg('No function context', "processLine", file, position, line)};
+      return {success: false, message: msg("No function context", "processLine", file, position, line)};
 
     /*
     // TO COME BACK TO
@@ -201,7 +201,7 @@ class Parser {
       this.currentTag = tag;
       this.section = null;
 
-      if(tag === 'return') {
+      if(tag === "return") {
         this.section = {tag, name: null};
         const tagContentMatches = this.regex.returnContent.exec(content);
         if(tagContentMatches) {
@@ -215,15 +215,15 @@ class Parser {
             singleton ? func[tag] = { type, content: [content] } : func[tag].push({type, content: [content]});
           }
         } else
-          return {success: false, message: msg('Failed to parse return tag', "processLine", file, position, line)};
+          return {success: false, message: msg("Failed to parse return tag", "processLine", file, position, line)};
       } else {
         const tagContentMatches = this.regex.tagContent.exec(content);
         if(tagContentMatches) {
           const {type, name, content} = tagContentMatches.groups;
           if(!type)
-            return {success: false, message: msg('Missing tag type', "processLine", file, position, line)};
+            return {success: false, message: msg("Missing tag type", "processLine", file, position, line)};
           if(!name)
-            return {success: false, message: msg('Missing tag name', "processLine", file, position, line)};
+            return {success: false, message: msg("Missing tag name", "processLine", file, position, line)};
           this.section = {tag,name};
           singleton ? func[tag] = { type, name, content: [content] } : func[tag].push({type, name, content: [content]});
         } else {
@@ -232,11 +232,11 @@ class Parser {
             this.section = {tag, name: null};
             func[tag] = [];
           } else {
-            return {success: false, message: msg('Failed to parse tag', "processLine", file, position, line)};
+            return {success: false, message: msg("Failed to parse tag", "processLine", file, position, line)};
           }
         }
       }
-      return {success: true, message: 'Processed tag'};
+      return {success: true, message: "Processed tag"};
     }
 
     // Process multiline content
@@ -275,7 +275,7 @@ class Parser {
             func[tag].push("");
         }
       }
-      return {success: true, message: 'Processed tag continuation'};
+      return {success: true, message: "Processed tag continuation"};
     }
 
     // If not a special tag, treat as description
@@ -283,11 +283,11 @@ class Parser {
     if(descMatch && descMatch.groups?.content) {
       func.description = func.description || [];
       func.description.push(descMatch.groups.content);
-      return {success: true, message: 'Processed description'};
+      return {success: true, message: "Processed description"};
     } else {
       func.description = func.description || [];
       func.description.push("");
-      return {success: true, message: 'Processed description'};
+      return {success: true, message: "Processed description"};
     }
   }
 
@@ -321,4 +321,4 @@ class Parser {
   }
 };
 
-module.exports = { meta, Parser };
+export { meta, Parser };

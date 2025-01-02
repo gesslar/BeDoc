@@ -6,19 +6,23 @@
   "bin": {
     "bedoc": "./src/cli.js"
   },
+  "type": "module",
   "scripts": {
-    "test": "mocha",
+    "test": "nyc mocha --recursive src/**/*.test.mjs",
     "build": "tsc",
     "package": "vsce package",
-    "mock": "bedoc -c ./wip/bedoc.json"
+    "mock": "bedoc -c wip/bedoc.json"
   },
   "dependencies": {
     "commander": "^13.0.0",
     "globby": "^14.0.2"
   },
   "devDependencies": {
+    "chai": "^5.1.2",
+    "chai-as-promised": "^8.0.1",
     "eslint": "^9.17.0",
     "mocha": "^11.0.1",
+    "nyc": "^17.1.0",
     "vsce": "^1.97.0"
   },
   "engines": {
@@ -38,6 +42,11 @@
     "parser",
     "printer"
   ],
+  "nyc": {
+    "include": ["src/**/*.js"],
+    "exclude": ["src/**/*.test.js"],
+    "reporter": ["text", "html"]
+  },
   "author": "gesslar",
   "license": "Unlicense"
 }
