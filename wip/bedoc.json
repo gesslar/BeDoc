@@ -5,6 +5,6 @@
   "output": "output/",
   "input" : "wip/sample/**/*.c",
   "hooks": "wip/my_custom_hooks.js",
-  "debug": true,
+  "debug": false,
   "debugLevel": 4
 }

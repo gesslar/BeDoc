@@ -3,6 +3,11 @@ enum HOOK_TYPE {
   PARSE = "Parser",
 }
 
+enum HOOK_UP {
+  Printer = "print",
+  Parser = "parse",
+}
+
 enum PRINT_HOOKS {
   START = "start",
   SECTION_LOAD = "load",
@@ -24,6 +29,7 @@ type Hooks = { [key: string]: Hook };
 
 export {
   HOOK_TYPE,
+  HOOK_UP,
   PRINT_HOOKS,
   PARSE_HOOKS,
   Hook,

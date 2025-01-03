@@ -34,10 +34,6 @@ export default class Logger {
       if (core?.env === Environment.EXTENSION) {
         this.initVSCode();
       }
-
-      console.log(`name: ${name}`);
-      console.log(`core:`, core);
-      console.log(`core classname: ${core?.constructor.name}`);
     });
   }
 

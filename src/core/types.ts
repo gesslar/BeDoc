@@ -46,6 +46,7 @@ export type {
 
 export type {
   HOOK_TYPE,
+  HOOK_UP,
   PRINT_HOOKS,
   PARSE_HOOKS,
   Hook,

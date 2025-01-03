@@ -19,7 +19,6 @@ class Printer {
    * @param {Object} content
    */
   async print(module, content) {
-    console.log("this", this);
     const HOOKS = this.HOOKS;
 
     await this.hook(HOOKS.START, {module, content});
@@ -35,7 +34,6 @@ class Printer {
     }
 
     const printDescription = async(section) => {
-      console.log("this", this);
       this.logger.debug(`[printDescription] section: ${JSON.stringify(section, null, 2)}`);
       await this.hook(HOOKS.ENTER, {name:"description", section, meta});
       const outputDescription = section.description?.length
@@ -71,15 +69,6 @@ class Printer {
       return outputParams;
     }
 
-    /*
-     *
-     *"return": {
-     *  "type": "mixed",
-     *  "content": [
-     *    "The filled array."
-     *  ]
-     * }
-     */
     const printReturns = async(section) => {
       await this.hook(HOOKS.ENTER, {name:"return", section, meta});
 
@@ -108,7 +97,7 @@ class Printer {
     }
 
     for(const section of work) {
-      await this.hook(HOOKS.LOAD, {section, meta});
+      await this.hook(HOOKS.SECTION_LOAD, {section, meta});
 
       // First the function name
       const outputName = await printName(section);
@@ -126,10 +115,10 @@ class Printer {
       const outputExample = await printExample(section);
 
       output.push(`${outputName}` +
-             `${outputDescription.length ? `\n${outputDescription}\n` : ""}` +
-             `${outputParams.length ? `\n${outputParams.join("\n")}\n` : ""}` +
-             `${outputReturns.length ? `\n${outputReturns}\n` : ""}` +
-             `${outputExample.length ? `\n${outputExample}\n` : ""}`);
+        `${outputDescription.length ? `\n${outputDescription}\n` : ""}` +
+        `${outputParams.length ? `\n${outputParams.join("\n")}\n` : ""}` +
+        `${outputReturns.length ? `\n${outputReturns}\n` : ""}` +
+        `${outputExample.length ? `\n${outputExample}\n` : ""}`);
     }
 
     await this.hook(HOOKS.END, {module, content, output});

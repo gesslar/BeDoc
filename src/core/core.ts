@@ -1,4 +1,3 @@
-import fs from "fs";
 import Environment from "./env.js";
 import Logger from "./logger.js";
 import Discovery from "./discovery.js";
@@ -94,8 +93,10 @@ export default class Core {
     const hookManager = new HookManager(instance);
     await hookManager.load();
 
-    hookManager.attachHooks(parser);
-    hookManager.attachHooks(printer);
+    const parserHooks = hookManager.attachHooks(parser);
+    const printerHooks = hookManager.attachHooks(printer);
+
+    instance.logger.debug(`[New] Attached ${parserHooks} parser hooks and ${printerHooks} printer hooks`);
 
     return instance;
   }
