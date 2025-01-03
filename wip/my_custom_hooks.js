@@ -1,19 +1,19 @@
-const parse = new Map([
-  ["enter", async({name, section, meta}) => {
+const parse = {
+  "enter": async({name, section, meta}) => {
     console.log(name, section, meta);
-  }]
-]);
+  }
+};
 
-const print = new Map([
-  ["enter", async({name, section, meta}) => {
+const print = {
+  "enter": async({name, section, meta}) => {
     if(name == "description") {
       const translated = await getDadJoke();
       if(translated.status == "success")
         section.description = [...section.description, translated.joke];
       return translated;
     }
-  }]
-]);
+  }
+};
 
 export { parse, print };
 

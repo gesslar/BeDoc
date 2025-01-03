@@ -2,18 +2,21 @@
   "name": "bedoc",
   "version": "1.0.0",
   "description": "Pluggable documentation engine for any language and format",
-  "main": "src/core/engine.js",
+  "main": "./dist/core/core.js",
   "bin": {
     "bedoc": "./dist/cli.js"
   },
   "type": "module",
   "scripts": {
     "test": "nyc mocha --recursive src/**/*.test.mjs",
+    "clean": "rimraf dist",
+    "clean-all": "rimraf dist && rimraf node_modules && rimraf package-lock.json && rimraf yarn.lock",
     "prepare": "npm run build",
     "build": "tsc",
+    "postinstall": "npm link",
     "preinstall": "npm run build",
     "package": "vsce package",
-    "mock": "npm run build && bedoc -c wip/bedoc.json"
+    "mock": "npm run build && node ./dist/cli.js -c wip/bedoc.json"
   },
   "dependencies": {
     "commander": "^13.0.0",
@@ -22,12 +25,16 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.4",
+    "@types/vscode": "^1.96.0",
+    "@typescript-eslint/eslint-plugin": "^8.19.0",
+    "@typescript-eslint/parser": "^8.19.0",
     "chai": "^5.1.2",
     "chai-as-promised": "^8.0.1",
     "eslint": "^9.17.0",
     "itypescript": "^0.4.0",
     "mocha": "^11.0.1",
     "nyc": "^17.1.0",
+    "rimraf": "^6.0.1",
     "vsce": "^2.15.0"
   },
   "engines": {
