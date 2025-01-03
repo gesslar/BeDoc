@@ -16,7 +16,9 @@
     "postinstall": "npm link",
     "preinstall": "npm run build",
     "package": "vsce package",
-    "mock": "npm run build && node ./dist/cli.js -c wip/bedoc.json"
+    "mock": "npm run build && node ./dist/cli.js -c wip/bedoc.json",
+    "docs:build": "cd docs && bundle exec jekyll build",
+    "docs:serve": "cd docs && bundle exec jekyll serve"
   },
   "dependencies": {
     "commander": "^13.0.0",
