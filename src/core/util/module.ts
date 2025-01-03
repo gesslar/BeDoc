@@ -9,7 +9,6 @@ export default class ModuleUtil {
    */
   static async require(module: string): Promise<any> {
     const resolvedFile = resolve(process.cwd(), module).replace(/\\/g, "/");
-    console.debug(`[ModuleUtil.require] resolvedFile: ${resolvedFile}`);
     return await createRequire(import.meta.url)(resolvedFile);
   }
 }

@@ -68,9 +68,7 @@ const fdUtil = new FDUtil();
         throw new Error(`Config file does not exist: ${options.config}`);
 
       const config = await ModuleUtil.require(options.config);
-      console.log(`[CLI] Loaded configuration from ${options.config}`, config);
       finalConfig = { ...options, ...config };
-      console.log(`[CLI] Loaded configuration from ${options.config}`, finalConfig);
       logger.setOptions({ name: packageJson.name, debugLevel: finalConfig.debugLevel, debug: finalConfig.debug });
       debug(`[CLI] Loaded configuration from ${options.config}`, 2);
     }

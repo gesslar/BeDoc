@@ -38,14 +38,11 @@ export default class FDUtil {
    * @returns The resolved file
    * @throws {Error}
    */
-  resolveFile = async (globPattern: string): Promise<FileMap> => {
-    console.debug(`[resolveFile] Resolving glob pattern: ${globPattern}`);
+  resolveFile = async (globPattern: string | string[]): Promise<FileMap> => {
     if (!this.valid.string(globPattern, true))
       throw new Error("File is required");
 
-    const files = await globby([globPattern]);
-
-    console.debug(`[resolveFile] Files: ${files}`);
+    const files = await globby(globPattern);
 
     if (!files)
       throw new Error(`File not found: ${globPattern}`);
@@ -84,10 +81,7 @@ export default class FDUtil {
    */
   composeFilename = async (dir: string, file: string): Promise<FileMap> => {
     const dirObject = await this.composeDir(dir);
-    console.debug(`[composeFile] dirObject`, dirObject);
     const fileName = path.resolve(dirObject.path, file);
-
-    console.debug(`[composeFile] fileName: ${fileName}`);
 
     const pathName = fileName;
     const extension = path.extname(pathName);
@@ -116,8 +110,6 @@ export default class FDUtil {
    * @throws {Error} Throws an error for invalid input or search failure.
    */
   getFiles = async (globPattern: string | string[]): Promise<string[]> => {
-    console.debug(`[getFiles] globPattern: ${globPattern}`);
-
     // Validate input
     if (!this.valid.string(globPattern, true) && !this.valid.array(globPattern, true))
       throw new Error("[getFiles] Invalid glob pattern: Must be a string or a non-empty array of strings.");
@@ -133,14 +125,11 @@ export default class FDUtil {
       globbyArray.push(...(globPattern as string[]));
     }
 
-    console.debug(`[getFiles] globbyArray: ${globbyArray}`);
-
     if (Array.isArray(globbyArray) && !this.valid.arrayUniform(globbyArray, "string", true) && !globbyArray.length)
       throw new Error("[getFiles] Invalid glob pattern: Array must contain only strings.");
 
     // Use Globby to fetch matching files
     const filesArray = await globby(globbyArray);
-    console.debug(`[getFiles] filesArray: ${filesArray}`);
 
     // Flatten the result and remove duplicates
     return filesArray.flat();
@@ -157,14 +146,13 @@ export default class FDUtil {
     if (!this.valid.string(globPattern, true))
       throw new Error("Path is required");
 
-    console.debug(`[resolveDir] globPattern: ${globPattern}`);
-
     const dirs = await globby([globPattern], {
       onlyDirectories: true,
       expandDirectories: false
     });
 
-    console.debug(`[resolveDir] dirs: ${dirs}`);
+    if (!dirs)
+      throw new Error(`Path not found: ${globPattern}`);
 
     if (!dirs.length)
       throw new Error(`Path not found: ${globPattern}`);
@@ -173,6 +161,9 @@ export default class FDUtil {
       throw new Error(`Multiple paths found for: ${globPattern}`);
 
     const pathName = dirs.values().next().value;
+    if (!pathName)
+      throw new Error(`Path not found: ${globPattern}`);
+
     const resolvedPath = this.toUri(path.resolve(process.cwd(), pathName));
 
     return {
@@ -204,7 +195,6 @@ export default class FDUtil {
   readFile = async (fileObject: FileMap): Promise<string> => {
     const absolutePath = fileObject.absolutePath;
     if (!absolutePath) throw new Error("No absolute path in file map");
-    console.debug(`[readFile] absolutePath: ${absolutePath}`);
     return await fs.promises.readFile(absolutePath, "utf8");
   };
 
@@ -217,7 +207,6 @@ export default class FDUtil {
   writeFile = async (fileObject: FileMap, content: string): Promise<void> => {
     const absolutePath = fileObject.absolutePath;
     if (!absolutePath) throw new Error("No absolute path in file map");
-    console.debug(`[writeFile] absolutePath: ${absolutePath}`);
     return await fs.promises.writeFile(absolutePath, content, "utf8");
   };
 }

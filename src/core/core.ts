@@ -30,7 +30,6 @@ export default class Core {
     }
 
     this.options = options;
-    console.log(`[Core.Constructor] options`, options);
   }
 
   static async new(options: CoreOptions): Promise<Core> {
@@ -64,13 +63,11 @@ export default class Core {
     // Select the parser based on the language
     const language = instance.options.language;
     const selectedParser = parsers[language];
-    console.log(`[New] selectedParser`, selectedParser);
     if (!selectedParser)
       throw new Error(`[New] No parser found for language ${language}`);
 
     // Initialize the parser
     const parserClass = selectedParser.parser;
-    console.log(`[New] parserClass`, parserClass);
     if (!parserClass)
       throw new Error(`[New] Invalid parser found for language ${language}`);
     // Instantiate the parser and assign it to the instance
@@ -145,7 +142,6 @@ export default class Core {
         throw new Error(`Failed to print ${resolvedFile.path}: ${printResult.message}`);
 
       const writeResult = await this.outputFile(output, destFile, content);
-      console.log(`[Core.processFiles] writeResult`, writeResult);
     }
 
     return {

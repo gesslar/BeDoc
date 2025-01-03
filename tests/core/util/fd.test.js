@@ -1,9 +1,12 @@
+import path from 'path';
+const testData = path.resolve("tests", '.data');
+
 import * as chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 chai.use(chaiAsPromised);
 const { expect } = chai;
 import { globby } from 'globby';
-import FileUtil from './fd.js';
+import FileUtil from '../../../dist/core/util/fd.js';
 
 describe('FileUtil', () => {
   let fileUtil;
@@ -35,19 +38,17 @@ describe('FileUtil', () => {
     });
 
     it('should throw an error if no file is found', async() => {
-      await expect(fileUtil.resolveFile('nonexistentfile.txt')).to.be.rejectedWith(/File not found/);
+      await expect(fileUtil.resolveFile(path.join(testData, 'nonexistentfile.txt'))).to.be.rejectedWith(/File not found/);
     });
 
     it('should resolve a valid file path', async () => {
-      const mockFile = 'mockfile.txt';
-      const mockPath = `D:/${mockFile}`;
+      const testFile = fileUtil.fixSlashes(path.join(testData, 'file1.txt'));
+      const result = await fileUtil.resolveFile(testFile);
 
-      fileUtil.getFiles = async () => new Set([mockPath]);
-      const result = await fileUtil.resolveFile(mockFile);
-
-      expect(result.get('path')).to.equal(mockPath);
-      expect(result.get('name')).to.equal(mockFile);
-      expect(result.get('module')).to.equal('mockfile');
+      expect(result.path).to.include('file1.txt');
+      expect(result.name).to.equal('file1.txt');
+      expect(result.module).to.equal('file1');
+      expect(result.extension).to.equal('.txt');
     });
   });
 
@@ -56,14 +57,13 @@ describe('FileUtil', () => {
       await expect(fileUtil.getFiles(123)).to.be.rejectedWith(/Invalid glob pattern/);
     });
 
-    it('should return a set of matching files', async () => {
-      const pattern = "test/*.txt";
-      const mockResults = await globby(pattern);
-      const mockResultsSet = new Set(mockResults);
-
+    it('should return an array of matching files', async () => {
+      const pattern = path.join(testData, '*.txt');
       const result = await fileUtil.getFiles(pattern);
-      expect(result).to.be.instanceOf(Set);
-      expect(result.size).to.equal(mockResultsSet.size); // Compare Set sizes
+      expect(Array.isArray(result)).to.be.true;
+      expect(result.length).to.equal(2); // file1.txt and file2.txt
+      expect(result.some(f => f.includes('file1.txt'))).to.be.true;
+      expect(result.some(f => f.includes('file2.txt'))).to.be.true;
     });
 
     it('should throw an error for an empty pattern', async() => {
@@ -73,24 +73,20 @@ describe('FileUtil', () => {
 
   describe('readFile', () => {
     it('should read the content of a file', async() => {
-      const mockContent = 'File content';
-      const mockFilePath = 'mockfile.txt';
-
-      fileUtil.resolveFile = async() => {
-        return new Map([['path', mockFilePath]]);
-      };
-
-      fileUtil.readFile = async() => mockContent;
-      const result = await fileUtil.readFile(mockFilePath);
-      expect(result).to.equal(mockContent);
+      const testFile = fileUtil.fixSlashes(path.join(testData, 'file1.txt'));
+      const result = await fileUtil.readFile(await fileUtil.resolveFile(testFile));
+      expect(result).to.be.a('string');
+      expect(result.length).to.be.greaterThan(0);
     });
 
     it('should throw an error for an invalid file path', async() => {
-      await expect(fileUtil.readFile('invalid.txt')).to.be.rejectedWith(/File not found/);
+      const invalidFile = fileUtil.fixSlashes(path.join(testData, 'invalid.txt'));
+      await expect(fileUtil.resolveFile(invalidFile)).to.be.rejectedWith(/File not found/);
     });
 
     it('should throw an error for a non-existent file', async() => {
-      await expect(fileUtil.readFile('nonexistentfile.txt')).to.be.rejectedWith(/File not found/);
+      const nonexistentFile = fileUtil.fixSlashes(path.join(testData, 'nonexistentfile.txt'));
+      await expect(fileUtil.resolveFile(nonexistentFile)).to.be.rejectedWith(/File not found/);
     });
   });
 });
