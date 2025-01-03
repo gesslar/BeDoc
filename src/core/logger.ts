@@ -1,61 +1,38 @@
 import ModuleUtil from "./util/module.js";
 import Environment from "./env.js";
-
-type LoggerOptions = {
-  debug?: boolean;
-  debugLevel?: number;
-  name: string;
-};
-
-type VSCodeWindow = {
-  showErrorMessage: (message: string) => void;
-  showWarningMessage: (message: string) => void;
-  showInformationMessage: (message: string) => void;
-};
+import { ICore } from "./types/core.js";
+import { LoggerOptions, VSCodeWindow } from "./types/logger.js";
 
 export default class Logger {
-  private core: any;
-  private name!: string;
+  private name: string;
   private debugMode?: boolean;
   private debugLevel?: number;
-  private vscodeError?: (message: string) => void;
-  private vscodeWarn?: (message: string) => void;
-  private vscodeInfo?: (message: string) => void;
-
-  constructor(core: any) {
-    ModuleUtil.require("package.json").then((pkg) => {
-      const { name } = pkg;
-
-      this.core = core;
-      this.name = name;
-      this.debugMode = core?.options?.debug;
-      this.debugLevel = core?.options?.debugLevel;
-
-      if (core?.env === Environment.EXTENSION) {
-        this.initVSCode();
-      }
-    });
-  }
-
-  private async initVSCode(): Promise<void> {
-    const vscode = await import("vscode") as { window: VSCodeWindow };
-    this.vscodeError = vscode.window.showErrorMessage.bind(vscode.window);
-    this.vscodeWarn = vscode.window.showWarningMessage.bind(vscode.window);
-    this.vscodeInfo = vscode.window.showInformationMessage.bind(vscode.window);
-  }
+  private vscodeError?: VSCodeWindow["showErrorMessage"];
+  private vscodeWarn?: VSCodeWindow["showWarningMessage"];
+  private vscodeInfo?: VSCodeWindow["showInformationMessage"];
 
   private colors = {
-    debug: "\x1b[48;5;129m",
-    info: "\x1b[48;5;039m",
-    warn: "\x1b[48;5;208m",
-    error: "\x1b[48;5;124m",
-    reset: "\x1b[0m"
+    debug: "\x1b[36m", // Cyan
+    info: "\x1b[32m",  // Green
+    warn: "\x1b[33m",  // Yellow
+    error: "\x1b[31m", // Red
+    reset: "\x1b[0m",  // Reset
   } as const;
 
+  constructor(core: ICore | null) {
+    this.name = "BeDoc";
+    if (core?.options.env === Environment.EXTENSION) {
+      const vscode = ModuleUtil.require("vscode");
+      this.vscodeError = vscode.window.showErrorMessage;
+      this.vscodeWarn = vscode.window.showWarningMessage;
+      this.vscodeInfo = vscode.window.showInformationMessage;
+    }
+  }
+
   setOptions(options: LoggerOptions): void {
+    this.name = options.name;
     this.debugMode = options.debug;
     this.debugLevel = options.debugLevel;
-    this.name = options.name;
   }
 
   private _capitalize(str: string): string {

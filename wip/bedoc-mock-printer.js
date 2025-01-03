@@ -1,6 +1,6 @@
 const meta = Object.freeze({
-  name: "mock",
-  type: "printer",
+  format: "mock",
+  formatExtension: ".mock",
 });
 
 class Printer {
@@ -8,13 +8,20 @@ class Printer {
     this.core = core;
   }
 
-  print(content) {
-    return `
+  print(module, content) {
+    const output = `
       Type: ${content.name}
       Lines: ${content.metadata?.lines}
       Length: ${content.metadata?.length}
       Content: ${content.content}
     `.trim();
+
+    return {
+      status: "success",
+      message: "File printed successfully",
+      destFile: `${module}${meta.formatExtension}`,
+      content: output,
+    };
   }
 };
 

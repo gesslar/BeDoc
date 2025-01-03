@@ -3,12 +3,12 @@ import { resolve } from "path";
 
 export default class ModuleUtil {
   /**
-   * Requires a module
+   * Requires a module synchronously
    * @param module - The module to require
-   * @returns {Promise<any>}
+   * @returns The required module
    */
-  static async require(module: string): Promise<any> {
+  static require(module: string): any {
     const resolvedFile = resolve(process.cwd(), module).replace(/\\/g, "/");
-    return await createRequire(import.meta.url)(resolvedFile);
+    return createRequire(import.meta.url)(resolvedFile);
   }
 }

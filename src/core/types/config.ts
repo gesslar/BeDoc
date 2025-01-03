@@ -15,6 +15,10 @@ export type ConfigParameter = {
   };
 };
 
+/**
+ * The strict type for core options after validation.
+ * This type is used internally by the Core class.
+ */
 export type CoreOptions = {
   env: string;
   mock?: string;
@@ -25,5 +29,13 @@ export type CoreOptions = {
   hooks?: string;
   debug?: boolean;
   debugLevel?: number;
+};
+
+/**
+ * The type for user-provided options before validation.
+ * This type allows unknown keys but will be validated and
+ * converted to CoreOptions.
+ */
+export type UserOptions = Partial<CoreOptions> & {
   [key: string]: unknown;
 };

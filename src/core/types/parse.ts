@@ -1,4 +1,5 @@
 import { Engine } from "./engine.js";
+import { BaseResponse } from "./common.js";
 
 type ParserMap = { [key in ParserKey]: ParserMeta | ParserClass };
 type ParserKey = "meta" | Engine.PARSER;
@@ -9,14 +10,17 @@ type ParserMeta = {
   languageExtension: string;
 };
 
-type ParseResponse = {
-  success: boolean;
-  result?: any;
-  error?: boolean;
+/**
+ * Response type for parse operations that need file context
+ */
+type FileResponse = BaseResponse & {
   file?: string;
   line?: string;
   lineNumber?: number;
-  message?: string;
+};
+
+type ParseResponse = FileResponse & {
+  result?: any;
 };
 
 type ParserClass = {

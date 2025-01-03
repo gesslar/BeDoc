@@ -1,11 +1,12 @@
 import FileUtil from "./util/fd.js";
 import {
   HOOK_TYPE,
-  HOOK_UP,
+  CLASS_TO_HOOK_MAP,
   PRINT_HOOKS,
   PARSE_HOOKS,
   Hooks,
 } from "./types/hook.js";
+import { ICore } from "./types/core.js";
 
 type Hookable = {
   constructor: { name: string };
@@ -15,11 +16,11 @@ type Hookable = {
 };
 
 export default class HookManager {
-  private core: any;
+  private core: ICore;
   private fileUtil: FileUtil;
   private hooks: { [key: string]: Hooks };
 
-  constructor(core: any) {
+  constructor(core: ICore) {
     this.core = core;
     this.fileUtil = new FileUtil();
     this.hooks = {};
@@ -53,7 +54,7 @@ export default class HookManager {
    */
   async on(this: Hookable, event: HOOK_TYPE, ...args: any[]): Promise<void> {
     if (!event)
-      throw new Error("Valid event is required");
+      throw new Error("[on] Event type is required for hook invocation");
 
     const hook = this.hooks?.[event];
     if (!hook)
@@ -79,7 +80,7 @@ export default class HookManager {
     if (name !== HOOK_TYPE.PRINT && name !== HOOK_TYPE.PARSE)
       throw new Error(`[attachHooks] Invalid target type: ${name}`);
 
-    target.hooks = this.hooks[HOOK_UP[name]];
+    target.hooks = this.hooks[CLASS_TO_HOOK_MAP[name]];
     target.hook = this.on;
     target.HOOKS = name === HOOK_TYPE.PRINT ? PRINT_HOOKS : PARSE_HOOKS;
 

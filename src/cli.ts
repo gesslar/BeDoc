@@ -7,6 +7,7 @@ import Environment from "./core/env.js";
 import ModuleUtil from "./core/util/module.js";
 import { ConfigurationParameters } from "./core/configuration.js";
 import { CoreOptions } from "./core/types.js";
+
 // We need our own logger instance, because we aren't the Core object.
 const logger = new Logger(null);
 const fdUtil = new FDUtil();
@@ -21,7 +22,7 @@ const fdUtil = new FDUtil();
 // Main entry point
 (async () => {
   try {
-    const packageJson = await ModuleUtil.require("package.json");
+    const packageJson = ModuleUtil.require("package.json");
 
     program
       .name(packageJson.name)
@@ -58,7 +59,7 @@ const fdUtil = new FDUtil();
 
     debug(`[CLI] Options passed: ${JSON.stringify(options, null, 2)}`, options.debugLevel);
 
-    let finalConfig = {} as CoreOptions;
+    let finalConfig: Partial<CoreOptions> = {};
     if (options.config) {
       debug(`[CLI] Config file: ${options.config}`, options.debugLevel);
       const resolvedConfigFile = await fdUtil.resolveFile(options.config);
@@ -67,7 +68,7 @@ const fdUtil = new FDUtil();
       if (!fs.existsSync(options.config ?? ""))
         throw new Error(`Config file does not exist: ${options.config}`);
 
-      const config = await ModuleUtil.require(options.config);
+      const config = ModuleUtil.require(options.config);
       finalConfig = { ...options, ...config };
       logger.setOptions({ name: packageJson.name, debugLevel: finalConfig.debugLevel, debug: finalConfig.debug });
       debug(`[CLI] Loaded configuration from ${options.config}`, 2);
@@ -77,10 +78,10 @@ const fdUtil = new FDUtil();
     debug(`[CLI] Final Options: ${JSON.stringify(finalConfig, null, 2)}`, options.debugLevel);
 
     for (const [key, value] of Object.entries(finalConfig)) {
-      let resolvedValue: string | string[];
+      let resolvedValue: string | string[] | undefined;
 
-      if (ConfigurationParameters[key]) {
-        const parameter = ConfigurationParameters[key];
+      if (key in ConfigurationParameters) {
+        const parameter = ConfigurationParameters[key as keyof typeof ConfigurationParameters];
         const [_, type, array] = /^(\w+)(\[\])?$/.exec(parameter?.type ?? "") || [];
 
         debug(`[CLI] Parameter: ${key} = ${value}`, options.debugLevel);
@@ -94,7 +95,7 @@ const fdUtil = new FDUtil();
 
         if (parameter?.subtype?.path) {
           if (key === "input")
-            resolvedValue = Array.isArray(value) ? value : [value];
+            resolvedValue = Array.isArray(value) ? value : [value as string];
           else
             resolvedValue = value as string;
 
@@ -108,34 +109,40 @@ const fdUtil = new FDUtil();
           if (Array.isArray(resolvedValue)) {
             debug(`[CLI] Resolving ${pathType}s for ${key} = ${JSON.stringify(resolvedValue, null, 2)}`, options.debugLevel);
 
-            const resolvedFiles: any[] = [];
+            const resolvedFiles: string[] = [];
             for (const file of resolvedValue) {
               debug(`[CLI] Resolving ${pathType}: ${file}`, options.debugLevel);
-              const resolvedFile = await resolveFunction(file as string);
+              const resolvedFile = await resolveFunction(file);
               debug(`[CLI] Resolved ${pathType}: ${resolvedFile}`, options.debugLevel);
-              resolvedFiles.push(resolvedFile);
+              resolvedFiles.push(resolvedFile.path);
             }
 
             debug(`[CLI] Resolved paths for ${key} = ${JSON.stringify(resolvedFiles, null, 2)}`, options.debugLevel);
-            finalConfig[key] = resolvedFiles as string[];
+            if (key in ConfigurationParameters) {
+              (finalConfig as any)[key] = resolvedFiles;
+            }
           } else {
             debug(`[CLI] Resolving ${pathType} for ${key} = ${resolvedValue}`, options.debugLevel);
-            const resolvedFile = await resolveFunction(resolvedValue as string);
+            const resolvedFile = await resolveFunction(resolvedValue);
             debug(`[CLI] Resolved ${pathType} for ${key} = ${resolvedFile.uri}`, options.debugLevel);
-            finalConfig[key] = resolvedFile;
+            if (key in ConfigurationParameters) {
+              (finalConfig as any)[key] = resolvedFile.path;
+            }
           }
 
           if (mustExist) {
             const missingPaths = Array.isArray(resolvedValue)
               ? resolvedValue.filter(item => !fs.existsSync(item))
-              : (!fs.existsSync(resolvedValue as string) ? [resolvedValue] : []);
+              : (!fs.existsSync(resolvedValue) ? [resolvedValue] : []);
 
             if (missingPaths.length > 0) throw new Error(`${key} path(s) do not exist: ${missingPaths.join(", ")}`);
           }
-        } else
+        } else {
           resolvedValue = value as string;
-
-        finalConfig[key] = resolvedValue;
+          if (key in ConfigurationParameters) {
+            (finalConfig as any)[key] = resolvedValue;
+          }
+        }
       } else {
         logger.warn(`[CLI] Unknown option: ${key}`);
       }
@@ -143,12 +150,12 @@ const fdUtil = new FDUtil();
 
     debug(`[CLI] Final configuration (resolved): ${JSON.stringify(finalConfig, null, 2)}`, finalConfig.debugLevel, finalConfig.debug);
     // Validate input options
-    if (!finalConfig.input && !finalConfig.directory) {
-      throw new Error("You must specify either a directory (-d) or trailing file arguments.");
+    if (!finalConfig.input) {
+      throw new Error("You must specify input files.");
     }
 
     finalConfig.env = Environment.CLI;
-    const core = await Core.new(finalConfig);
+    const core = await Core.new(finalConfig as CoreOptions);
     await core.processFiles();
   } catch (e: any) {
     logger.error(`Error: ${e?.message}`);

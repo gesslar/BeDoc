@@ -1,16 +1,21 @@
 import { Engine } from "./engine.js";
+import { BaseResponse } from "./common.js";
 
 type PrinterMap = { [key in PrinterKey]: PrinterMeta | PrinterClass };
 type PrinterKey = "meta" | Engine.PRINTER;
 type PrinterValue = PrinterMeta | PrinterClass;
 
-type PrintResponse = {
-  status: "success" | "error";
-  destFile?: string;
+/**
+ * Response type for print operations that produce content
+ */
+type ContentResponse = BaseResponse & {
   content?: string;
+  destFile?: string;
+};
+
+type PrintResponse = ContentResponse & {
   file?: string;
   line?: string;
-  message?: string;
 };
 
 type PrinterMeta = {

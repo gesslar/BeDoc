@@ -7,10 +7,13 @@ import DataUtil from "./util/data.js";
 import ModuleUtil from "./util/module.js";
 import StringUtil from "./util/string.js";
 import ValidUtil from "./util/valid.js";
-import { CoreOptions, ParseResponse, PrintResponse, ParserMap, PrinterMap, ParserClass, PrinterClass } from "./types.js";
+import { CoreOptions, UserOptions } from "./types/config.js";
+import { ParseResponse, PrintResponse } from "./types.js";
+import { ICore } from "./types/core.js";
+import { ConfigurationParameters } from "./configuration.js";
 
-export default class Core {
-  private options: CoreOptions;
+export default class Core implements ICore {
+  public options: CoreOptions;
   public logger!: Logger;
   public fdUtil!: FDUtil;
   public string!: typeof StringUtil;
@@ -20,18 +23,48 @@ export default class Core {
   public parser!: { parse: (file: string, content: string) => Promise<ParseResponse> };
   public printer!: { print: (module: string, content: any) => Promise<PrintResponse> };
 
-  constructor(options: CoreOptions) {
-    if (!options.env || typeof options.env !== "string") {
-      throw new Error("Env is required");
-    }
-    if (options.mock && typeof options.mock !== "string") {
-      throw new Error("Mock must be a string");
+  private validateOptions(options: UserOptions): CoreOptions {
+    // Check required options
+    for (const [key, config] of Object.entries(ConfigurationParameters)) {
+      if (config.required && !(key in options)) {
+        throw new Error(`[Core] Required option missing: ${key}`);
+      }
     }
 
-    this.options = options;
+    // Validate option types
+    const validatedOptions: Partial<CoreOptions> = {};
+    for (const [key, value] of Object.entries(options)) {
+      const config = ConfigurationParameters[key as keyof typeof ConfigurationParameters];
+
+      // Skip unknown options
+      if (!config) continue;
+
+      // Validate type
+      const expectedType = config.type;
+      const actualType = typeof value;
+      if (value !== undefined && actualType !== expectedType) {
+        throw new Error(`[Core] Invalid type for ${key}: expected ${expectedType}, got ${actualType}`);
+      }
+
+      // Validate path subtypes if needed
+      if (config.subtype?.path && typeof value === "string") {
+        const { type, mustExist } = config.subtype.path;
+        // Path validation would go here - for now we just pass it through
+      }
+
+      // Use default if value is undefined
+      validatedOptions[key as keyof CoreOptions] = value ?? config.default;
+    }
+
+    // Ensure we have all required properties for CoreOptions
+    return validatedOptions as CoreOptions;
   }
 
-  static async new(options: CoreOptions): Promise<Core> {
+  constructor(options: CoreOptions | UserOptions) {
+    this.options = 'env' in options ? options as CoreOptions : this.validateOptions(options as UserOptions);
+  }
+
+  static async new(options: CoreOptions | UserOptions): Promise<Core> {
     const instance = new Core(options);
     const logger = new Logger(instance);
     instance.logger = logger;
@@ -101,7 +134,7 @@ export default class Core {
     return instance;
   }
 
-  async processFiles(): Promise<Object> {
+  async processFiles(): Promise<{ status: string; message: string }> {
     this.logger.debug("Processing files...");
 
     // Get input files
@@ -124,7 +157,7 @@ export default class Core {
       // Parse the file
       this.logger.debug(`Parsing file: ${resolvedFile.path}`);
       const parseResult = await this.parser.parse(resolvedFile.path, fileContent);
-      if (!parseResult.success) {
+      if (parseResult.status === "error") {
         throw new Error(`Failed to parse ${resolvedFile.path}: ${parseResult.message}`);
       }
 
@@ -152,13 +185,17 @@ export default class Core {
   }
 
   /**
- * Writes content to the output file or prints to stdout if in CLI mode.
- * @param output
- * @param destFile
- * @param content
- * @returns {Promise<Object>}
- */
-  async outputFile(output: string | undefined, destFile: string, content: string): Promise<Object> {
+   * Writes content to the output file or prints to stdout if in CLI mode.
+   * @param output
+   * @param destFile
+   * @param content
+   * @returns {Promise<Object>}
+   */
+  async outputFile(
+    output: string | undefined,
+    destFile: string,
+    content: string
+  ): Promise<{ destFile: string | null; status: string; message: string }> {
     this.logger.debug(`[outputFile] Output: ${output}, DestFile: ${destFile}, Content length: ${content.length}`);
     if (this.options.env === Environment.CLI && !output) {
       // Print to stdout if no output file is specified in CLI mode

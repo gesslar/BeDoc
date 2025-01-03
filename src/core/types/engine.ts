@@ -12,7 +12,7 @@ const enum Engine {
   PRINTER = "printer",
 }
 
-type DiscoveredMap = {
+type Discovered = {
   parser: { [key: string]: DiscoveredParser };
   printer: { [key: string]: DiscoveredPrinter };
 };
@@ -27,10 +27,16 @@ type DiscoveredPrinter = {
   printer: PrinterClass;
 };
 
+type ModuleSource = {
+  path: string;
+  absoluteUri: string;
+};
+
 export {
   Engine,
   EngineExports,
-  DiscoveredMap,
+  Discovered,
   DiscoveredParser,
   DiscoveredPrinter,
+  ModuleSource,
 };

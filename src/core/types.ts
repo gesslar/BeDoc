@@ -27,7 +27,6 @@ export type {
 
 export type {
   EngineExports,
-  DiscoveredMap,
 } from "./types/engine.js";
 
 export type {
@@ -46,7 +45,7 @@ export type {
 
 export type {
   HOOK_TYPE,
-  HOOK_UP,
+  CLASS_TO_HOOK_MAP,
   PRINT_HOOKS,
   PARSE_HOOKS,
   Hook,

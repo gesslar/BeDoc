@@ -5,7 +5,12 @@ import Logger from "./logger.js";
 import FileUtil from "./util/fd.js";
 import { ParserClass, ParserMeta } from "./types/parse.js";
 import { PrinterClass, PrinterMeta } from "./types/print.js";
-import { EngineExports } from "./types/engine.js";
+import {
+  EngineExports,
+  Discovered,
+  ModuleSource
+} from "./types/engine.js";
+import { ICore } from "./types/core.js";
 
 function isParserMeta(meta: ParserMeta | PrinterMeta): meta is ParserMeta {
   return 'language' in meta;
@@ -15,30 +20,46 @@ function isPrinterMeta(meta: ParserMeta | PrinterMeta): meta is PrinterMeta {
   return 'format' in meta;
 }
 
-type Discovered = {
-  parser: { [key: string]: DiscoveredParser };
-  printer: { [key: string]: DiscoveredPrinter };
-};
-
-type DiscoveredParser = {
-  meta: ParserMeta;
-  parser: ParserClass;
-};
-
-type DiscoveredPrinter = {
-  meta: PrinterMeta;
-  printer: PrinterClass;
-};
-
 export default class Discovery {
-  private core: any;
+  private core: ICore;
   private logger: Logger;
   private fileUtil: FileUtil;
 
-  constructor(core: any) {
+  constructor(core: ICore) {
     this.core = core;
     this.logger = new Logger(core);
     this.fileUtil = new FileUtil();
+  }
+
+  /**
+   * Process a module and register any discovered parsers/printers
+   * @param discovered - The current discovery state
+   * @param moduleSource - The module source information
+   */
+  private async processModule(
+    discovered: Discovered,
+    moduleSource: ModuleSource
+  ): Promise<void> {
+    const { absoluteUri } = moduleSource;
+
+    this.logger.debug(`[processModule] Processing module ${absoluteUri}`);
+    const module = await import(absoluteUri) as EngineExports;
+
+    if (module.Parser && module.meta && isParserMeta(module.meta)) {
+      this.logger.debug(`[processModule] Found parser for language ${module.meta.language}`);
+      discovered.parser[module.meta.language] = {
+        meta: module.meta,
+        parser: module.Parser
+      };
+    }
+
+    if (module.Printer && module.meta && isPrinterMeta(module.meta)) {
+      this.logger.debug(`[processModule] Found printer for format ${module.meta.format}`);
+      discovered.printer[module.meta.format] = {
+        meta: module.meta,
+        printer: module.Printer
+      };
+    }
   }
 
   /**
@@ -55,34 +76,19 @@ export default class Discovery {
     // TODO: Need to use workspace path instead of __dirname
     const localModulesPath = path.resolve(__dirname, "../../node_modules");
     const globalNodeModules = execSync("npm root -g").toString().trim();
-
     const discovered: Discovered = { parser: {}, printer: {} };
 
     for (const modulesPath of [localModulesPath, globalNodeModules]) {
       const modules = fs
         .readdirSync(modulesPath)
-        .filter((name) => name.startsWith("bedoc-"));
+        .filter((name) => name.startsWith("bedoc-"))
+        .map(name => ({
+          path: path.join(modulesPath, name),
+          absoluteUri: path.join(modulesPath, name)
+        }));
 
-      for (const moduleName of modules) {
-        const modulePath = path.join(modulesPath, moduleName);
-        const module = await import(modulePath) as EngineExports;
-
-        if (module.Parser && module.meta && isParserMeta(module.meta)) {
-          const parsers = discovered.parser;
-          const parser = {
-            meta: module.meta,
-            parser: module.Parser
-          };
-          parsers[module.meta.language] = parser;
-        }
-        if (module.Printer && module.meta && isPrinterMeta(module.meta)) {
-          const printers = discovered.printer || {};
-          const printer = {
-            meta: module.meta,
-            printer: module.Printer
-          };
-          printers[module.meta.format] = printer;
-        }
+      for (const moduleSource of modules) {
+        await this.processModule(discovered, moduleSource);
       }
     }
 
@@ -109,30 +115,9 @@ export default class Discovery {
 
     for (const file of files) {
       const resolvedFile = await resolveFile(file);
-      const absoluteUri = resolvedFile.absoluteUri;
-      if (!absoluteUri) continue;
+      if (!resolvedFile.absoluteUri) continue;
 
-      this.logger.debug(`[discoverMockModules] Processing file ${absoluteUri}`);
-      const module = await import(absoluteUri) as EngineExports;
-      this.logger.debug(`[discoverMockModules] Found meta ${JSON.stringify(module.meta, null, 2)}`);
-
-      if (module.Parser && module.meta && isParserMeta(module.meta)) {
-        this.logger.debug(`[discoverMockModules] Found parser for language ${module.meta.language}`);
-        const parser = {
-          meta: module.meta,
-          parser: module.Parser as ParserClass
-        };
-        discovered.parser[module.meta.language] = parser;
-      }
-
-      if (module.Printer && module.meta && isPrinterMeta(module.meta)) {
-        this.logger.debug(`[discoverMockModules] Found printer for format ${module.meta.format}`);
-        const printer = {
-          meta: module.meta,
-          printer: module.Printer as PrinterClass
-        };
-        discovered.printer[module.meta.format] = printer;
-      }
+      await this.processModule(discovered, resolvedFile);
     }
 
     return discovered;
