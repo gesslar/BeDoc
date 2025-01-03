@@ -4,7 +4,7 @@
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="/BeDoc/assets/css/style.css?v=466d7cbcdc88d1159383f5579d46d359c7dd723d">
+    <link rel="stylesheet" href="/BeDoc/assets/css/style.css?v=f73aff5b7bf3e99b9cb348bf764eebe00e3eef00">
     <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
 
 <!-- Setup theme-color -->
@@ -66,7 +66,7 @@
           <h1>BeDoc</h1>
         </a>
         <h2>Bespoke Documentation Generator</h2>
-        <section id="nav"> <div class="wrapper"><nav class="site-nav"><a class="page-link" href="/BeDoc/about/">About</a><a class="page-link" href="/BeDoc/faq/">FAQ</a></nav></div>
+        <section id="nav"> <div class="wrapper"><nav class="site-nav"><a class="page-link" href="/BeDoc/about/">About</a><a class="page-link" href="/BeDoc/faq/">FAQ</a><a class="page-link" href="/BeDoc/parsers.html">Creating Parsers</a></nav></div>
  </section>
         <section id="repo_url">
           <a href="https://github.com/gesslar/BeDoc" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
@@ -76,20 +76,51 @@
 
     <div class="container">
       <section id="main_content">
-        <p>BeDoc is an innovative, open-source documentation engine that adapts to any programming language or file format. It is designed to simplify the documentation process by allowing developers to create, parse, and generate documentation efficiently using pluggable parsers and printers. Whether you’re a seasoned developer or just starting, BeDoc ensures seamless integration into your workflow.</p>
+        <p>BeDoc is an innovative, open-source documentation engine that adapts to any
+programming language or file format. It is designed to simplify the documentation
+process by allowing developers to create, parse, and generate documentation
+efficiently using pluggable parsers and printers. Whether you’re a seasoned
+developer or just starting, BeDoc ensures seamless integration into your
+workflow.</p>
 
 <h2 id="what-makes-bedoc-unique">What Makes BeDoc Unique?</h2>
 
 <ul>
-  <li><strong>Versatility</strong>: Supports a variety of environments, including CLI, VS Code extensions, and GitHub Actions.</li>
-  <li><strong>Extensibility</strong>: With its pluggable architecture, developers can create custom modules to suit project-specific requirements.</li>
-  <li><strong>Ease of Use</strong>: Intuitive configuration and module discovery streamline setup and usage, saving valuable time.</li>
-  <li><strong>Open Source</strong>: Released under <a href="https://unlicense.org">The Unlicense</a>, BeDoc places no restrictions on usage, modification, or distribution.</li>
+  <li><strong>Versatility</strong>: Supports a variety of environments, including CLI, VS Code
+extensions, and GitHub Actions.</li>
+  <li><strong>Extensibility</strong>: With its pluggable architecture, developers can create
+custom parsers and printers, and use hooks to modify the documentation process
+without changing core code.</li>
+  <li><strong>Type Safety</strong>: Built with TypeScript, BeDoc provides consistent response
+types and error handling across all operations, making debugging and
+maintenance straightforward.</li>
+  <li><strong>Ease of Use</strong>: Intuitive configuration, automatic module discovery, and a
+powerful hook system streamline setup and customization.</li>
+  <li><strong>Mock Testing</strong>: Develop and test your parsers and printers in isolation with
+a local mock environment.</li>
+  <li><strong>Open Source</strong>: Released under <a href="https://unlicense.org">The Unlicense</a>, BeDoc
+places no restrictions on usage, modification, or distribution.</li>
 </ul>
+
+<h2 id="architecture">Architecture</h2>
+
+<p>BeDoc’s architecture is built around three core concepts:</p>
+<ul>
+  <li><strong>Parsers</strong>: Convert source code into structured documentation data</li>
+  <li><strong>Printers</strong>: Transform structured data into the desired output format</li>
+  <li><strong>Hooks</strong>: Modify the documentation process at any point</li>
+</ul>
+
+<p>This modular design allows for maximum flexibility while maintaining type safety
+and predictable behavior.</p>
 
 <h2 id="join-the-community">Join the Community</h2>
 
-<p>BeDoc thrives on contributions and collaboration. Whether you want to explore the codebase, report an issue, or contribute new features, we invite you to get involved. Visit our <a href="https://github.com/gesslar/BeDoc">GitHub repository</a> to learn more and start contributing. For any feedback or bug reports, check out our <a href="https://github.com/gesslar/BeDoc/issues">issue tracker</a>.</p>
+<p>BeDoc thrives on contributions and collaboration. Whether you want to explore the
+codebase, report an issue, or contribute new features, we invite you to get
+involved. Visit our <a href="https://github.com/gesslar/BeDoc">GitHub repository</a> to learn more and start
+contributing. For any feedback or bug reports, check out our
+<a href="https://github.com/gesslar/BeDoc/issues">issue tracker</a>.</p>
 
       </section>
     </div>
