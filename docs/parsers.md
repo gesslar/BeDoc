@@ -205,11 +205,20 @@ export class Parser {
 
 ## Testing Your Parser
 
-BeDoc provides a mock mode for testing parsers:
+BeDoc provides multiple ways to test your parsers:
 
-```bash
-bedoc --mock ./my-parser -l mylang -f markdown -i test/*.ml -o test/docs
-```
+1. **Mock Mode**: Test using a local mock environment:
+   ```bash
+   bedoc --mock ./my-parser -l mylang -f markdown -i test/*.ml -o test/docs
+   ```
 
-This allows you to test your parser with sample files before integrating it into
-your main project.
+2. **Direct File Usage**: Test your parser file directly without installation:
+   ```bash
+   bedoc --parser ./my-parser.js --printer markdown -i test/*.ml -o test/docs
+   # Or use the short form
+   bedoc -p ./my-parser.js -r markdown -i test/*.ml -o test/docs
+   ```
+
+These options allow you to rapidly iterate on your parser implementation without
+needing to package and install it first. The direct file usage is particularly
+helpful during initial development and debugging.

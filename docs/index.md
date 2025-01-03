@@ -50,6 +50,11 @@ and powerful solution.
 
    # Use mock mode for testing parsers/printers
    bedoc --mock ./mock-modules -l lpc -f markdown -i test/*.c -o test/docs
+
+   # Use local parser and printer files directly (no installation needed)
+   bedoc --parser ./my-parser.js --printer ./my-printer.js -i src/*.c -o docs
+   # Or use the short form
+   bedoc -p ./my-parser.js -r ./my-printer.js -i src/*.c -o docs
    ```
 
 3. **Hook System**:

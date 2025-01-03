@@ -62,6 +62,19 @@ using a local mock environment. Instead of installing modules globally, you can
 point BeDoc to a local directory containing your test modules. This is
 particularly useful during development and testing phases.
 
+## Can I use parsers and printers without installing them?
+Yes! BeDoc allows you to use parser and printer files directly from your local
+filesystem without installation. Simply use the `--parser` (or `-p`) and
+`--printer` (or `-r`) options:
+```bash
+bedoc --parser ./my-parser.js --printer ./my-printer.js -i src/*.c -o docs
+```
+This is particularly useful for:
+- Quick testing of new parsers/printers
+- One-off documentation tasks
+- Using project-specific parsers without global installation
+- Rapid prototyping of documentation workflows
+
 ## Should I use BeDoc for my project?
 If your project requires support for niche formats, custom documentation needs,
 or you need fine-grained control over the documentation process through hooks,
