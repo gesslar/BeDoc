@@ -1,4 +1,5 @@
 import FileUtil from "./util/fd.js";
+import DataUtil from "./util/data.js";
 import { CLASS_TO_HOOK, HOOK_TO_CLASS, PRINT_HOOKS, PARSE_HOOKS }from "./include/hooks.js";
 
 export default class HookManager {
@@ -13,7 +14,7 @@ export default class HookManager {
    *
    * @returns The type of hooks attached
    */
-  async load() {
+  load = async() => {
     const hooksFile = this.core.options.hooks;
     if(!hooksFile)
       return;
@@ -23,13 +24,17 @@ export default class HookManager {
     this.hooks = hooks;
   }
 
+  getAvailableHooks = () =>
+    this.hooks ||
+    DataUtil.allocate(Object.keys(CLASS_TO_HOOK), _ => {})
+
   /**
    * Attach hooks to a target
    *
    * @param target - The target to attach hooks to
    * @returns The type of hooks attached
    */
-  attachHooks(target) {
+  attachHooks = target => {
     if(!target.constructor?.name)
       throw new Error("[attachHooks] Target must have a constructor name");
 
@@ -51,16 +56,6 @@ export default class HookManager {
     return name;
   }
 
-  isErrorResponse = result => {
-    const keys = Object.keys(result || {});
-    return keys.includes("status") && result.status === "error" && keys.includes("error");
-  }
-
-  isSuccessResponse = result => {
-    const keys = Object.keys(result || {});
-    return keys.includes("status") && result.status === "success";
-  }
-
   /**
    * Trigger a hook
    *
@@ -72,31 +67,41 @@ export default class HookManager {
     if(!event)
       throw new Error("[on] Event type is required for hook invocation");
 
-    const hook = this.hooks?.[event];
+    const hook = this.hooks?.[event] || null;
     if(!hook)
       return;
 
-    const result = await hook(args) || {};
-    if(this.isErrorResponse(result))
-      throw result.error;
-
-    if(this.isSuccessResponse(result))
-      return result;
-
-    return;
-  }
-
-
-  /*
-    validateHooks(events, validHooks) {
-      if (!events || events.length === 0 || !validHooks || Object.keys(validHooks).length === 0)
-        return;
-
-      const HOOKS = Object.values(validHooks);
-      events.forEach((handler, event) => {
-        if (!HOOKS.includes(event))
-          throw new Error(`Unknown event "${event}"`);
-      });
+    if(hook) {
+      try {
+        const result = await hook(...args);
+        if(result?.status === "error")
+          throw result.error;
+        return result;
+      } catch(error) {
+        this.logger.error(`[on] Error executing hook "${event}": ${error.message}`);
+        throw error;
+      }
     }
-  */
+  }
+/*
+
+  validateHooks = (events, validHooks = {}) => {
+    if(!events || events.size === 0 || !validHooks || Object.keys(validHooks).length === 0)
+      return;
+console.log(events)
+    console.debug(`[validateHooks] Events: ${JSON.stringify(events, null, 2)}`);
+    console.debug(`[validateHooks] Valid hooks: ${JSON.stringify(validHooks, null, 2)}`);
+
+    console.log(HOOK_TYPES);
+    console.log()
+    const HOOKS = Object.values(validHooks);
+    events.forEach((handler, event) => {
+      if(!HOOKS.includes(event))
+        throw new Error(`Unknown event "${event}"`);
+
+      if(typeof handler !== "function")
+        throw new Error(`Handler for "${type} ${event}" is not a function.`);
+    });
+  }
+*/
 }

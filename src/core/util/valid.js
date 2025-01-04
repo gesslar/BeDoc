@@ -8,6 +8,13 @@ export default class ValidUtil {
   static string = (str, nonEmpty = false) => typeof str === "string" && (nonEmpty ? str.length > 0 : true);
 
   /**
+   *
+   * @param f - The value to check if is a function
+   * @returns boolean
+   */
+  static func = f => typeof f === "function";
+
+  /**
    * Validates an array
    * @param arr - The array to validate
    * @param nonEmpty - Whether the array must be non-empty
@@ -22,7 +29,7 @@ export default class ValidUtil {
    * @param nonEmpty - Whether the array must be non-empty
    * @returns boolean
    */
-  static arrayUniform = (arr, type, nonEmpty = false) => Array.isArray(arr) && arr.every(item => typeof item === type) && (nonEmpty ? arr.length > 0 : true);
+  static arrayUniform = (arr, type, nonEmpty = false) => ValidUtil.array(arr, nonEmpty) && arr.every(item => typeof item === type) && (nonEmpty ? arr.length > 0 : true);
 
   /**
    * Validates a value against a type

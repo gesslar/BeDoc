@@ -1,9 +1,9 @@
 import { program }from "commander";
-import Core from "./core/core.js";
-import Logger from "./core/logger.js";
-import ModuleUtil from "./core/util/module.js";
-import { ConfigurationParameters }from "./core/configuration.js";
-import { ConfigValidator }from "./core/validation.js";
+import Core from "./core/core";
+import Logger from "./core/logger";
+import ModuleUtil from "./core/util/module";
+import { ConfigurationParameters }from "./core/configuration";
+import { ConfigValidator }from "./core/validation";
 
 // We need our own logger instance, because we aren't the Core object.
 const logger = new Logger(null);

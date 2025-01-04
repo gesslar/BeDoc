@@ -5,3 +5,4 @@ test/
 output/
 dist/
 coverage/
+.nyc_output/

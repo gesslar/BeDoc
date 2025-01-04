@@ -9,9 +9,6 @@
   "type": "module",
   "scripts": {
     "test": "nyc mocha --recursive tests/**/*.test.js",
-    "clean": "rimraf dist",
-    "clean-all": "rimraf node_modules && rimraf package-lock.json && rimraf yarn.lock",
-    "postinstall": "npm link",
     "mock": "node ./src/cli.js -c wip/bedoc.json",
     "docs:build": "cd docs && bundle exec jekyll build",
     "docs:serve": "cd docs && bundle exec jekyll serve",
@@ -26,8 +23,8 @@
     "chai": "^5.1.2",
     "chai-as-promised": "^8.0.1",
     "eslint": "^9.17.0",
-    "nyc": "^17.1.0",
-    "rimraf": "^6.0.1"
+    "mocha": "^11.0.1",
+    "nyc": "^17.1.0"
   },
   "engines": {
     "vscode": "^1.80.0"
@@ -47,12 +44,11 @@
     "printer"
   ],
   "nyc": {
+    "all": true,
     "include": [
       "src/**/*.js"
     ],
-    "exclude": [
-      "src/**/*.test.js"
-    ],
+    "exclude": [],
     "reporter": [
       "text",
       "html"

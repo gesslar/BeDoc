@@ -5,8 +5,7 @@ import * as chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 chai.use(chaiAsPromised);
 const { expect } = chai;
-import { globby } from 'globby';
-import FileUtil from '../../../dist/core/util/fd.js';
+import FileUtil from '../../../src/core/util/fd.js';
 
 describe('FileUtil', () => {
   let fileUtil;
