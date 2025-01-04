@@ -7,7 +7,7 @@ export default class ModuleUtil {
    * @param module - The module to require
    * @returns The required module
    */
-  static require<T = unknown>(module: string): T {
+  static require(module) {
     const resolvedFile = resolve(process.cwd(), module).replace(/\\/g, "/");
     return createRequire(import.meta.url)(resolvedFile);
   }

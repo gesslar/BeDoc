@@ -3,33 +3,17 @@ import path from "path";
 import { execSync }from "child_process";
 import Logger from "./logger.js";
 import FileUtil from "./util/fd.js";
-import { ParserClass, ParserMeta }from "./types/parse.js";
-import { PrinterClass, PrinterMeta }from "./types/print.js";
-import { Engine, EngineClass }from "./types/engine.js";
-import {
-  EngineExports,
-  Discovered,
-  ModuleSource,
-  DiscoveredPrinter,
-  DiscoveredParser
-}from "./types/engine.js";
-import { ICore }from "./types/core.js";
-import { FileMap }from "./types/fd.js";
 
-function isParserMeta(meta: ParserMeta | PrinterMeta): meta is ParserMeta {
+function isParserMeta(meta) {
   return "language" in meta;
 }
 
-function isPrinterMeta(meta: ParserMeta | PrinterMeta): meta is PrinterMeta {
+function isPrinterMeta(meta) {
   return "format" in meta;
 }
 
 export default class Discovery {
-  private core: ICore;
-  private logger: Logger;
-  private fileUtil: FileUtil;
-
-  constructor(core: ICore) {
+  constructor(core) {
     this.core = core;
     this.logger = new Logger(core);
     this.fileUtil = new FileUtil();
@@ -41,14 +25,11 @@ export default class Discovery {
    * @param discovered - The current discovery state
    * @param moduleSource - The module source information
    */
-  private async processModule(
-    discovered: Discovered,
-    moduleSource: ModuleSource
-  ): Promise<void> {
+  async processModule(discovered, moduleSource) {
     const { absoluteUri } = moduleSource;
 
     this.logger.debug(`[processModule] Processing module ${absoluteUri}`);
-    const module = await import(absoluteUri) as EngineExports;
+    const module = await import(absoluteUri);
 
     if(module.Parser && module.meta && isParserMeta(module.meta)) {
       this.logger.debug(`[processModule] Found parser for language ${module.meta.language}`);
@@ -72,7 +53,7 @@ export default class Discovery {
    * @param mockPath - The path to the mock modules
    * @returns A map of discovered modules
    */
-  public async discoverModules(mockPath?: string): Promise<Discovered> {
+  async discoverModules(mockPath) {
     if(mockPath) {
       this.logger.debug(`[discoverModules] Discovering mock modules in ${mockPath}`);
       return await this.discoverMockModules(mockPath);
@@ -81,7 +62,7 @@ export default class Discovery {
     // TODO: Need to use workspace path instead of __dirname
     const localModulesPath = path.resolve(__dirname, "../../node_modules");
     const globalNodeModules = execSync("npm root -g").toString().trim();
-    const discovered: Discovered = { parser: {}, printer: {} };
+    const discovered = { parser: {}, printer: {} };
 
     for(const modulesPath of [localModulesPath, globalNodeModules]) {
       const modules = fs
@@ -105,7 +86,7 @@ export default class Discovery {
    * @param mockPath - The path to the mock modules
    * @returns A map of discovered modules
    */
-  private async discoverMockModules(mockPath: string): Promise<Discovered> {
+  async discoverMockModules(mockPath) {
     const { getFiles, resolveFile } = this.fileUtil;
 
     this.logger.debug(`[discoverMockModules] Discovering mock modules in ${mockPath}`);
@@ -116,7 +97,7 @@ export default class Discovery {
 
     this.logger.debug(`[discoverMockModules] Files: ${JSON.stringify([...files], null, 2)}`);
 
-    const discovered: Discovered = { parser: {}, printer: {} };
+    const discovered = { parser: {}, printer: {} };
 
     for(const file of files) {
       if(!file.absoluteUri)
@@ -134,15 +115,15 @@ export default class Discovery {
    * @param fileMap - The FileMap object for the printer
    * @returns The printer
    */
-  public async specificPrinter(fileMap: FileMap): Promise<DiscoveredPrinter> {
+  async specificPrinter(fileMap) {
     if(!fileMap.path)
       throw new Error(`[specificPrinter] No path specified in ${fileMap.path}`);
 
     const printer = await this.specificModule(fileMap);
 
     return {
-      meta: printer.meta as PrinterMeta,
-      printer: printer.Printer as PrinterClass
+      meta: printer.meta,
+      printer: printer.Printer
     };
   }
 
@@ -152,15 +133,15 @@ export default class Discovery {
    * @param fileMap - The FileMap object for the parser
    * @returns The parser
    */
-  public async specificParser(fileMap: FileMap): Promise<DiscoveredParser> {
+  async specificParser(fileMap) {
     if(!fileMap.path)
       throw new Error(`[specificParser] No path specified in ${fileMap.path}`);
 
     const parser = await this.specificModule(fileMap);
 
     return {
-      meta: parser.meta as ParserMeta,
-      parser: parser.Parser as ParserClass
+      meta: parser.meta,
+      parser: parser.Parser
     };
   }
 
@@ -170,8 +151,8 @@ export default class Discovery {
    * @param fileMap - The FileMap object for the module
    * @returns The module
    */
-  private async specificModule(fileMap: FileMap): Promise<EngineExports> {
-    const result: EngineExports = await import(fileMap.absoluteUri) as EngineExports;
+  async specificModule(fileMap) {
+    const result = await import(fileMap.absoluteUri);
 
     if(result.Parser && result.meta && isParserMeta(result.meta))
       return result;

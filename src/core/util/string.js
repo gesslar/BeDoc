@@ -6,7 +6,7 @@ export default class StringUtil {
    * @param indentAt - The number of spaces to indent wrapped lines
    * @returns The wrapped text
    */
-  static wrap(str: string, wrapAt = 80, indentAt = 0): string {
+  static wrap(str, wrapAt = 80, indentAt = 0) {
     const sections = str.split("\n").map(section => {
       let parts = section.split(" ");
       let inCodeBlock = false;
@@ -60,12 +60,12 @@ export default class StringUtil {
    * @param str - The string to capitalize
    * @returns The capitalized string
    */
-  static capitalize = (str: string): string => `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
+  static capitalize = str => `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
 
   /**
    * Uncapitalizes the first letter of a string
    * @param str - The string to uncapitalize
    * @returns The uncapitalized string
    */
-  static uncapitalize = (str: string): string => `${str.charAt(0).toLowerCase()}${str.slice(1)}`;
+  static uncapitalize = str => `${str.charAt(0).toLowerCase()}${str.slice(1)}`;
 }

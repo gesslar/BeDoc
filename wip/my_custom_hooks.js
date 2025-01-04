@@ -6,6 +6,7 @@ const parse = {
 
 const print = {
   "enter": async({name, section, meta}) => {
+    console.log(name, section, meta);
     if(name == "description") {
       const translated = await getDadJoke();
       if(translated.status == "success")

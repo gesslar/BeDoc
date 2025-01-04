@@ -6,29 +6,14 @@ import DataUtil from "./util/data.js";
 import ModuleUtil from "./util/module.js";
 import StringUtil from "./util/string.js";
 import ValidUtil from "./util/valid.js";
-import { CoreOptions }from "./types/config.js";
-import { ParseResponse, PrintResponse }from "./types.js";
-import { ICore }from "./types/core.js";
-import { Environment }from "./types.js";
-import { FileMap, DirMap }from "./types/fd.js";
-import { BaseResponse }from "./types/common.js";
+import { Environment }from "./include/environment.js";
 
-export default class Core implements ICore {
-  public options: CoreOptions;
-  public logger!: Logger;
-  public fdUtil!: FDUtil;
-  public string!: typeof StringUtil;
-  public valid!: typeof ValidUtil;
-  public module!: typeof ModuleUtil;
-  public data!: typeof DataUtil;
-  public parser!: { parse: (file: string, content: string) => Promise<ParseResponse> };
-  public printer!: { print: (module: string, content: ParseResponse["result"]) => Promise<PrintResponse> };
-
-  constructor(options: CoreOptions) {
+export default class Core {
+  constructor(options) {
     this.options = options;
   }
 
-  static async new(options: CoreOptions): Promise<Core> {
+  static async new(options) {
     const instance = new Core(options);
     const logger = new Logger(instance);
     instance.logger = logger;
@@ -120,7 +105,7 @@ export default class Core implements ICore {
     return instance;
   }
 
-  async processFiles(): Promise<BaseResponse> {
+  async processFiles() {
     this.logger.debug("Processing files...");
 
     // Get input files - these are already FileMap objects from validation
@@ -137,7 +122,7 @@ export default class Core implements ICore {
       this.logger.debug(`Processing file: ${fileMap.path}`);
 
       // Read the file using the FileMap
-      const fileContent = await this.fdUtil.readFile(fileMap as FileMap);
+      const fileContent = await this.fdUtil.readFile(fileMap);
 
       // Parse the file
       this.logger.debug(`Parsing file: ${fileMap.path}`);
@@ -148,7 +133,7 @@ export default class Core implements ICore {
 
       // Print the results
       this.logger.debug(`Printing results for: ${fileMap.path}`);
-      const printResult = await this.printer.print(fileMap.module, parseResult.result) as PrintResponse;
+      const printResult = await this.printer.print(fileMap.module, parseResult.result);
 
       if(!printResult)
         throw new Error(`Failed to print ${fileMap.path}: ${printResult}`);
@@ -160,7 +145,7 @@ export default class Core implements ICore {
       if(!destFile || !content)
         throw new Error(`Failed to print ${fileMap.path}: ${printResult.message}`);
 
-      const writeResult = await this.outputFile(output as DirMap | undefined, destFile, content);
+      const writeResult = await this.outputFile(output, destFile, content);
     }
 
     return {
@@ -176,11 +161,7 @@ export default class Core implements ICore {
    * @param content
    * @returns {Promise<Object>}
    */
-  async outputFile(
-    output: DirMap | undefined,
-    destFile: string,
-    content: string
-  ): Promise<{ destFile: string | null; status: string; message: string }> {
+  async outputFile(output, destFile, content) {
     this.logger.debug(`[outputFile] Output: ${output?.path}, DestFile: ${destFile}, Content length: ${content.length}`);
     if(this.options.env === Environment.CLI && !output) {
       // Print to stdout if no output file is specified in CLI mode

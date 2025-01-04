@@ -1,19 +1,15 @@
 import path from "path";
 import fs from "fs";
-import { globby }from "globby";
+import {globby}from "globby";
 
 import DataUtil from "./data.js";
 import ValidUtil from "./valid.js";
-import { FileMap, DirMap }from "../types/fd.js";
 
 export default class FDUtil {
-  private data: DataUtil;
-  private valid: ValidUtil;
+  data = new DataUtil();
+  valid = new ValidUtil();
 
-  constructor() {
-    this.data = new DataUtil();
-    this.valid = new ValidUtil();
-  }
+  constructor() {}
 
   /**
    * Fix slashes in a path
@@ -21,7 +17,7 @@ export default class FDUtil {
    * @param pathName - The path to fix
    * @returns The fixed path
    */
-  fixSlashes = (pathName: string): string => pathName.replace(/\\/g, "/");
+  fixSlashes = pathName => pathName.replace(/\\/g, "/");
 
   /**
    * Convert a path to a URI
@@ -29,7 +25,7 @@ export default class FDUtil {
    * @param pathName - The path to convert
    * @returns The URI
    */
-  toUri = (pathName: string): string => `file://${this.fixSlashes(pathName)}`;
+  toUri = pathName => `file://${this.fixSlashes(pathName)}`;
 
   /**
    * Resolves a file to an absolute path
@@ -38,7 +34,7 @@ export default class FDUtil {
    * @returns The resolved file
    * @throws {Error}
    */
-  resolveFile = async(globPattern: string | string[]): Promise<FileMap> => {
+  resolveFile = async(globPattern) => {
     if(!ValidUtil.string(globPattern, true))
       throw new Error(`Expected string or array of strings, got: ${typeof globPattern}\n${JSON.stringify(globPattern)}`);6
 
@@ -64,7 +60,7 @@ export default class FDUtil {
    * @param file - The file
    * @returns The composed file path
    */
-  composeFilename = async(dir: string, file: string): Promise<FileMap> => {
+  composeFilename = async(dir, file) => {
     const dirObject = await this.composeDir(dir);
     const fileName = path.resolve(dirObject.path, file);
 
@@ -77,7 +73,7 @@ export default class FDUtil {
    * @param file - The file to map
    * @returns The mapped file
    */
-  mapFile = (file: string): FileMap => {
+  mapFile = file => {
     return {
       path: file,
       uri: this.toUri(file),
@@ -95,7 +91,7 @@ export default class FDUtil {
    * @param dir - The directory to map
    * @returns The mapped directory
    */
-  mapDir = (dir: string): DirMap => {
+  mapDir = dir => {
     return {
       path: dir,
       uri: this.toUri(dir),
@@ -109,20 +105,20 @@ export default class FDUtil {
    * @returns Set of file paths.
    * @throws {Error} Throws an error for invalid input or search failure.
    */
-  getFiles = async(globPattern: string | string[]): Promise<FileMap[]> => {
+  getFiles = async(globPattern) => {
     // Validate input
     if(!ValidUtil.string(globPattern, true) && !ValidUtil.array(globPattern, true))
       throw new Error("[getFiles] Invalid glob pattern: Must be a string or a non-empty array of strings.");
 
-    const globbyArray: string[] = [];
+    const globbyArray = [];
     if(ValidUtil.string(globPattern)) {
-      globbyArray.push(...(globPattern as string)
+      globbyArray.push(...(globPattern
         .split("|")
         .map(g => g.trim())
         .filter(Boolean)
-        .map(g => this.fixSlashes(g)));
+        .map(g => this.fixSlashes(g))));
     } else {
-      globbyArray.push(...(globPattern as string[]));
+      globbyArray.push(...globPattern);
     }
 
     if(Array.isArray(globbyArray) && !ValidUtil.arrayUniform(globbyArray, "string", true) && !globbyArray.length)
@@ -143,7 +139,7 @@ export default class FDUtil {
    * @returns The resolved path
    * @throws {Error}
    */
-  resolveDir = async(globPattern: string): Promise<DirMap> => {
+  resolveDir = async(globPattern) => {
     if(!ValidUtil.string(globPattern, true))
       throw new Error("Path is required");
 
@@ -176,7 +172,7 @@ export default class FDUtil {
    * @param dir - The directory
    * @returns The composed directory map
    */
-  composeDir = async(dir: string): Promise<DirMap> => {
+  composeDir = async(dir) => {
     return this.mapDir(dir);
   };
 
@@ -186,7 +182,7 @@ export default class FDUtil {
    * @param fileObject - The file map containing the file path
    * @returns The file contents
    */
-  readFile = async(fileObject: FileMap): Promise<string> => {
+  readFile = async(fileObject) => {
     const absolutePath = fileObject.absolutePath;
     if(!absolutePath) throw new Error("No absolute path in file map");
     return await fs.promises.readFile(absolutePath, "utf8");
@@ -198,7 +194,7 @@ export default class FDUtil {
    * @param fileObject - The file map containing the file path
    * @param content - The content to write
    */
-  writeFile = async(fileObject: FileMap, content: string): Promise<void> => {
+  writeFile = async(fileObject, content) => {
     const absolutePath = fileObject.absolutePath;
     if(!absolutePath) throw new Error("No absolute path in file map");
     return await fs.promises.writeFile(absolutePath, content, "utf8");

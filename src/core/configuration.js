@@ -1,6 +1,4 @@
-import { ConfigParameter }from "./types/config.js";
-
-export const ConfigurationParameters: Record<string, ConfigParameter> = {
+export const ConfigurationParameters = {
   input: {
     short: "i",
     param: "file",
@@ -124,4 +122,4 @@ export const ConfigurationParameters: Record<string, ConfigParameter> = {
     required: false,
     default: 4,
   }
-} as const;
+};

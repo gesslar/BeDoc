@@ -1,24 +1,18 @@
-import fs from "fs";
 import { program }from "commander";
 import Core from "./core/core.js";
 import Logger from "./core/logger.js";
-import FDUtil from "./core/util/fd.js";
 import ModuleUtil from "./core/util/module.js";
 import { ConfigurationParameters }from "./core/configuration.js";
-import { CoreOptions, Environment }from "./core/types.js";
-import { PackageJson }from "./core/types/package.js";
-import { FileMap, DirMap }from "./core/types/fd.js";
 import { ConfigValidator }from "./core/validation.js";
 
 // We need our own logger instance, because we aren't the Core object.
 const logger = new Logger(null);
-const fdUtil = new FDUtil();
 
 // Main entry point
-(async(): Promise<void> => {
+(async() => {
   try {
     // Get package info
-    const packageJson = ModuleUtil.require<PackageJson>("./package.json");
+    const packageJson = ModuleUtil.require("./package.json");
 
     // Setup program
     program
@@ -41,7 +35,7 @@ const fdUtil = new FDUtil();
         program.option(arg, description,
           typeof defaultValue === "number"
             ? String(defaultValue)
-            : defaultValue as string | boolean | string[]
+            : defaultValue
         );
     }
 
@@ -59,7 +53,7 @@ const fdUtil = new FDUtil();
     // Create core instance with validated config
     const core = await Core.new(validatedConfig);
     await core.processFiles();
-  } catch(e: unknown) {
+  } catch(e) {
     if(e instanceof Error) {
       logger.error(`Error: ${e.message}`);
       if(e.stack)

@@ -6,7 +6,7 @@ export default class DataUtil {
    * @param type - The type to check for
    * @returns Whether all elements are of the specified type
    */
-  static uniformArray = (arr: unknown[], type: string): boolean =>
+  static uniformArray = (arr, type) =>
     arr.every(item => typeof item === type);
 
   /**
@@ -16,7 +16,7 @@ export default class DataUtil {
    * @param freeze - Whether to freeze the cloned object
    * @returns The cloned object
    */
-  static clone = <T>(obj: T, freeze = false): T => {
+  static clone = (obj, freeze = false) => {
     const clone = JSON.parse(JSON.stringify(obj));
 
     if(freeze) {
@@ -32,6 +32,5 @@ export default class DataUtil {
    * @param value - The value to check
    * @returns Whether the value is a Map
    */
-  static isMap = (value: unknown): value is Map<unknown, unknown> =>
-    value instanceof Map;
+  static isMap = value => value instanceof Map;
 }

@@ -8,16 +8,11 @@
       "skipFiles": [
         "<node_internals>/**"
       ],
-      "program": "${workspaceFolder}/src/cli.ts",
-      "preLaunchTask": "tsc: build - tsconfig.json",
-      "outFiles": [
-        "${workspaceFolder}/dist/**/*.js"
-      ],
-      "sourceMaps": true,
+      "program": "${workspaceFolder}/src/cli.js",
       "args": [
         "-c",
         "wip/bedoc.json"
-      ], // You can add CLI arguments here
+      ],
       "console": "integratedTerminal"
     }
   ]
