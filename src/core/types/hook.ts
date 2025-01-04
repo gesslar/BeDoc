@@ -1,3 +1,6 @@
+import { ParsedContent, ParserMeta }from "./parse.js";
+import { PrinterMeta }from "./print.js";
+import { Status }from "./common.js";
 /**
  * Class names for hookable types.
  * These match the actual class names in parsers/printers.
@@ -40,8 +43,60 @@ enum PARSE_HOOKS {
   END = "end",
 }
 
-type Hook = (...args: any[]) => Promise<any>;
-type Hooks = { [key: string]: Hook };
+// Base response type for hooks
+type HookResponse = {
+  status: Status;
+  error?: Error;
+  [key: string]: unknown;
+};
+
+// Section type for documentation sections
+type DocSection = {
+  type?: string;
+  name?: string;
+  content?: string[];
+  [key: string]: unknown;
+};
+
+type HookStart = {
+  module: string;
+  content: ParsedContent;
+};
+
+type HookEnd = {
+  module: string;
+  content: ParsedContent;
+  output: string[];
+};
+
+type HookLoad = {
+  section: DocSection;
+  meta: PrinterMeta | ParserMeta;
+};
+
+type HookEnter = {
+  name: string;
+  section: DocSection;
+  meta: PrinterMeta | ParserMeta;
+};
+
+type HookExit = {
+  name: string;
+  section: DocSection;
+  meta: PrinterMeta | ParserMeta;
+};
+
+type HookPoints = HookStart | HookEnd | HookLoad | HookEnter | HookExit;
+
+type Hook = (args: HookPoints) => Promise<HookResponse | void>;
+type Hooks = { [K in CLASS_TO_HOOK_MAP]?: Hook };
+
+type Hookable = {
+  constructor: { name: string };
+  hooks?: Hooks;
+  hook?: (event: HOOK_TYPE, args: HookPoints) => Promise<void>;
+  HOOKS?: typeof PRINT_HOOKS | typeof PARSE_HOOKS;
+};
 
 export {
   HOOK_TYPE,
@@ -50,4 +105,8 @@ export {
   PARSE_HOOKS,
   Hook,
   Hooks,
+  HookPoints,
+  HookResponse,
+  DocSection,
+  Hookable,
 };

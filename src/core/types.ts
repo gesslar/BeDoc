@@ -1,47 +1,59 @@
-import * as config from "./types/config.js";
-import * as engine from "./types/engine.js";
-import * as fd from "./types/fd.js";
-import * as parse from "./types/parse.js";
-import * as print from "./types/print.js";
-import * as hook from "./types/hook.js";
+import *as config from "./types/config.js";
+import *as engine from "./types/engine.js";
+import *as env from "./types/env.js";
+import *as fd from "./types/fd.js";
+import *as hook from "./types/hook.js";
+import *as parse from "./types/parse.js";
+import *as print from "./types/print.js";
+
 export {
   config,
   engine,
+  env,
   fd,
+  hook,
   parse,
   print,
-  hook,
 };
 
 // Re-export commonly used types for convenience
 export type {
   CoreOptions,
   ConfigParameter,
-} from "./types/config.js";
+}from "./types/config.js";
 
 export type {
   FileMap,
   DirMap,
   TYPE,
-} from "./types/fd.js";
+  FD_TYPES,
+}from "./types/fd.js";
 
 export type {
+  Engine,
   EngineExports,
-} from "./types/engine.js";
+  EngineClass,
+  Discovered,
+  DiscoveredEngines,
+  DiscoveredParser,
+  DiscoveredPrinter,
+  ModuleSource,
+}from "./types/engine.js";
 
 export type {
   ParserClass,
   ParserMap,
   ParserMeta,
   ParseResponse,
-} from "./types/parse.js";
+  ParsedContent,
+}from "./types/parse.js";
 
 export type {
   PrinterClass,
   PrinterMap,
   PrinterMeta,
   PrintResponse,
-} from "./types/print.js";
+}from "./types/print.js";
 
 export type {
   HOOK_TYPE,
@@ -50,4 +62,9 @@ export type {
   PARSE_HOOKS,
   Hook,
   Hooks,
-} from "./types/hook.js";
+  HookPoints,
+}from "./types/hook.js";
+
+export {
+  Environment,
+}from "./types/env.js";

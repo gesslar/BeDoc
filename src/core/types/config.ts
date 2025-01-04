@@ -1,3 +1,5 @@
+import { FileMap, DirMap }from "./fd.js";
+
 export type PathSubtype = {
   type: "file" | "directory";
   mustExist: boolean;
@@ -9,7 +11,9 @@ export type ConfigParameter = {
   description: string;
   type: string;
   required: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   default?: any;
+  exclusiveOf?: string;
   subtype?: {
     path?: PathSubtype;
   };
@@ -22,11 +26,13 @@ export type ConfigParameter = {
 export type CoreOptions = {
   env: string;
   mock?: string;
-  input?: string | string[];
+  input?: FileMap[];
   language: string;
   format: string;
-  output?: string;
-  hooks?: string;
+  output?: DirMap;
+  hooks?: FileMap;
+  parser?: FileMap;
+  printer?: FileMap;
   debug?: boolean;
   debugLevel?: number;
 };
@@ -38,4 +44,11 @@ export type CoreOptions = {
  */
 export type UserOptions = Partial<CoreOptions> & {
   [key: string]: unknown;
+};
+
+/**
+ * The type for options that are comma-separated lists of glob patterns.
+ */
+export type InputOptions = {
+  [key: string]: string | string[] ;
 };

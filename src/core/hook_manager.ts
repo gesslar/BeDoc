@@ -5,15 +5,12 @@ import {
   PRINT_HOOKS,
   PARSE_HOOKS,
   Hooks,
-} from "./types/hook.js";
-import { ICore } from "./types/core.js";
-
-type Hookable = {
-  constructor: { name: string };
-  hooks?: Hooks;
-  hook?: HookManager["on"];
-  HOOKS?: typeof PRINT_HOOKS | typeof PARSE_HOOKS;
-};
+  Hook,
+  HookPoints,
+  Hookable,
+}from "./types/hook.js";
+import { ICore }from "./types/core.js";
+import { FileMap }from "./types/fd.js";
 
 export default class HookManager {
   private core: ICore;
@@ -33,14 +30,10 @@ export default class HookManager {
    */
   async load(): Promise<void> {
     const hooksFile = this.core.options.hooks;
-    if (!hooksFile)
+    if(!hooksFile)
       return;
 
-    const resolvedFile = await this.fileUtil.resolveFile(hooksFile);
-    if (!resolvedFile)
-      throw new Error(`Hook file not found: ${hooksFile}`);
-
-    const hooks = await import(resolvedFile.absoluteUri);
+    const hooks = await import(hooksFile.absoluteUri);
 
     this.hooks = hooks;
   }
@@ -49,21 +42,21 @@ export default class HookManager {
    * Trigger a hook
    *
    * @param event - The type of hook to trigger
-   * @param args - The arguments to pass to the hook
+   * @param args - The hook arguments
    * @returns The result of the hook
    */
-  async on(this: Hookable, event: HOOK_TYPE, ...args: any[]): Promise<void> {
-    if (!event)
-      throw new Error("[on] Event type is required for hook invocation");
+  async on(this: Hookable, event: HOOK_TYPE, args: HookPoints): Promise<void> {
+    if(!event)
+      throw new Error("[on] Event type is required for hook invocation") ;
 
-    const hook = this.hooks?.[event];
-    if (!hook)
-      return;
+    const hook = this.hooks?.[CLASS_TO_HOOK_MAP[event]] ;
+    if(!hook)
+      return ;
 
-    const result = await hook(...args);
-    if (result?.status === "error")
-      throw result.error;
-    return result;
+    const result = await hook(args) ;
+    if(result && typeof result === "object" && "status" in result && result.status === "error" && "error" in result)
+      throw result.error ;
+    return ;
   }
 
   /**
@@ -73,11 +66,11 @@ export default class HookManager {
    * @returns The type of hooks attached
    */
   attachHooks(target: Hookable): string {
-    if (!target.constructor?.name)
+    if(!target.constructor?.name)
       throw new Error("[attachHooks] Target must have a constructor name");
 
     const name = target.constructor.name;
-    if (name !== HOOK_TYPE.PRINT && name !== HOOK_TYPE.PARSE)
+    if(name !== HOOK_TYPE.PRINT && name !== HOOK_TYPE.PARSE)
       throw new Error(`[attachHooks] Invalid target type: ${name}`);
 
     target.hooks = this.hooks[CLASS_TO_HOOK_MAP[name]];

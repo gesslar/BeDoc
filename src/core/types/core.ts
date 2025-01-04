@@ -1,11 +1,13 @@
-import { CoreOptions } from "./config.js";
+import { CoreOptions }from "./config.js";
 import Logger from "../logger.js";
 import FDUtil from "../util/fd.js";
 import DataUtil from "../util/data.js";
 import StringUtil from "../util/string.js";
 import ValidUtil from "../util/valid.js";
 import ModuleUtil from "../util/module.js";
-import { ParseResponse, PrintResponse } from "../types.js";
+import { ParseResponse, PrintResponse }from "../types.js";
+import { DirMap }from "./fd.js";
+import { BaseResponse }from "./common.js";
 
 export interface ICore {
   options: CoreOptions;
@@ -19,14 +21,11 @@ export interface ICore {
     parse: (file: string, content: string) => Promise<ParseResponse>;
   };
   printer: {
-    print: (module: string, content: any) => Promise<PrintResponse>;
+    print: (module: string, content: ParseResponse["result"]) => Promise<PrintResponse>;
   };
-  processFiles(): Promise<{
-    status: string;
-    message: string;
-  }>;
+  processFiles(): Promise<BaseResponse>;
   outputFile(
-    output: string | undefined,
+    output: DirMap | undefined,
     destFile: string,
     content: string
   ): Promise<{

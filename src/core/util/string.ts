@@ -13,7 +13,7 @@ export default class StringUtil {
       let isStartOfLine = true;  // Start of each section is start of line
 
       // Preserve leading space if it existed
-      if (section[0] === " ") {
+      if(section[0] === " ") {
         parts = ["", ...parts];
       }
 
@@ -21,14 +21,14 @@ export default class StringUtil {
 
       parts = parts.map(part => {
         // Only check for code block if we're at start of line
-        if (isStartOfLine && /^```(?:\w+)?$/.test(part)) {
+        if(isStartOfLine && /^```(?:\w+)?$/.test(part)) {
           inCodeBlock = !inCodeBlock;
           running += (part.length + 1);
           isStartOfLine = false;
           return part;
         }
 
-        if (part[0] === "\n") {
+        if(part[0] === "\n") {
           running = 0;
           isStartOfLine = true;  // Next part will be at start of line
           return part;
@@ -37,7 +37,7 @@ export default class StringUtil {
         running += (part.length + 1);
         isStartOfLine = false;   // No longer at start of line
 
-        if (!inCodeBlock && running >= wrapAt) {
+        if(!inCodeBlock && running >= wrapAt) {
           running = part.length + indentAt;
           isStartOfLine = true;  // After newline, next part will be at start
           return "\n" + " ".repeat(indentAt) + part;
@@ -60,12 +60,12 @@ export default class StringUtil {
    * @param str - The string to capitalize
    * @returns The capitalized string
    */
-  static capitalize = (str: string) => `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
+  static capitalize = (str: string): string => `${str.charAt(0).toUpperCase()}${str.slice(1)}`;
 
   /**
    * Uncapitalizes the first letter of a string
    * @param str - The string to uncapitalize
    * @returns The uncapitalized string
    */
-  static uncapitalize = (str: string) => `${str.charAt(0).toLowerCase()}${str.slice(1)}`;
+  static uncapitalize = (str: string): string => `${str.charAt(0).toLowerCase()}${str.slice(1)}`;
 }

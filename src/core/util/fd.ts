@@ -1,10 +1,10 @@
 import path from "path";
 import fs from "fs";
-import { globby } from "globby";
+import { globby }from "globby";
 
 import DataUtil from "./data.js";
 import ValidUtil from "./valid.js";
-import { FileMap, DirMap, TYPE } from "../types/fd.js";
+import { FileMap, DirMap }from "../types/fd.js";
 
 export default class FDUtil {
   private data: DataUtil;
@@ -38,38 +38,23 @@ export default class FDUtil {
    * @returns The resolved file
    * @throws {Error}
    */
-  resolveFile = async (globPattern: string | string[]): Promise<FileMap> => {
-    if (!this.valid.string(globPattern, true))
-      throw new Error("File is required");
+  resolveFile = async(globPattern: string | string[]): Promise<FileMap> => {
+    if(!ValidUtil.string(globPattern, true))
+      throw new Error(`Expected string or array of strings, got: ${typeof globPattern}\n${JSON.stringify(globPattern)}`);6
 
     const files = await globby(globPattern);
 
-    if (!files)
+    if(!files)
       throw new Error(`File not found: ${globPattern}`);
 
-    if (!files.length)
+    if(!files.length)
       throw new Error(`File not found: ${globPattern}`);
 
-    if (files.length > 1)
+    if(files.length > 1)
       throw new Error(`Multiple files found for: ${globPattern}`);
 
     const pathName = files[0];
-    const extension = path.extname(pathName);
-    const name = path.basename(pathName);
-    const moduleName = path.basename(pathName, extension);
-    const resolved = this.toUri(pathName);
-    const absolutePath = path.resolve(process.cwd(), pathName);
-    const absoluteUri = this.toUri(absolutePath);
-
-    return {
-      path: pathName,
-      uri: resolved,
-      absolutePath: absolutePath,
-      absoluteUri: absoluteUri,
-      name: name,
-      module: moduleName,
-      extension: extension,
-    };
+    return this.mapFile(pathName);
   };
 
   /**
@@ -79,26 +64,41 @@ export default class FDUtil {
    * @param file - The file
    * @returns The composed file path
    */
-  composeFilename = async (dir: string, file: string): Promise<FileMap> => {
+  composeFilename = async(dir: string, file: string): Promise<FileMap> => {
     const dirObject = await this.composeDir(dir);
     const fileName = path.resolve(dirObject.path, file);
 
-    const pathName = fileName;
-    const extension = path.extname(pathName);
-    const name = path.basename(pathName);
-    const moduleName = path.basename(pathName, extension);
-    const resolved = this.toUri(pathName);
-    const absolutePath = path.resolve(process.cwd(), pathName);
-    const absoluteUri = this.toUri(absolutePath);
+    return this.mapFile(fileName);
+  };
 
+  /**
+   * Map a file to a FileMap
+   *
+   * @param file - The file to map
+   * @returns The mapped file
+   */
+  mapFile = (file: string): FileMap => {
     return {
-      path: `${dirObject.uri}/${name}`,
-      uri: resolved,
-      absolutePath: absolutePath,
-      absoluteUri: absoluteUri,
-      name: name,
-      module: moduleName,
-      extension: extension,
+      path: file,
+      uri: this.toUri(file),
+      absolutePath: path.resolve(process.cwd(), file),
+      absoluteUri: this.toUri(path.resolve(process.cwd(), file)),
+      name: path.basename(file),
+      module: path.basename(file, path.extname(file)),
+      extension: path.extname(file),
+    };
+  };
+
+  /**
+   * Map a directory to a DirMap
+   *
+   * @param dir - The directory to map
+   * @returns The mapped directory
+   */
+  mapDir = (dir: string): DirMap => {
+    return {
+      path: dir,
+      uri: this.toUri(dir),
     };
   };
 
@@ -109,13 +109,13 @@ export default class FDUtil {
    * @returns Set of file paths.
    * @throws {Error} Throws an error for invalid input or search failure.
    */
-  getFiles = async (globPattern: string | string[]): Promise<string[]> => {
+  getFiles = async(globPattern: string | string[]): Promise<FileMap[]> => {
     // Validate input
-    if (!this.valid.string(globPattern, true) && !this.valid.array(globPattern, true))
+    if(!ValidUtil.string(globPattern, true) && !ValidUtil.array(globPattern, true))
       throw new Error("[getFiles] Invalid glob pattern: Must be a string or a non-empty array of strings.");
 
     const globbyArray: string[] = [];
-    if (this.valid.string(globPattern)) {
+    if(ValidUtil.string(globPattern)) {
       globbyArray.push(...(globPattern as string)
         .split("|")
         .map(g => g.trim())
@@ -125,14 +125,15 @@ export default class FDUtil {
       globbyArray.push(...(globPattern as string[]));
     }
 
-    if (Array.isArray(globbyArray) && !this.valid.arrayUniform(globbyArray, "string", true) && !globbyArray.length)
+    if(Array.isArray(globbyArray) && !ValidUtil.arrayUniform(globbyArray, "string", true) && !globbyArray.length)
       throw new Error("[getFiles] Invalid glob pattern: Array must contain only strings.");
 
     // Use Globby to fetch matching files
     const filesArray = await globby(globbyArray);
+    const files = filesArray.map(file => this.mapFile(file));
 
     // Flatten the result and remove duplicates
-    return filesArray.flat();
+    return files;
   };
 
   /**
@@ -142,8 +143,8 @@ export default class FDUtil {
    * @returns The resolved path
    * @throws {Error}
    */
-  resolveDir = async (globPattern: string): Promise<DirMap> => {
-    if (!this.valid.string(globPattern, true))
+  resolveDir = async(globPattern: string): Promise<DirMap> => {
+    if(!ValidUtil.string(globPattern, true))
       throw new Error("Path is required");
 
     const dirs = await globby([globPattern], {
@@ -151,25 +152,22 @@ export default class FDUtil {
       expandDirectories: false
     });
 
-    if (!dirs)
+    if(!dirs)
       throw new Error(`Path not found: ${globPattern}`);
 
-    if (!dirs.length)
+    if(!dirs.length)
       throw new Error(`Path not found: ${globPattern}`);
 
-    if (dirs.length > 1)
+    if(dirs.length > 1)
       throw new Error(`Multiple paths found for: ${globPattern}`);
 
     const pathName = dirs.values().next().value;
-    if (!pathName)
+    if(!pathName)
       throw new Error(`Path not found: ${globPattern}`);
 
     const resolvedPath = this.toUri(path.resolve(process.cwd(), pathName));
 
-    return {
-      path: pathName,
-      uri: resolvedPath,
-    };
+    return this.mapDir(pathName);
   };
 
   /**
@@ -178,12 +176,8 @@ export default class FDUtil {
    * @param dir - The directory
    * @returns The composed directory map
    */
-  composeDir = async (dir: string): Promise<DirMap> => {
-    const resolvedPath = this.toUri(dir);
-    return {
-      path: dir,
-      uri: resolvedPath,
-    };
+  composeDir = async(dir: string): Promise<DirMap> => {
+    return this.mapDir(dir);
   };
 
   /**
@@ -192,9 +186,9 @@ export default class FDUtil {
    * @param fileObject - The file map containing the file path
    * @returns The file contents
    */
-  readFile = async (fileObject: FileMap): Promise<string> => {
+  readFile = async(fileObject: FileMap): Promise<string> => {
     const absolutePath = fileObject.absolutePath;
-    if (!absolutePath) throw new Error("No absolute path in file map");
+    if(!absolutePath) throw new Error("No absolute path in file map");
     return await fs.promises.readFile(absolutePath, "utf8");
   };
 
@@ -204,9 +198,9 @@ export default class FDUtil {
    * @param fileObject - The file map containing the file path
    * @param content - The content to write
    */
-  writeFile = async (fileObject: FileMap, content: string): Promise<void> => {
+  writeFile = async(fileObject: FileMap, content: string): Promise<void> => {
     const absolutePath = fileObject.absolutePath;
-    if (!absolutePath) throw new Error("No absolute path in file map");
+    if(!absolutePath) throw new Error("No absolute path in file map");
     return await fs.promises.writeFile(absolutePath, content, "utf8");
   };
 }

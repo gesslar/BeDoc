@@ -1,5 +1,7 @@
-import { Engine } from "./engine.js";
-import { BaseResponse } from "./common.js";
+import { Engine }from "./engine.js";
+import { BaseResponse }from "./common.js";
+import { ParseResponse }from "./parse.js";
+import Core from "../core.js";
 
 type PrinterMap = { [key in PrinterKey]: PrinterMeta | PrinterClass };
 type PrinterKey = "meta" | Engine.PRINTER;
@@ -24,8 +26,8 @@ type PrinterMeta = {
 };
 
 type PrinterClass = {
-  new(core: any): {
-    print: (module: string, content: any) => Promise<PrintResponse>;
+  new(core: Core): {
+    print: (module: string, content: ParseResponse["result"]) => Promise<PrintResponse>;
   };
 };
 

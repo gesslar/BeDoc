@@ -1,5 +1,5 @@
-import { Engine } from "./engine.js";
-import { BaseResponse } from "./common.js";
+import { Engine }from "./engine.js";
+import { BaseResponse }from "./common.js";
 
 type ParserMap = { [key in ParserKey]: ParserMeta | ParserClass };
 type ParserKey = "meta" | Engine.PARSER;
@@ -20,11 +20,15 @@ type FileResponse = BaseResponse & {
 };
 
 type ParseResponse = FileResponse & {
-  result?: any;
+  result?: Object;
+};
+
+type ParsedContent = {
+  content: ParseResponse["result"];
 };
 
 type ParserClass = {
-  new(core: any): {
+  new(core: Object): {
     parse: (file: string, content: string) => Promise<ParseResponse>;
   };
 };
@@ -32,6 +36,7 @@ type ParserClass = {
 export {
   ParserClass,
   ParseResponse,
+  ParsedContent,
   ParserMap,
   ParserMeta,
   ParserKey,

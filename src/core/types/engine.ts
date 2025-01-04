@@ -1,5 +1,5 @@
-import { ParserClass, ParserMeta, ParserMap } from "./parse.js";
-import { PrinterClass, PrinterMeta, PrinterMap } from "./print.js";
+import { ParserClass, ParserMeta, ParserMap }from "./parse.js";
+import { PrinterClass, PrinterMeta, PrinterMap }from "./print.js";
 
 type EngineExports = {
   meta: ParserMeta | PrinterMeta;
@@ -11,6 +11,11 @@ const enum Engine {
   PARSER = "parser",
   PRINTER = "printer",
 }
+
+const EngineClass = {
+  Parser: "Parser",
+  Printer: "Printer",
+} as const;
 
 type Discovered = {
   parser: { [key: string]: DiscoveredParser };
@@ -27,6 +32,8 @@ type DiscoveredPrinter = {
   printer: PrinterClass;
 };
 
+type DiscoveredEngines = DiscoveredParser | DiscoveredPrinter;
+
 type ModuleSource = {
   path: string;
   absoluteUri: string;
@@ -35,7 +42,9 @@ type ModuleSource = {
 export {
   Engine,
   EngineExports,
+  EngineClass,
   Discovered,
+  DiscoveredEngines,
   DiscoveredParser,
   DiscoveredPrinter,
   ModuleSource,

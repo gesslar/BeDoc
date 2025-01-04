@@ -1,5 +1,5 @@
-import { createRequire } from "module";
-import { resolve } from "path";
+import { createRequire }from "module";
+import { resolve }from "path";
 
 export default class ModuleUtil {
   /**
@@ -7,7 +7,7 @@ export default class ModuleUtil {
    * @param module - The module to require
    * @returns The required module
    */
-  static require(module: string): any {
+  static require<T = unknown>(module: string): T {
     const resolvedFile = resolve(process.cwd(), module).replace(/\\/g, "/");
     return createRequire(import.meta.url)(resolvedFile);
   }

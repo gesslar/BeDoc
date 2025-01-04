@@ -1,4 +1,4 @@
-import { ConfigParameter } from "./types/config.js";
+import { ConfigParameter }from "./types/config.js";
 
 export const ConfigurationParameters: Record<string, ConfigParameter> = {
   input: {
@@ -6,20 +6,28 @@ export const ConfigurationParameters: Record<string, ConfigParameter> = {
     param: "file",
     description: "Comma-separated glob patterns to match files",
     type: "string",
-    required: false,
+    required: true,
+    subtype: {
+      path: {
+        type: "file",
+        mustExist: true,
+      }
+    }
   },
   language: {
     short: "l",
     param: "lang",
     description: "Language parser to use",
     type: "string",
-    required: true,
+    required: false,
+    exclusiveOf: "parser",
   },
   format: {
     short: "f",
     description: "Output format",
     type: "string",
-    required: true,
+    required: false,
+    exclusiveOf: "printer",
   },
   hooks: {
     short: "k",
@@ -43,6 +51,34 @@ export const ConfigurationParameters: Record<string, ConfigParameter> = {
     subtype: {
       path: {
         type: "directory",
+        mustExist: true,
+      }
+    }
+  },
+  parser: {
+    short: "p",
+    param: "file",
+    description: "Custom parser JS file",
+    type: "string",
+    required: false,
+    exclusiveOf: "language",
+    subtype: {
+      path: {
+        type: "file",
+        mustExist: true,
+      }
+    }
+  },
+  printer: {
+    short: "P",
+    param: "file",
+    description: "Custom printer JS file",
+    type: "string",
+    required: false,
+    exclusiveOf: "format",
+    subtype: {
+      path: {
+        type: "file",
         mustExist: true,
       }
     }

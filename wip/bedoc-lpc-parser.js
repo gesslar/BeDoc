@@ -59,7 +59,7 @@ class Parser {
     let stack;
     try {
       throw new Error();
-    } catch (e) {
+    } catch(e) {
       stack = e.stack;
     }
     // we don't need the first two lines of the stack, cos they'll just be the
@@ -84,34 +84,34 @@ class Parser {
       let func = null;
       let position = 0, length = lines.length;
 
-      for (position; position < length; position++) {
+      for(position; position < length; position++) {
         const line = lines[position];
         const lineTrimmed = line.trim();
 
         // Skip empty lines unless we're processing a comment
-        if (!this.processingComment && !lineTrimmed.length)
+        if(!this.processingComment && !lineTrimmed.length)
           continue;
 
         // Check for start of doc comment block
-        if (this.isCommentStart(lineTrimmed)) {
+        if(this.isCommentStart(lineTrimmed)) {
           // Restart with a new function
           func = this.newFunction();
-        } else if (this.isCommentEnd(lineTrimmed)) {
+        } else if(this.isCommentEnd(lineTrimmed)) {
           this._resetState();
           continue;
-        } else if (this.isFunctionLine(lineTrimmed)) {
+        } else if(this.isFunctionLine(lineTrimmed)) {
           const { status, message: functionName } = this.determineFunctionName(lineTrimmed);
-          if (status === "success") {
+          if(status === "success") {
             funcs.push({ ...func, name: functionName });
           } else
             return { status: "error", file, line, lineNumber: position + 1, message: functionName };
           continue;
         }
 
-        if (this.processingComment) {
+        if(this.processingComment) {
           const processed = this.processLine({ line, func, file, position });
           const { status, message } = processed;
-          if (status === "error")
+          if(status === "error")
             return { status: "error", file, line, lineNumber: position + 1, message };
         }
       }
@@ -119,7 +119,7 @@ class Parser {
       result.funcs = funcs;
 
       return { status: "success", result };
-    } catch (e) {
+    } catch(e) {
       return { status: "error", file, line: null, lineNumber: null, message: e.message };
     }
   }
@@ -168,18 +168,18 @@ class Parser {
     const lineTrimmed = line.trim();
     const msg = this.generateMessage;
 
-    if (!func)
+    if(!func)
       return { status: "error", message: msg("No function context", "processLine", file, position, line) };
 
     const tagMatches = this.regex.tag.exec(line);
-    if (tagMatches) {
+    if(tagMatches) {
       const { tag, content } = tagMatches.groups;
-      if (!tags.isValid(tag))
+      if(!tags.isValid(tag))
         return { status: "error", message: msg(`Invalid tag: ${tag}`, "processLine", file, position, line) };
 
       const singleton = tags.singletons.includes(tag);
-      if (singleton) {
-        if (func[tag])
+      if(singleton) {
+        if(func[tag])
           return { status: "error", message: msg(`Singleton tag already exists: ${tag}`, "processLine", file, position, line) };
         func[tag] = null;
       } else {
@@ -189,14 +189,14 @@ class Parser {
       this.currentTag = tag;
       this.section = null;
 
-      if (tag === "return") {
+      if(tag === "return") {
         this.section = { tag, name: null };
         const tagContentMatches = this.regex.returnContent.exec(content);
-        if (tagContentMatches) {
+        if(tagContentMatches) {
           const { type, content } = tagContentMatches.groups;
-          if (!type)
+          if(!type)
             return { status: "error", message: msg(`Missing return type: ${tag}`, "processLine", file, position, line) };
-          if (!content) {
+          if(!content) {
             this.core.logger.warn(msg(`Missing return content: ${tag}`, "processLine", file, position, line));
             singleton ? func[tag] = { type, content: [] } : func[tag].push({ type, content: [] });
           } else {
@@ -206,17 +206,17 @@ class Parser {
           return { status: "error", message: msg("Failed to parse return tag", "processLine", file, position, line) };
       } else {
         const tagContentMatches = this.regex.tagContent.exec(content);
-        if (tagContentMatches) {
+        if(tagContentMatches) {
           const { type, name, content } = tagContentMatches.groups;
-          if (!type)
+          if(!type)
             return { status: "error", message: msg("Missing tag type", "processLine", file, position, line) };
-          if (!name)
+          if(!name)
             return { status: "error", message: msg("Missing tag name", "processLine", file, position, line) };
           this.section = { tag, name };
           singleton ? func[tag] = { type, name, content: [content] } : func[tag].push({ type, name, content: [content] });
         } else {
           // This is probably a singleton
-          if (tags.singletons.includes(tag)) {
+          if(tags.singletons.includes(tag)) {
             this.section = { tag, name: null };
             func[tag] = [];
           } else {
@@ -228,22 +228,22 @@ class Parser {
     }
 
     // Process multiline content
-    if (this.currentTag) {
-      if (this.section?.name) {
+    if(this.currentTag) {
+      if(this.section?.name) {
         const currentTag = this.currentTag;
         const { tag, name } = this.section;
 
         const index = name ? func[tag].findIndex(item => item.name === name) : null;
         const tagMatch = this.regex.commentContinuation.exec(lineTrimmed);
 
-        if (tagMatch && tagMatch.groups?.content) {
-          if (index > -1) {
+        if(tagMatch && tagMatch.groups?.content) {
+          if(index > -1) {
             func[currentTag][index].content.push(tagMatch.groups.content);
           } else {
             func[currentTag].content.push(tagMatch.groups.content);
           }
         } else {
-          if (index)
+          if(index)
             func[currentTag][index].content.push("");
           else
             func[currentTag].content.push("");
@@ -251,13 +251,13 @@ class Parser {
       } else {
         const { tag } = this.section;
         const commentMatch = this.regex.commentContinuation.exec(lineTrimmed);
-        if (commentMatch && commentMatch.groups?.content) {
-          if (func[tag].content)
+        if(commentMatch && commentMatch.groups?.content) {
+          if(func[tag].content)
             func[tag].content.push(commentMatch.groups.content);
           else
             func[tag].push(commentMatch.groups.content);
         } else {
-          if (func[tag].content)
+          if(func[tag].content)
             func[tag].content.push("");
           else
             func[tag].push("");
@@ -268,7 +268,7 @@ class Parser {
 
     // If not a special tag, treat as description
     const descMatch = this.regex.commentContinuation.exec(lineTrimmed);
-    if (descMatch && descMatch.groups?.content) {
+    if(descMatch && descMatch.groups?.content) {
       func.description = func.description || [];
       func.description.push(descMatch.groups.content);
       return { status: "success", message: "Processed description" };
@@ -293,13 +293,13 @@ class Parser {
   determineFunctionName(line) {
     const match = this.regex.functionPattern.exec(line);
 
-    if (match) {
+    if(match) {
       const access = match.groups?.access || "public";
       const modifiers = [match.groups?.modifier1, match.groups?.modifier2].filter(modifier => modifier !== undefined);
       const type = match.groups?.type;
       const name = match.groups?.name;
 
-      if (!name)
+      if(!name)
         return { status: "error", message: `Failed to extract function name from line: ${line}` };
 
       return { status: "success", message: name };

@@ -15,11 +15,15 @@ type DirMap = {
 
 const enum TYPE {
   FILE = "file",
-  DIR = "dir",
+  DIR = "directory",
+  DIRECTORY = "directory",
 }
+
+type FD_TYPES = typeof TYPE[keyof typeof TYPE] ;
 
 export {
   FileMap,
   DirMap,
   TYPE,
-};
+  FD_TYPES,
+} ;

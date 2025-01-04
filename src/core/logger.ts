@@ -1,7 +1,7 @@
 import ModuleUtil from "./util/module.js";
-import Environment from "./env.js";
-import { ICore } from "./types/core.js";
-import { LoggerOptions, VSCodeWindow } from "./types/logger.js";
+import { ICore }from "./types/core.js";
+import { LoggerOptions, VSCodeWindow, LoggerColors, LoggerColor }from "./types/logger.js";
+import { Environment }from "./types.js";
 
 export default class Logger {
   private name: string;
@@ -10,19 +10,12 @@ export default class Logger {
   private vscodeError?: VSCodeWindow["showErrorMessage"];
   private vscodeWarn?: VSCodeWindow["showWarningMessage"];
   private vscodeInfo?: VSCodeWindow["showInformationMessage"];
-
-  private colors = {
-    debug: "\x1b[36m", // Cyan
-    info: "\x1b[32m",  // Green
-    warn: "\x1b[33m",  // Yellow
-    error: "\x1b[31m", // Red
-    reset: "\x1b[0m",  // Reset
-  } as const;
+  private colors = LoggerColors;
 
   constructor(core: ICore | null) {
     this.name = "BeDoc";
-    if (core?.options.env === Environment.EXTENSION) {
-      const vscode = ModuleUtil.require("vscode");
+    if(core?.options.env === Environment.EXTENSION) {
+      const vscode = ModuleUtil.require<typeof import("vscode")>("vscode");
       this.vscodeError = vscode.window.showErrorMessage;
       this.vscodeWarn = vscode.window.showWarningMessage;
       this.vscodeInfo = vscode.window.showInformationMessage;
@@ -44,7 +37,7 @@ export default class Logger {
     return `[${this.name}] ${this.colors[level]}${tag}${this.colors.reset}: ${message}`;
   }
 
-  debug(message: any, level = 4, force = false): void {
+  debug(message: string, level = 4, force = false): void {
     (force || this.debugMode === true) &&
       (level <= (this.debugLevel ?? 4)) &&
       console.debug(this._compose("debug", message));
@@ -64,8 +57,10 @@ export default class Logger {
     let stack: string | undefined;
     try {
       throw new Error();
-    } catch (e: any) {
-      stack = e.stack;
+    } catch(e: unknown) {
+      if(e instanceof Error) {
+        stack = e.stack;
+      }
     }
 
     console.error(this._compose("error", message));

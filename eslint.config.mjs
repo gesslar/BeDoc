@@ -1,16 +1,13 @@
-export default[
+const config = [
+  // Base config for both JS and TS files
   {
-    files: ["**/*.ts"],
+    files: ["wip/**/*.[jt]s", "src/**/*.[jt]s"],
     languageOptions: {
       ecmaVersion: "latest",
-      sourceType: "module",
-      parser: (await import("@typescript-eslint/parser")).default
-    },
-    plugins: {
-      "@typescript-eslint": (await import("@typescript-eslint/eslint-plugin")).default
+      sourceType: "module"
     },
     rules: {
-      // Your existing rules
+      // Common style rules
       "quotes": ["error", "double"],
       "no-trailing-spaces": ["error"],
       "eol-last": ["error", "always"],
@@ -36,11 +33,25 @@ export default[
           "catch": { "before": true, "after": false },
           "finally": { "before": true, "after": true },
         }
-      }],
+      }]
+    }
+  },
 
+  // TypeScript-specific config
+  {
+    files: ["wip/**/*.ts", "src/**/*.ts"],
+    languageOptions: {
+      parser: (await import("@typescript-eslint/parser")).default
+    },
+    plugins: {
+      "@typescript-eslint": (await import("@typescript-eslint/eslint-plugin")).default
+    },
+    rules: {
       // TypeScript specific rules
       "@typescript-eslint/explicit-function-return-type": "warn",
       "@typescript-eslint/no-explicit-any": "warn"
     }
   }
-];
+] ;
+
+export default config ;
