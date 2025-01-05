@@ -1,11 +1,11 @@
 const meta = Object.freeze({
   format: "mock",
   formatExtension: ".mock",
-});
+})
 
 class Printer {
   constructor(core) {
-    this.core = core;
+    this.core = core
   }
 
   print(module, content) {
@@ -14,15 +14,15 @@ class Printer {
       Lines: ${content.metadata?.lines}
       Length: ${content.metadata?.length}
       Content: ${content.content}
-    `.trim();
+    `.trim()
 
     return {
       status: "success",
       message: "File printed successfully",
       destFile: `${module}${meta.formatExtension}`,
       content: output,
-    };
+    }
   }
 };
 
-export { meta, Printer };
+export { meta, Printer }

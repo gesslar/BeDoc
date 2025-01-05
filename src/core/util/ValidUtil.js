@@ -5,14 +5,14 @@ export default class ValidUtil {
    * @param nonEmpty - Whether the string must be non-empty
    * @returns boolean
    */
-  static string = (str, nonEmpty = false) => typeof str === "string" && (nonEmpty ? str.length > 0 : true);
+  static string = (str, nonEmpty = false) => typeof str === "string" && (nonEmpty ? str.length > 0 : true)
 
   /**
    *
    * @param f - The value to check if is a function
    * @returns boolean
    */
-  static func = f => typeof f === "function";
+  static func = f => typeof f === "function"
 
   /**
    * Validates an array
@@ -20,7 +20,7 @@ export default class ValidUtil {
    * @param nonEmpty - Whether the array must be non-empty
    * @returns boolean
    */
-  static array = (arr, nonEmpty = false) => Array.isArray(arr) && (nonEmpty ? arr.length > 0 : true);
+  static array = (arr, nonEmpty = false) => Array.isArray(arr) && (nonEmpty ? arr.length > 0 : true)
 
   /**
    * Validates an array of uniform type
@@ -29,7 +29,7 @@ export default class ValidUtil {
    * @param nonEmpty - Whether the array must be non-empty
    * @returns boolean
    */
-  static arrayUniform = (arr, type, nonEmpty = false) => ValidUtil.array(arr, nonEmpty) && arr.every(item => typeof item === type) && (nonEmpty ? arr.length > 0 : true);
+  static arrayUniform = (arr, type, nonEmpty = false) => ValidUtil.array(arr, nonEmpty) && arr.every(item => typeof item === type) && (nonEmpty ? arr.length > 0 : true)
 
   /**
    * Validates a value against a type
@@ -40,19 +40,19 @@ export default class ValidUtil {
    */
   static type = (value, type, required = false) => {
     if(!required && ValidUtil.nothing(value))
-      return true ;
+      return true
 
     switch(type) {
     case"array":
-      return ValidUtil.array(value) ;
+      return ValidUtil.array(value)
     case"string":
-      return ValidUtil.string(value) ;
+      return ValidUtil.string(value)
     case"boolean":
-      return typeof value === "boolean" ;
+      return typeof value === "boolean"
     case"number":
-      return typeof value === "number" ;
+      return typeof value === "number"
     default:
-      return false ;
+      return false
     }
   }
 
@@ -61,5 +61,5 @@ export default class ValidUtil {
    * @param value - The value to validate
    * @returns boolean
    */
-  static nothing = value => value === undefined || value === null;
+  static nothing = value => value === undefined || value === null
 }

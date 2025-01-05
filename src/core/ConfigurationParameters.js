@@ -123,4 +123,4 @@ export const ConfigurationParameters = {
     required: false,
     default: 4,
   }
-};
+}

@@ -1,22 +1,17 @@
-import fs from "fs";
-import path from "path";
-import { execSync }from "child_process";
-import Logger from "./logger.js";
-import FileUtil from "./util/fd.js";
+import fs from "fs"
+import path from "path"
+import { execSync } from "child_process"
+import Logger from "./Logger.js"
+import FDUtil from "./util/FDUtil.js"
 
-function isParserMeta(meta) {
-  return "language" in meta;
-}
+const isParserMeta = meta => "language" in meta
+const isPrinterMeta = meta => "format" in meta
 
-function isPrinterMeta(meta) {
-  return "format" in meta;
-}
+let logger
 
 export default class Discovery {
   constructor(core) {
-    this.core = core;
-    this.logger = new Logger(core);
-    this.fileUtil = new FileUtil();
+    logger = new Logger(core)
   }
 
   /**
@@ -26,25 +21,25 @@ export default class Discovery {
    * @param moduleSource - The module source information
    */
   async processModule(discovered, moduleSource) {
-    const { absoluteUri } = moduleSource;
+    const { absoluteUri } = moduleSource
 
-    this.logger.debug(`[processModule] Processing module ${absoluteUri}`);
-    const module = await import(absoluteUri);
+    this.logger.debug(`[processModule] Processing module ${absoluteUri}`)
+    const module = await import(absoluteUri)
 
     if(module.Parser && module.meta && isParserMeta(module.meta)) {
-      this.logger.debug(`[processModule] Found parser for language ${module.meta.language}`);
+      this.logger.debug(`[processModule] Found parser for language ${module.meta.language}`)
       discovered.parser[module.meta.language] = {
         meta: module.meta,
         parser: module.Parser
-      };
+      }
     }
 
     if(module.Printer && module.meta && isPrinterMeta(module.meta)) {
-      this.logger.debug(`[processModule] Found printer for format ${module.meta.format}`);
+      this.logger.debug(`[processModule] Found printer for format ${module.meta.format}`)
       discovered.printer[module.meta.format] = {
         meta: module.meta,
         printer: module.Printer
-      };
+      }
     }
   }
 
@@ -55,30 +50,24 @@ export default class Discovery {
    */
   async discoverModules(mockPath) {
     if(mockPath) {
-      this.logger.debug(`[discoverModules] Discovering mock modules in ${mockPath}`);
-      return await this.discoverMockModules(mockPath);
+      this.logger.debug(`[discoverModules] Discovering mock modules in ${mockPath}`)
+      return await this.discoverMockModules(mockPath)
     }
 
     // TODO: Need to use workspace path instead of __dirname
-    const localModulesPath = path.resolve(__dirname, "../../node_modules");
-    const globalNodeModules = execSync("npm root -g").toString().trim();
-    const discovered = { parser: {}, printer: {} };
+    const localModulesPath = await FDUtil.resolveDirectory("node_modules")
+    const globalNodeModules = await FDUtil.resolveDirectory(execSync("npm root -g").toString().trim())
+    const discovered = { parser: {}, printer: {} }
 
     for(const modulesPath of [localModulesPath, globalNodeModules]) {
-      const modules = fs
-        .readdirSync(modulesPath)
-        .filter((name) => name.startsWith("bedoc-"))
-        .map(name => ({
-          path: path.join(modulesPath, name),
-          absoluteUri: path.join(modulesPath, name)
-        }));
-
+      const pathToCheck = `${modulesPath}/bedoc-*`
+      const modules = await FDUtil.getFiles(pathToCheck)
       for(const moduleSource of modules) {
-        await this.processModule(discovered, moduleSource);
+        await this.processModule(discovered, moduleSource)
       }
     }
 
-    return discovered;
+    return discovered
   }
 
   /**
@@ -87,26 +76,26 @@ export default class Discovery {
    * @returns A map of discovered modules
    */
   async discoverMockModules(mockPath) {
-    const { getFiles, resolveFile } = this.fileUtil;
+    const { getFiles } = FDUtil
 
-    this.logger.debug(`[discoverMockModules] Discovering mock modules in ${mockPath}`);
+    this.logger.debug(`[discoverMockModules] Discovering mock modules in ${mockPath}`)
 
     const files = await getFiles(
       [`${mockPath}/bedoc-*-printer.js`, `${mockPath}/bedoc-*-parser.js`]
-    );
+    )
 
-    this.logger.debug(`[discoverMockModules] Files: ${JSON.stringify([...files], null, 2)}`);
+    this.logger.debug(`[discoverMockModules] Files: ${JSON.stringify([...files], null, 2)}`)
 
-    const discovered = { parser: {}, printer: {} };
+    const discovered = { parser: {}, printer: {} }
 
     for(const file of files) {
       if(!file.absoluteUri)
-        continue;
+        continue
 
-      await this.processModule(discovered, file);
+      await this.processModule(discovered, file)
     }
 
-    return discovered;
+    return discovered
   }
 
   /**
@@ -117,14 +106,14 @@ export default class Discovery {
    */
   async specificPrinter(fileMap) {
     if(!fileMap.path)
-      throw new Error(`[specificPrinter] No path specified in ${fileMap.path}`);
+      throw new Error(`[specificPrinter] No path specified in ${fileMap.path}`)
 
-    const printer = await this.specificModule(fileMap);
+    const printer = await this.specificModule(fileMap)
 
     return {
       meta: printer.meta,
       printer: printer.Printer
-    };
+    }
   }
 
   /**
@@ -135,14 +124,14 @@ export default class Discovery {
    */
   async specificParser(fileMap) {
     if(!fileMap.path)
-      throw new Error(`[specificParser] No path specified in ${fileMap.path}`);
+      throw new Error(`[specificParser] No path specified in ${fileMap.path}`)
 
-    const parser = await this.specificModule(fileMap);
+    const parser = await this.specificModule(fileMap)
 
     return {
       meta: parser.meta,
       parser: parser.Parser
-    };
+    }
   }
 
   /**
@@ -152,14 +141,14 @@ export default class Discovery {
    * @returns The module
    */
   async specificModule(fileMap) {
-    const result = await import(fileMap.absoluteUri);
+    const result = await import(fileMap.absoluteUri)
 
     if(result.Parser && result.meta && isParserMeta(result.meta))
-      return result;
+      return result
 
     if(result.Printer && result.meta && isPrinterMeta(result.meta))
-      return result;
+      return result
 
-    throw new Error(`[specificModule] Module ${fileMap.path} does not export a Parser or Printer`);
+    throw new Error(`[specificModule] Module ${fileMap.path} does not export a Parser or Printer`)
   }
 }

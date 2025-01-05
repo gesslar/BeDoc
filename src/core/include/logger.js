@@ -4,4 +4,4 @@ export const LoggerColors = {
   warn: "\x1b[33m",  // Yellow
   error: "\x1b[31m", // Red
   reset: "\x1b[0m",  // Reset
-};
+}
