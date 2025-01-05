@@ -1,5 +1,7 @@
 import FileUtil from "./util/FDUtil.js"
 import DataUtil from "./util/DataUtil.js"
+import StringUtil from "./util/StringUtil.js"
+
 import { Hooks, HookEvents, HookTypes, HookClasses, ClassToHook } from "./include/hooks.js"
 
 export default class HookManager {
@@ -61,6 +63,9 @@ export default class HookManager {
     target.hooks = attachedHooks
     target.hook = this.on
     target.HOOKS = Hooks
+
+    // Let's inject some utilities
+    target.string = StringUtil
 
     return name
   }

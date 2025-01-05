@@ -6,6 +6,7 @@ import mm from "micromatch"
 import DataUtil from "./DataUtil.js"
 import ValidUtil from "./ValidUtil.js"
 import micromatch from "micromatch"
+import { dir } from "console"
 
 export default class FDUtil {
   data = new DataUtil()
@@ -36,7 +37,7 @@ export default class FDUtil {
    * @returns The resolved file
    * @throws {Error}
    */
-  static resolveFile = async(globPattern) => {
+  static resolveFile = async globPattern => {
     if(!ValidUtil.string(globPattern, true))
       throw new Error(`Expected string or array of strings, got: ${typeof globPattern}\n${JSON.stringify(globPattern)}`);6
 
@@ -62,7 +63,7 @@ export default class FDUtil {
    * @param file - The file
    * @returns The composed file path
    */
-  static composeFile = async(dir, file) => {
+  static composeFilename = async(dir, file) => {
     const dirObject = await FDUtil.composeDirectory(dir)
     const fileName = path.resolve(dirObject.path, file)
 
@@ -72,31 +73,34 @@ export default class FDUtil {
   /**
    * Map a file to a FileMap
    *
-   * @param file - The file to map
+   * @param fileName - The file to map
    * @returns The mapped file
    */
-  static mapFile = file => {
+  static mapFile = fileName => {
     return {
-      path: file,
-      uri: FDUtil.toUri(file),
-      absolutePath: path.resolve(process.cwd(), file),
-      absoluteUri: FDUtil.toUri(path.resolve(process.cwd(), file)),
-      name: path.basename(file),
-      module: path.basename(file, path.extname(file)),
-      extension: path.extname(file),
+      path: fileName,
+      uri: FDUtil.toUri(fileName),
+      absolutePath: path.resolve(process.cwd(), fileName),
+      absoluteUri: FDUtil.toUri(path.resolve(process.cwd(), fileName)),
+      name: path.basename(fileName),
+      module: path.basename(fileName, path.extname(fileName)),
+      extension: path.extname(fileName),
     }
   }
 
   /**
    * Map a directory to a DirMap
    *
-   * @param dir - The directory to map
+   * @param directoryName - The directory to map
    * @returns The mapped directory
    */
-  static mapDirectory = dir => {
+  static mapDirectory = directoryName => {
     return {
-      path: dir,
-      uri: FDUtil.toUri(dir),
+      path: directoryName,
+      uri: FDUtil.toUri(directoryName),
+      absolutePath: path.resolve(process.cwd(), directoryName),
+      absoluteUri: FDUtil.toUri(path.resolve(process.cwd(), directoryName)),
+      name: path.basename(directoryName),
     }
   }
 
@@ -137,34 +141,19 @@ export default class FDUtil {
   /**
    * Resolves a path to an absolute path
    *
-   * @param pattern - The path to resolve
+   * @param directoryName - The path to resolve
    * @returns The resolved directory path
    * @throws {Error}
    */
-  static resolveDirectory = async(pattern) => {
-    if(!ValidUtil.string(pattern, true))
+  static resolveDirectory = async directoryName => {
+    if(!ValidUtil.string(directoryName, true))
       throw new Error("Path is required")
 
-    const dirs = await globby([pattern], {
-      onlyDirectories: true,
-      expandDirectories: false,
+    const mappedDirectory = FDUtil.mapDirectory(directoryName)
+    const stat = await fs.promises.stat(mappedDirectory.absolutePath)
 
-    })
-
-    if(!dirs)
-      throw new Error(`Path not found: ${pattern}`)
-
-    if(!dirs.length)
-      throw new Error(`Path not found: ${pattern}`)
-
-    if(dirs.length > 1)
-      throw new Error(`Multiple paths found for: ${pattern}`)
-
-    const pathName = dirs.values().next().value
-    if(!pathName)
-      throw new Error(`Path not found: ${pattern}`)
-
-    return FDUtil.mapDirectory(pathName)
+    if(stat.isDirectory())
+      return mappedDirectory
   }
 
   /**

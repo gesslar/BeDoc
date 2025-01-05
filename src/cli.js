@@ -3,7 +3,7 @@ import Core from "./core/Core.js"
 import Logger from "./core/Logger.js"
 import ModuleUtil from "./core/util/ModuleUtil.js"
 import { ConfigurationParameters } from "./core/ConfigurationParameters.js"
-import { ConfigValidator } from "./core/ConfigValidator.js"
+import { ConfigurationValidator } from "./core/ConfigurationValidator.js"
 
 // We need our own logger instance, because we aren't the Core object.
 const logger = new Logger(null);
@@ -48,7 +48,7 @@ const logger = new Logger(null);
     const options = program.opts()
 
     // Validate options using ConfigValidator
-    const validatedConfig = await ConfigValidator.validate(options)
+    const validatedConfig = await ConfigurationValidator.validate(options)
     if(validatedConfig.status === "error") {
       console.error(`The following errors were found in the configuration:\n\n${validatedConfig.error}`)
       process.exit(0)
@@ -59,9 +59,10 @@ const logger = new Logger(null);
     await core.processFiles()
   } catch(e) {
     if(e instanceof Error) {
-      console.error(`Error: ${e.message}`)
       if(e.stack)
         console.error(e.stack)
+      else
+        console.error(`Error: ${e.message}`)
     }
     process.exit(1)
   }

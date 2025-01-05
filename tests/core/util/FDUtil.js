@@ -113,7 +113,7 @@ describe("FileUtil", () => {
     })
 
     it("should throw an error if no directory is found", async() => {
-      await expect(FDUtil.resolveDirectory(path.join(testData, "nonexistentdir"))).to.be.rejectedWith(/Path not found/)
+      await expect(FDUtil.resolveDirectory(path.join(testData, "nonexistentdir"))).to.be.rejectedWith(/Directory not found/)
     })
   })
 

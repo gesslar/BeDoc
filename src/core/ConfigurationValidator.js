@@ -2,9 +2,9 @@ import ValidUtil from "./util/ValidUtil.js"
 import FDUtil from "./util/FDUtil.js"
 import ModuleUtil from "./util/ModuleUtil.js"
 import { ConfigurationParameters } from "./ConfigurationParameters.js"
-import { FdTypes } from "./include/fd.js"
+import { FdType, FdTypes } from "./include/fd.js"
 
-export class ConfigValidator {
+export class ConfigurationValidator {
   static async validate(options) {
     const errors = []
 
@@ -17,7 +17,7 @@ export class ConfigValidator {
         errors.push(...configErrors)
         return {
           status: "error",
-          error: errors.map(ConfigValidator._decorateError).join("\n`")
+          error: errors.map(ConfigurationValidator._decorateError).join("\n`")
         }
       }
 
@@ -66,7 +66,7 @@ export class ConfigValidator {
             const patterns = inputString.split(",")
             options[key] = await FDUtil.getFiles(patterns)
           } else if(param.subtype.path.mustExist) {
-            options[key] = pathType === FdTypes.FILE ?
+            options[key] = pathType === FdType.FILE ?
               await FDUtil.resolveFile(options[key]) :
               await FDUtil.resolveDirectory(options[key])
           }
