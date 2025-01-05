@@ -8,7 +8,6 @@
   },
   "type": "module",
   "scripts": {
-    "test": "nyc mocha --recursive tests/**/*.test.js",
     "mock": "node ./src/cli.js -c wip/bedoc.json",
     "docs:build": "cd docs && bundle exec jekyll build",
     "docs:serve": "cd docs && bundle exec jekyll serve",
@@ -20,11 +19,7 @@
     "globby": "^14.0.2"
   },
   "devDependencies": {
-    "chai": "^5.1.2",
-    "chai-as-promised": "^8.0.1",
-    "eslint": "^9.17.0",
-    "mocha": "^11.0.1",
-    "nyc": "^17.1.0"
+    "eslint": "^9.17.0"
   },
   "engines": {
     "vscode": "^1.80.0"
@@ -43,17 +38,6 @@
     "parser",
     "printer"
   ],
-  "nyc": {
-    "all": true,
-    "include": [
-      "src/**/*.js"
-    ],
-    "exclude": [],
-    "reporter": [
-      "text",
-      "html"
-    ]
-  },
   "author": "gesslar",
   "license": "Unlicense"
 }

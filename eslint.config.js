@@ -34,9 +34,18 @@ export default[
           "default": { "after": false },
           "throw": { "before": true, "after": false },
 
+          // Keywords
+          "as": { "before": true, "after": false },
+          "async": { "before": true, "after": false },
+          "await": { "before": true, "after": false },
+          "class": { "before": true, "after": false },
+          "const": { "before": true, "after": true },
+          "let": { "before": true, "after": true },
+          "var": { "before": true, "after": true },
+
           // Exception handling
-          "catch": { "before" : true, "after": false },
-          "finally": { "before" : true, "after": true },
+          "catch": { "before": true, "after": false },
+          "finally": { "before": true, "after": true },
         }
       }]
     }
