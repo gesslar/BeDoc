@@ -2,39 +2,25 @@
   "name": "bedoc",
   "version": "1.0.0",
   "description": "Pluggable documentation engine for any language and format",
-  "main": "./dist/core/core.js",
+  "main": "./src/core/core.js",
   "bin": {
-    "bedoc": "./dist/cli.js"
+    "bedoc": "./src/cli.js"
   },
   "type": "module",
   "scripts": {
-    "test": "npm run build && nyc mocha --recursive tests/**/*.test.js",
-    "clean": "rimraf dist",
-    "clean-all": "rimraf dist && rimraf node_modules && rimraf package-lock.json && rimraf yarn.lock",
-    "prepare": "npm run build",
-    "build": "tsc",
-    "postinstall": "npm link",
-    "preinstall": "npm run build",
-    "package": "vsce package",
-    "mock": "npm run build && node ./dist/cli.js -c wip/bedoc.json",
+    "mock": "node ./src/cli.js -c wip/bedoc.json",
     "docs:build": "cd docs && bundle exec jekyll build",
-    "docs:serve": "cd docs && bundle exec jekyll serve"
+    "docs:serve": "cd docs && bundle exec jekyll serve",
+    "lint:check": "npx eslint .",
+    "lint:fix": "npx eslint . --fix"
   },
   "dependencies": {
     "commander": "^13.0.0",
-    "globby": "^14.0.2"
+    "globby": "^14.0.2",
+    "micromatch": "^4.0.8"
   },
   "devDependencies": {
-    "@types/node": "^22.10.5",
-    "@types/vscode": "^1.96.0",
-    "@typescript-eslint/eslint-plugin": "^8.19.0",
-    "@typescript-eslint/parser": "^8.19.0",
-    "chai": "^5.1.2",
-    "chai-as-promised": "^8.0.1",
-    "eslint": "^9.17.0",
-    "nyc": "^17.1.0",
-    "rimraf": "^6.0.1",
-    "typescript": "^5.7.2"
+    "eslint": "^9.17.0"
   },
   "engines": {
     "vscode": "^1.80.0"
@@ -53,18 +39,6 @@
     "parser",
     "printer"
   ],
-  "nyc": {
-    "include": [
-      "dist/**/*.js"
-    ],
-    "exclude": [
-      "dist/**/*.test.js"
-    ],
-    "reporter": [
-      "text",
-      "html"
-    ]
-  },
   "author": "gesslar",
   "license": "Unlicense"
 }

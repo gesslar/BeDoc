@@ -13,8 +13,10 @@
   "[snippets]": {
     "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   },
+  "eslint.options": {
+    "overrideConfigFile": "eslint.config.mjs"
+  },
   "eslint.useFlatConfig": true,
-  "eslint.format.enable": true,
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": true
   },

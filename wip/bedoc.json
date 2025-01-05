@@ -1,7 +1,6 @@
 {
   "language": "lpc",
   "format": "markdown",
-  "mock": "wip",
   "output": "output/",
   "input" : "wip/sample/**/*.c",
   "hooks": "wip/my_custom_hooks.js",
