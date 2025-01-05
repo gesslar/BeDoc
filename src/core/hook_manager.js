@@ -58,7 +58,6 @@ export default class HookManager {
       throw new Error(`[attachHooks] No hooks available for \`${hookType}\``);
 
     attachedHooks[hookType] = hooksForClass;
-    console.log(attachedHooks);
     target.hooks = attachedHooks;
     target.hook = this.on;
     target.HOOKS = Hooks;
@@ -111,25 +110,4 @@ export default class HookManager {
       }
     }
   }
-/*
-
-  validateHooks = (events, validHooks = {}) => {
-    if(!events || events.size === 0 || !validHooks || Object.keys(validHooks).length === 0)
-      return;
-console.log(events)
-    console.debug(`[validateHooks] Events: ${JSON.stringify(events, null, 2)}`);
-    console.debug(`[validateHooks] Valid hooks: ${JSON.stringify(validHooks, null, 2)}`);
-
-    console.log(HOOK_TYPES);
-    console.log()
-    const HOOKS = Object.values(validHooks);
-    events.forEach((handler, event) => {
-      if(!HOOKS.includes(event))
-        throw new Error(`Unknown event "${event}"`);
-
-      if(typeof handler !== "function")
-        throw new Error(`Handler for "${type} ${event}" is not a function.`);
-    });
-  }
-*/
 }
