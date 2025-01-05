@@ -8,7 +8,7 @@ export class ConfigurationValidator {
   static async validate(options) {
     const errors = []
 
-    // File the entry points do wrap the entire process in a try/catch, we
+    // While the entry points do wrap the entire process in a try/catch, we
     // should also do this here, so we can trap everything and instead
     // of throwing, return friendly messages back!
     try {
@@ -23,8 +23,8 @@ export class ConfigurationValidator {
 
       // Load config file if specified
       if(options.config) {
-        const configFile = await FDUtil.resolveFile(options.config)
-        const config = ModuleUtil.require(configFile.path)
+        const configFile = await FDUtil.resolveFilename(options.config)
+        const config = ModuleUtil.require(configFile)
         options = { ...options, ...config }
         options.config = configFile  // Store full FileMap
       }
@@ -67,7 +67,7 @@ export class ConfigurationValidator {
             options[key] = await FDUtil.getFiles(patterns)
           } else if(param.subtype.path.mustExist) {
             options[key] = pathType === FdType.FILE ?
-              await FDUtil.resolveFile(options[key]) :
+              await FDUtil.resolveFilename(options[key]) :
               await FDUtil.resolveDirectory(options[key])
           }
         }

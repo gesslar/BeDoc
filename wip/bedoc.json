@@ -1,8 +1,8 @@
 {
+  "language": "lpc",
+  "format": "markdown",
   "output": "output/",
   "input" : "wip/sample/**/*.c",
-  "parser": "wip/bedoc-lpc-parser.js",
-  "printer": "wip/bedoc-markdown-printer.js",
   "hooks": "wip/my_custom_hooks.js",
   "debug": false,
   "debugLevel": 4

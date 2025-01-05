@@ -3,15 +3,14 @@ import path from "path"
 import { execSync } from "child_process"
 import Logger from "./Logger.js"
 import FDUtil from "./util/FDUtil.js"
+import ModuleUtil from "./util/ModuleUtil.js"
 
 const isParserMeta = meta => "language" in meta
 const isPrinterMeta = meta => "format" in meta
 
-let logger
-
 export default class Discovery {
   constructor(core) {
-    logger = new Logger(core)
+    this.logger = core.logger
   }
 
   /**
@@ -21,26 +20,40 @@ export default class Discovery {
    * @param moduleSource - The module source information
    */
   async processModule(discovered, moduleSource) {
-    const { absoluteUri } = moduleSource
+    const { absolutePath } = moduleSource
 
-    this.logger.debug(`[processModule] Processing module ${absoluteUri}`)
-    const module = await import(absoluteUri)
+    const packageJsonFile = await FDUtil.resolveFilename(`${absolutePath}/package.json`)
+    const packageJson = await ModuleUtil.loadJson(packageJsonFile)
 
-    if(module.Parser && module.meta && isParserMeta(module.meta)) {
-      this.logger.debug(`[processModule] Found parser for language ${module.meta.language}`)
-      discovered.parser[module.meta.language] = {
-        meta: module.meta,
-        parser: module.Parser
+    const { parsers: parserFilenames, printers: printerFilenames } = packageJson.bedoc
+
+    const getFileObjects = async fileName => await FDUtil.resolveFilename(fileName, packageJsonFile.directory)
+    const parserFileObjects = parserFilenames ? await Promise.all(parserFilenames?.map(getFileObjects)) : []
+    const printerFileObjects = printerFilenames ? await Promise.all(printerFilenames?.map(getFileObjects)) : []
+
+    const loadEngine = async fileObject => await import(fileObject.absoluteUri)
+    const parsers = await Promise.all(parserFileObjects?.map(loadEngine))
+    const printers = await Promise.all(printerFileObjects?.map(loadEngine))
+
+    parsers?.forEach(parser => {
+      if(parser.Parser && parser.meta && isParserMeta(parser.meta)) {
+        this.logger.debug(`[processModule] Found parser for language ${parser.meta.language}`)
+        discovered.parser[parser.meta.language] = {
+          meta: parser.meta,
+          parser: parser.Parser
+        }
       }
-    }
+    })
 
-    if(module.Printer && module.meta && isPrinterMeta(module.meta)) {
-      this.logger.debug(`[processModule] Found printer for format ${module.meta.format}`)
-      discovered.printer[module.meta.format] = {
-        meta: module.meta,
-        printer: module.Printer
+    printers?.forEach(printer => {
+      if(printer.Printer && printer.meta && isPrinterMeta(printer.meta)) {
+        this.logger.debug(`[processModule] Found printer for format ${printer.meta.format}`)
+        discovered.printer[printer.meta.format] = {
+          meta: printer.meta,
+          printer: printer.Printer
+        }
       }
-    }
+    })
   }
 
   /**
@@ -55,14 +68,15 @@ export default class Discovery {
     }
 
     // TODO: Need to use workspace path instead of __dirname
-    const localModulesPath = await FDUtil.resolveDirectory("node_modules")
-    const globalNodeModules = await FDUtil.resolveDirectory(execSync("npm root -g").toString().trim())
+    // const localModuleDirectory = await FDUtil.resolveDirectory("node_modules")
+    const localModuleDirectory = await FDUtil.resolveDirectory("c:/temp")
+    const globalModuleDirectory = await FDUtil.resolveDirectory(execSync("npm root -g").toString().trim())
     const discovered = { parser: {}, printer: {} }
 
-    for(const modulesPath of [localModulesPath, globalNodeModules]) {
-      const pathToCheck = `${modulesPath}/bedoc-*`
-      const modules = await FDUtil.getFiles(pathToCheck)
-      for(const moduleSource of modules) {
+    for(const moduleDirectory of [localModuleDirectory, globalModuleDirectory]) {
+      const {directories} = await FDUtil.ls(moduleDirectory.absolutePath)
+      const matchingModules = directories.filter(d => d.name.startsWith("bedoc-"))
+      for(const moduleSource of matchingModules) {
         await this.processModule(discovered, moduleSource)
       }
     }

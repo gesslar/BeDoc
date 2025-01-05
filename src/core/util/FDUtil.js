@@ -5,8 +5,7 @@ import mm from "micromatch"
 
 import DataUtil from "./DataUtil.js"
 import ValidUtil from "./ValidUtil.js"
-import micromatch from "micromatch"
-import { dir } from "console"
+import { on } from "events"
 
 export default class FDUtil {
   data = new DataUtil()
@@ -33,50 +32,64 @@ export default class FDUtil {
   /**
    * Resolves a file to an absolute path
    *
-   * @param globPattern - The file to resolve
-   * @returns The resolved file
+   * @param fileName - The file to resolve
+   * @param directoryObject - The directory object to resolve the file in
+   * @returns A file object (validated)
    * @throws {Error}
    */
-  static resolveFile = async globPattern => {
-    if(!ValidUtil.string(globPattern, true))
-      throw new Error(`Expected string or array of strings, got: ${typeof globPattern}\n${JSON.stringify(globPattern)}`);6
+  static resolveFilename =  async(fileName, directoryObject = null) => {
+    if(!ValidUtil.string(fileName, true))
+      throw new Error("File path is required")
 
-    const files = await globby(globPattern)
+    const fixedFileName = FDUtil.fixSlashes(fileName)
+    const directoryNamePart = fixedFileName.split("/").slice(0, -1).join("/")
+    const fileNamePart = fixedFileName.split("/").pop()
+    if(!directoryObject)
+      directoryObject = await FDUtil.resolveDirectory(directoryNamePart)
 
-    if(!files)
-      throw new Error(`File not found: ${globPattern}`)
+    const fileObject = await FDUtil.composeFilename(directoryObject, fileNamePart)
+    const stat = await fs.promises.stat(fileObject.absolutePath)
 
-    if(!files.length)
-      throw new Error(`File not found: ${globPattern}`)
+    if(stat.isFile())
+      return {
+        ...fileObject,
+        directory:directoryObject
+      }
 
-    if(files.length > 1)
-      throw new Error(`Multiple files found for: ${globPattern}`)
-
-    const pathName = files[0]
-    return FDUtil.mapFile(pathName)
+    throw new Error(`File does not exist: \`${fileObject.absolutePath}\``)
   }
 
   /**
    * Compose a file path from a directory and a file
    *
-   * @param dir - The directory
-   * @param file - The file
-   * @returns The composed file path
+   * @param directoryName - The directory
+   * @param fileName - The file
+   * @returns A file object
    */
-  static composeFilename = async(dir, file) => {
-    const dirObject = await FDUtil.composeDirectory(dir)
-    const fileName = path.resolve(dirObject.path, file)
+  static composeFilename = async(directoryNameorObject, fileName) => {
+    let dirObject
 
-    return FDUtil.mapFile(fileName)
+    if(ValidUtil.string(directoryNameorObject)) {
+      dirObject = await FDUtil.composeDirectory(directoryNameorObject)
+    } else {
+      if(!directoryNameorObject.isDirectory)
+        throw new Error("Directory object is not a directory")
+
+      dirObject = directoryNameorObject
+    }
+
+    const fileObject = path.resolve(dirObject.path, fileName)
+
+    return FDUtil.mapFilename(fileObject)
   }
 
   /**
    * Map a file to a FileMap
    *
    * @param fileName - The file to map
-   * @returns The mapped file
+   * @returns A file object
    */
-  static mapFile = fileName => {
+  static mapFilename = fileName => {
     return {
       path: fileName,
       uri: FDUtil.toUri(fileName),
@@ -85,6 +98,8 @@ export default class FDUtil {
       name: path.basename(fileName),
       module: path.basename(fileName, path.extname(fileName)),
       extension: path.extname(fileName),
+      isFile: true,
+      isDirectory: false,
     }
   }
 
@@ -92,7 +107,7 @@ export default class FDUtil {
    * Map a directory to a DirMap
    *
    * @param directoryName - The directory to map
-   * @returns The mapped directory
+   * @returns A directory object
    */
   static mapDirectory = directoryName => {
     return {
@@ -101,6 +116,8 @@ export default class FDUtil {
       absolutePath: path.resolve(process.cwd(), directoryName),
       absoluteUri: FDUtil.toUri(path.resolve(process.cwd(), directoryName)),
       name: path.basename(directoryName),
+      isFile: false,
+      isDirectory: true,
     }
   }
 
@@ -108,7 +125,7 @@ export default class FDUtil {
    * Retrieve all files matching a specific glob pattern.
    *
    * @param globPattern - The glob pattern(s) to search.
-   * @returns Set of file paths.
+   * @returns An array of file objects
    * @throws {Error} Throws an error for invalid input or search failure.
    */
   static getFiles = async(globPattern) => {
@@ -132,7 +149,7 @@ export default class FDUtil {
 
     // Use Globby to fetch matching files
     const filesArray = await globby(globbyArray)
-    const files = filesArray.map(file => FDUtil.mapFile(file))
+    const files = filesArray.map(file => FDUtil.mapFilename(file))
 
     // Flatten the result and remove duplicates
     return files
@@ -142,27 +159,48 @@ export default class FDUtil {
    * Resolves a path to an absolute path
    *
    * @param directoryName - The path to resolve
-   * @returns The resolved directory path
+   * @returns The directory object
    * @throws {Error}
    */
   static resolveDirectory = async directoryName => {
     if(!ValidUtil.string(directoryName, true))
       throw new Error("Path is required")
 
-    const mappedDirectory = FDUtil.mapDirectory(directoryName)
-    const stat = await fs.promises.stat(mappedDirectory.absolutePath)
+    const directoryObject = FDUtil.mapDirectory(directoryName)
+    const stat = await fs.promises.stat(directoryObject.absolutePath)
 
     if(stat.isDirectory())
-      return mappedDirectory
+      return directoryObject
+
+    throw new Error(`Path does not exist: \`${directoryObject.absolutePath}\``)
   }
 
   /**
    * Compose a directory map from a path
    *
-   * @param dir - The directory
-   * @returns The composed directory map
+   * @param directory - The directory
+   * @returns A directory object
    */
-  static composeDirectory = async(dir) => FDUtil.mapDirectory(dir)
+  static composeDirectory = async(directory) => FDUtil.mapDirectory(directory)
+
+  static ls = async(directory) => {
+    const found = await fs.promises.readdir(directory, {withFileTypes: true})
+    const results = await Promise.all(found.map(async dirent => {
+      const fullPath = path.join(directory, dirent.name)
+      const stat = await fs.promises.stat(fullPath)
+      return { dirent, stat, fullPath }
+    }))
+
+    const files = results
+      .filter(({stat}) => stat.isFile())
+      .map(({fullPath}) => FDUtil.mapFilename(fullPath))
+
+    const directories = results
+      .filter(({stat}) => stat.isDirectory())
+      .map(({fullPath}) => FDUtil.mapDirectory(fullPath))
+
+    return {files, directories}
+  }
 
   /**
    * Reads the content of a file asynchronously.
@@ -171,7 +209,7 @@ export default class FDUtil {
    * @returns The file contents
    */
   static readFile = async(fileObject) => {
-    const absolutePath = fileObject.absolutePath
+    const {absolutePath} = fileObject
     if(!absolutePath) throw new Error("No absolute path in file map")
     return await fs.promises.readFile(absolutePath, "utf8")
   }

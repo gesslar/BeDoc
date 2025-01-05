@@ -1,12 +1,8 @@
-import Logger from "./Logger.js"
 import Discovery from "./Discovery.js"
 import HookManager from "./HookManager.js"
-import FDUtil from "./util/FDUtil.js"
-import DataUtil from "./util/DataUtil.js"
-import ModuleUtil from "./util/ModuleUtil.js"
-import StringUtil from "./util/StringUtil.js"
-import ValidUtil from "./util/ValidUtil.js"
 import { Environment } from "./include/environment.js"
+import Logger from "./Logger.js"
+import FDUtil from "./util/FDUtil.js"
 
 export default class Core {
   constructor(options) {
@@ -60,7 +56,7 @@ export default class Core {
         const numPrinters = Object.keys(printers).length
         if(numPrinters === 0)
           throw new Error("[New] No printers discovered.")
-
+        console.log(instance.options)
         // Select the printer based on the format
         const format = instance.options.format
         const selectedPrinter = printers[format]

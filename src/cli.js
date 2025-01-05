@@ -1,7 +1,10 @@
+#!/usr/bin/env node
+
 import { program } from "commander"
 import Core from "./core/Core.js"
 import Logger from "./core/Logger.js"
 import ModuleUtil from "./core/util/ModuleUtil.js"
+import FDUtil from "./core/util/FDUtil.js"
 import { ConfigurationParameters } from "./core/ConfigurationParameters.js"
 import { ConfigurationValidator } from "./core/ConfigurationValidator.js"
 
@@ -12,7 +15,8 @@ const logger = new Logger(null);
 (async() => {
   try {
     // Get package info
-    const packageJson = ModuleUtil.require("./package.json")
+    const packageJasonFileObject = await FDUtil.resolveFilename("./package.json")
+    const packageJson = await ModuleUtil.require(packageJasonFileObject)
 
     // Setup program
     program
