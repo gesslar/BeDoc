@@ -35,7 +35,8 @@ export default[
           "throw": { "before": true, "after": false },
 
           // Keywords
-          "as": { "before": true, "after": false },
+          "as": { "before": true, "after": true },
+          "from": { "before": true, "after": true },
           "async": { "before": true, "after": false },
           "await": { "before": true, "after": false },
           "class": { "before": true, "after": false },
