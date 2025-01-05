@@ -19,7 +19,7 @@ class Printer {
    * @param {Object} content
    */
   async print(module, content) {
-    const HOOKS = this.HOOKS;
+    const HOOKS = this.HOOKS.print;
 
     await this.hook(HOOKS.START, {module, content});
 

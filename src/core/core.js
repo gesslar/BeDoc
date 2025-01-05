@@ -115,8 +115,6 @@ export default class Core {
       throw new Error("No input files specified");
     }
 
-    console.log("input", input);
-
     // Process each file
     for(const fileMap of input) {
       this.logger.debug(`Processing file: ${fileMap.path}`);

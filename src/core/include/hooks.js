@@ -1,25 +1,17 @@
-export const CLASS_TO_HOOK = Object.freeze({
-  Printer: "print",
-  Parser: "parse",
-});
+import DataUtil from "../util/data.js";
 
-export const HOOK_TO_CLASS = Object.freeze({
-  print: "Printer",
-  parse: "Parser",
-});
+const freeze = Object.freeze ;
+const allocate = DataUtil.allocate ;
 
-export const PRINT_HOOKS = Object.freeze({
-  START: "start",
-  SECTION_LOAD: "load",
-  ENTER: "enter",
-  EXIT: "exit",
-  END: "end",
-});
+export const HookClasses = freeze(["Printer", "Parser"]) ;
+export const HookTypes = freeze(["print", "parse"]) ;
+export const HookEvents = freeze(["start", "section_load", "enter", "exit", "end"]) ;
 
-export const PARSE_HOOKS = Object.freeze({
-  START: "start",
-  SECTION_LOAD: "load",
-  ENTER: "enter",
-  EXIT: "exit",
-  END: "end",
-});
+export const ClassToHook = freeze(allocate(HookClasses, HookTypes)) ;
+export const HookToClass = freeze(allocate(HookTypes, HookClasses)) ;
+
+const upperEvents = HookEvents.map(event => event.toUpperCase()) ;
+export const PrintHooks = freeze(allocate(upperEvents, HookEvents)) ;
+export const ParseHooks = freeze(allocate(upperEvents, HookEvents)) ;
+
+export const Hooks = freeze(allocate(HookTypes, [PrintHooks, ParseHooks])) ;

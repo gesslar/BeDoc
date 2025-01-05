@@ -66,4 +66,12 @@ export default class DataUtil {
 
     return result;
   }
+
+  /**
+   * Checks if an object is empty
+   *
+   * @param obj - The object to check
+   * @returns Whether the object is empty
+   */
+  static objectIsEmpty = obj => Object.keys(obj).length === 0;
 }

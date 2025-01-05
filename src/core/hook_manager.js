@@ -1,6 +1,6 @@
 import FileUtil from "./util/fd.js";
 import DataUtil from "./util/data.js";
-import { CLASS_TO_HOOK, HOOK_TO_CLASS, PRINT_HOOKS, PARSE_HOOKS }from "./include/hooks.js";
+import { Hooks, HookTypes, HookClasses, ClassToHook }from "./include/hooks.js";
 
 export default class HookManager {
   constructor(core) {
@@ -26,7 +26,7 @@ export default class HookManager {
 
   getAvailableHooks = () =>
     this.hooks ||
-    DataUtil.allocate(Object.keys(CLASS_TO_HOOK), _ => {})
+    DataUtil.allocate(HookTypes, _ => [])
 
   /**
    * Attach hooks to a target
@@ -39,19 +39,29 @@ export default class HookManager {
       throw new Error("[attachHooks] Target must have a constructor name");
 
     const name = target.constructor.name;
-    if(!(name in CLASS_TO_HOOK))
+    if(!HookClasses.includes(name))
       throw new Error(`[attachHooks] Invalid target type: ${name}`);
 
-    const hookType = CLASS_TO_HOOK[name];
+    const availableHooks = this.getAvailableHooks();
+    if(!availableHooks)
+      throw new Error("[attachHooks] No hooks available");
+
+    const hookType = ClassToHook[name];
     target.hooks = target.hooks || {};
 
-    const currHooks = target.hooks[hookType];
-    if(currHooks)
-      throw new Error(`[attachHooks] Hooks already attached for ${name}`);
+    const attachedHooks = target.hooks[hookType] || {};
+    if(!DataUtil.objectIsEmpty(attachedHooks))
+      throw new Error(`[attachHooks] Hooks already attached for \`${hookType}\``);
 
-    target.hooks[hookType] = this.hooks[hookType];
+    const hooksForClass = availableHooks[hookType];
+    if(!hooksForClass || DataUtil.objectIsEmpty(hooksForClass))
+      throw new Error(`[attachHooks] No hooks available for \`${hookType}\``);
+
+    attachedHooks[hookType] = hooksForClass;
+    console.log(attachedHooks);
+    target.hooks = attachedHooks;
     target.hook = this.on;
-    target.HOOKS = name === HOOK_TO_CLASS.print ? PRINT_HOOKS : PARSE_HOOKS;
+    target.HOOKS = Hooks;
 
     return name;
   }
@@ -66,12 +76,30 @@ export default class HookManager {
   async on(event, ...args) {
     if(!event)
       throw new Error("[on] Event type is required for hook invocation");
+    if(!HookEvents.includes(event))
+      throw new Error(`[on] Invalid event type: ${event}`);
 
-    const hook = this.hooks?.[event] || null;
+    const thisClass = this.constructor?.name;
+    if(!thisClass)
+      throw new Error("[on] This class must have a constructor name");
+
+    const allHooks = this.hooks;
+    if(!allHooks)
+      return;
+
+    const hookType = ClassToHook[thisClass];
+    const hooks = allHooks[hookType];
+    if(!hooks)
+      return;
+
+    const hook = hooks[event];
     if(!hook)
       return;
 
     if(hook) {
+      if(typeof hook !== "function")
+        throw new Error(`[on] Hook "${event}" is not a function`);
+
       try {
         const result = await hook(...args);
         if(result?.status === "error")
