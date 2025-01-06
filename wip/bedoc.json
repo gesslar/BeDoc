@@ -2,7 +2,7 @@
   "language": "lpc",
   "format": "markdown",
   "output": "output/",
-  "input" : "wip/sample/**/*.c",
+  "input" : ["wip/sample/arrays.c", "wip/sample/base64.c"],
   "hooks": "wip/my_custom_hooks.js",
   "debug": false,
   "debugLevel": 4

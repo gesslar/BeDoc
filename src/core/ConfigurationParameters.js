@@ -4,14 +4,19 @@ export const ConfigurationParameters = {
     short: "i",
     param: "file",
     description: "Comma-separated glob patterns to match files",
-    type: "string",
+    type: "string|string[]",
     required: true,
-    subtype: {
-      path: {
-        type: "file",
-        mustExist: true,
-      }
+    path: {
+      type: "file",
+      mustExist: true,
     }
+  },
+  exclude: {
+    short: "x",
+    param: "file",
+    description: "Comma-separated glob patterns to exclude files",
+    type: "string|string[]",
+    required: false,
   },
   language: {
     short: "l",
@@ -34,11 +39,9 @@ export const ConfigurationParameters = {
     description: "Custom hooks JS file",
     type: "string",
     required: false,
-    subtype: {
-      path: {
-        type: "file",
-        mustExist: true,
-      }
+    path: {
+      type: "file",
+      mustExist: true,
     }
   },
   output: {
@@ -47,11 +50,9 @@ export const ConfigurationParameters = {
     description: "Output directory",
     type: "string",
     required: false,
-    subtype: {
-      path: {
-        type: "directory",
-        mustExist: true,
-      }
+    path: {
+      type: "directory",
+      mustExist: true,
     }
   },
   parser: {
@@ -61,11 +62,9 @@ export const ConfigurationParameters = {
     type: "string",
     required: false,
     exclusiveOf: "language",
-    subtype: {
-      path: {
-        type: "file",
-        mustExist: true,
-      }
+    path: {
+      type: "file",
+      mustExist: true,
     }
   },
   printer: {
@@ -75,11 +74,9 @@ export const ConfigurationParameters = {
     type: "string",
     required: false,
     exclusiveOf: "format",
-    subtype: {
-      path: {
-        type: "file",
-        mustExist: true,
-      }
+    path: {
+      type: "file",
+      mustExist: true,
     }
   },
   mock: {
@@ -88,11 +85,9 @@ export const ConfigurationParameters = {
     description: "Path to mock parsers and printers",
     type: "string",
     required: false,
-    subtype: {
-      path: {
-        type: "directory",
-        mustExist: true,
-      }
+    path: {
+      type: "directory",
+      mustExist: true,
     }
   },
   config: {
@@ -101,11 +96,9 @@ export const ConfigurationParameters = {
     description: "Use JSON config file",
     type: "string",
     required: false,
-    subtype: {
-      path: {
-        type: "file",
-        mustExist: true,
-      }
+    path: {
+      type: "file",
+      mustExist: true,
     }
   },
   debug: {
@@ -124,3 +117,8 @@ export const ConfigurationParameters = {
     default: 4,
   }
 }
+
+export const ConfigurationPriorityKeys = Object.freeze([
+  "exclude",
+  "input",
+])

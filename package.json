@@ -14,6 +14,9 @@
     "lint:check": "npx eslint .",
     "lint:fix": "npx eslint . --fix"
   },
+  "bedoc": {
+    "config": "./wip/bedoc.json"
+  },
   "dependencies": {
     "commander": "^13.0.0",
     "globby": "^14.0.2",

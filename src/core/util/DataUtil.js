@@ -28,7 +28,6 @@ export default class DataUtil {
   }
 
   static allocate = (source, spec, forceConversion = true) => {
-    const specType = typeof spec
     const workSource = [], workSpec = [], result = {}
 
     if(!ValidUtil.array(source))

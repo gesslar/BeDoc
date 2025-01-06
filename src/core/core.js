@@ -56,7 +56,7 @@ export default class Core {
         const numPrinters = Object.keys(printers).length
         if(numPrinters === 0)
           throw new Error("[New] No printers discovered.")
-        console.log(instance.options)
+
         // Select the printer based on the format
         const format = instance.options.format
         const selectedPrinter = printers[format]

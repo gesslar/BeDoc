@@ -18,8 +18,9 @@ bedoc -l <language> -f <format> -i <input> -o <output>
 ### Core Options
 - `-l, --language <lang>`: Source code language (e.g., javascript, lpc)
 - `-f, --format <format>`: Output format (e.g., markdown, html)
-- `-i, --input <glob>`: Input file pattern(s)
+- `-i, --input <glob>`: Input file pattern(s). Multiple patterns can be comma-separated (e.g., "src/*.js,lib/*.js")
 - `-o, --output <dir>`: Output directory for generated docs
+- `-x, --exclude <glob>`: Patterns to exclude. Multiple patterns can be comma-separated (e.g., "**/*.test.js,**/*.spec.js")
 
 ### Module Options
 - `-p, --parser <file>`: Use local parser file

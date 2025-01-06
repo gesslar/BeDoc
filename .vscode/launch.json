@@ -9,10 +9,7 @@
         "<node_internals>/**"
       ],
       "program": "${workspaceFolder}/src/cli.js",
-      "args": [
-        "-c",
-        "wip/bedoc.json"
-      ],
+      "args": [],
       "console": "integratedTerminal"
     }
   ]
