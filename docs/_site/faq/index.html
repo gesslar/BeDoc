@@ -4,7 +4,7 @@
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="/BeDoc/assets/css/style.css?v=f73aff5b7bf3e99b9cb348bf764eebe00e3eef00">
+    <link rel="stylesheet" href="/BeDoc/assets/css/style.css?v=1b4a4b0d41f4fe73183c2c8fe0dccd21849fc7c1">
     <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
 
 <!-- Setup theme-color -->
@@ -66,7 +66,7 @@
           <h1>BeDoc</h1>
         </a>
         <h2>Bespoke Documentation Generator</h2>
-        <section id="nav"> <div class="wrapper"><nav class="site-nav"><a class="page-link" href="/BeDoc/about/">About</a><a class="page-link" href="/BeDoc/faq/">FAQ</a><a class="page-link" href="/BeDoc/parsers.html">Creating Parsers</a></nav></div>
+        <section id="nav"> <div class="wrapper"><nav class="site-nav"><a class="page-link" href="/BeDoc/about/">About</a><a class="page-link" href="/BeDoc/configuration.html">Configuration Guide</a><a class="page-link" href="/BeDoc/faq/">FAQ</a><a class="page-link" href="/BeDoc/hooks.html">Hook System</a><a class="page-link" href="/BeDoc/parsers.html">Creating Parsers</a><a class="page-link" href="/BeDoc/printers.html">Creating Printers</a></nav></div>
  </section>
         <section id="repo_url">
           <a href="https://github.com/gesslar/BeDoc" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
@@ -141,6 +141,20 @@ This makes error handling predictable and debugging straightforward.</li>
 using a local mock environment. Instead of installing modules globally, you can
 point BeDoc to a local directory containing your test modules. This is
 particularly useful during development and testing phases.</p>
+
+<h2 id="can-i-use-parsers-and-printers-without-installing-them">Can I use parsers and printers without installing them?</h2>
+<p>Yes! BeDoc allows you to use parser and printer files directly from your local
+filesystem without installation. Simply use the <code class="language-plaintext highlighter-rouge">--parser</code> (or <code class="language-plaintext highlighter-rouge">-p</code>) and
+<code class="language-plaintext highlighter-rouge">--printer</code> (or <code class="language-plaintext highlighter-rouge">-r</code>) options:</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bedoc <span class="nt">--parser</span> ./my-parser.js <span class="nt">--printer</span> ./my-printer.js <span class="nt">-i</span> src/<span class="k">*</span>.c <span class="nt">-o</span> docs
+</code></pre></div></div>
+<p>This is particularly useful for:</p>
+<ul>
+  <li>Quick testing of new parsers/printers</li>
+  <li>One-off documentation tasks</li>
+  <li>Using project-specific parsers without global installation</li>
+  <li>Rapid prototyping of documentation workflows</li>
+</ul>
 
 <h2 id="should-i-use-bedoc-for-my-project">Should I use BeDoc for my project?</h2>
 <p>If your project requires support for niche formats, custom documentation needs,

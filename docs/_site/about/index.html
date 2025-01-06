@@ -4,7 +4,7 @@
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="/BeDoc/assets/css/style.css?v=f73aff5b7bf3e99b9cb348bf764eebe00e3eef00">
+    <link rel="stylesheet" href="/BeDoc/assets/css/style.css?v=1b4a4b0d41f4fe73183c2c8fe0dccd21849fc7c1">
     <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
 
 <!-- Setup theme-color -->
@@ -66,7 +66,7 @@
           <h1>BeDoc</h1>
         </a>
         <h2>Bespoke Documentation Generator</h2>
-        <section id="nav"> <div class="wrapper"><nav class="site-nav"><a class="page-link" href="/BeDoc/about/">About</a><a class="page-link" href="/BeDoc/faq/">FAQ</a><a class="page-link" href="/BeDoc/parsers.html">Creating Parsers</a></nav></div>
+        <section id="nav"> <div class="wrapper"><nav class="site-nav"><a class="page-link" href="/BeDoc/about/">About</a><a class="page-link" href="/BeDoc/configuration.html">Configuration Guide</a><a class="page-link" href="/BeDoc/faq/">FAQ</a><a class="page-link" href="/BeDoc/hooks.html">Hook System</a><a class="page-link" href="/BeDoc/parsers.html">Creating Parsers</a><a class="page-link" href="/BeDoc/printers.html">Creating Printers</a></nav></div>
  </section>
         <section id="repo_url">
           <a href="https://github.com/gesslar/BeDoc" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
@@ -91,8 +91,8 @@ extensions, and GitHub Actions.</li>
   <li><strong>Extensibility</strong>: With its pluggable architecture, developers can create
 custom parsers and printers, and use hooks to modify the documentation process
 without changing core code.</li>
-  <li><strong>Type Safety</strong>: Built with TypeScript, BeDoc provides consistent response
-types and error handling across all operations, making debugging and
+  <li><strong>Clean Design</strong>: Built with pure JavaScript, BeDoc provides consistent response
+patterns and error handling across all operations, making debugging and
 maintenance straightforward.</li>
   <li><strong>Ease of Use</strong>: Intuitive configuration, automatic module discovery, and a
 powerful hook system streamline setup and customization.</li>
@@ -111,8 +111,10 @@ places no restrictions on usage, modification, or distribution.</li>
   <li><strong>Hooks</strong>: Modify the documentation process at any point</li>
 </ul>
 
-<p>This modular design allows for maximum flexibility while maintaining type safety
-and predictable behavior.</p>
+<p>Plugins (parsers and printers) are discovered through npm packages that follow the
+BeDoc naming convention (<code class="language-plaintext highlighter-rouge">bedoc-*</code>) and include a <code class="language-plaintext highlighter-rouge">bedoc</code> field in their package.json
+that specifies their parsers and printers. This modular design allows for maximum
+flexibility while maintaining clean interfaces and predictable behavior.</p>
 
 <h2 id="join-the-community">Join the Community</h2>
 

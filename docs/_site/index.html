@@ -4,7 +4,7 @@
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="/BeDoc/assets/css/style.css?v=f73aff5b7bf3e99b9cb348bf764eebe00e3eef00">
+    <link rel="stylesheet" href="/BeDoc/assets/css/style.css?v=1b4a4b0d41f4fe73183c2c8fe0dccd21849fc7c1">
     <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
 
 <!-- Setup theme-color -->
@@ -66,7 +66,7 @@
           <h1>BeDoc</h1>
         </a>
         <h2>Bespoke Documentation Generator</h2>
-        <section id="nav"> <div class="wrapper"><nav class="site-nav"><a class="page-link" href="/BeDoc/about/">About</a><a class="page-link" href="/BeDoc/faq/">FAQ</a><a class="page-link" href="/BeDoc/parsers.html">Creating Parsers</a></nav></div>
+        <section id="nav"> <div class="wrapper"><nav class="site-nav"><a class="page-link" href="/BeDoc/about/">About</a><a class="page-link" href="/BeDoc/configuration.html">Configuration Guide</a><a class="page-link" href="/BeDoc/faq/">FAQ</a><a class="page-link" href="/BeDoc/hooks.html">Hook System</a><a class="page-link" href="/BeDoc/parsers.html">Creating Parsers</a><a class="page-link" href="/BeDoc/printers.html">Creating Printers</a></nav></div>
  </section>
         <section id="repo_url">
           <a href="https://github.com/gesslar/BeDoc" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
@@ -91,8 +91,8 @@ and powerful solution.</p>
   <li><strong>Pluggable Architecture</strong>: Extend BeDoc’s functionality with custom parsers and
 printers tailored to your project’s needs. The hook system allows you to modify
 the documentation pipeline at any point without changing core code.</li>
-  <li><strong>Type-Safe Response System</strong>: Every operation returns consistent, typed
-responses with clear success/error states and detailed messages, making error
+  <li><strong>Consistent Response System</strong>: Every operation returns consistent response
+objects with clear success/error states and detailed messages, making error
 handling and debugging straightforward.</li>
   <li><strong>Multi-Environment Support</strong>: Operate BeDoc via the command line interface
 (CLI), embed it in Visual Studio Code as an extension, or integrate it into
@@ -101,8 +101,8 @@ GitHub Actions for automated workflows.</li>
 options. You can specify input files, directories, output paths, and more to
 suit your workflow.</li>
   <li><strong>Automatic Module Discovery</strong>: BeDoc identifies and loads parsers and printers
-from local and global <code class="language-plaintext highlighter-rouge">node_modules</code> directories, streamlining the integration
-process.</li>
+from npm packages that follow the BeDoc naming convention and structure,
+streamlining the integration process.</li>
   <li><strong>Enhanced Debugging Tools</strong>: Benefit from detailed logging and error handling
 to make troubleshooting straightforward and transparent.</li>
 </ul>
@@ -126,83 +126,106 @@ bedoc <span class="nt">-l</span> javascript <span class="nt">-f</span> markdown 
 
 <span class="c"># Use mock mode for testing parsers/printers</span>
 bedoc <span class="nt">--mock</span> ./mock-modules <span class="nt">-l</span> lpc <span class="nt">-f</span> markdown <span class="nt">-i</span> <span class="nb">test</span>/<span class="k">*</span>.c <span class="nt">-o</span> <span class="nb">test</span>/docs
+
+<span class="c"># Use local parser and printer files directly (no installation needed)</span>
+bedoc <span class="nt">--parser</span> ./my-parser.js <span class="nt">--printer</span> ./my-printer.js <span class="nt">-i</span> src/<span class="k">*</span>.c <span class="nt">-o</span> docs
+<span class="c"># Or use the short form</span>
+bedoc <span class="nt">-p</span> ./my-parser.js <span class="nt">-P</span> ./my-printer.js <span class="nt">-i</span> src/<span class="k">*</span>.c <span class="nt">-o</span> docs
 </code></pre></div>    </div>
   </li>
   <li><strong>Hook System</strong>:
 Customize the documentation process by adding hooks at any stage:
     <div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// my_custom_hooks.js</span>
 <span class="kd">const</span> <span class="nx">print</span> <span class="o">=</span> <span class="p">{</span>
-  <span class="c1">// Enrich documentation with data from external API</span>
+  <span class="c1">// Hook called when printing starts</span>
   <span class="dl">"</span><span class="s2">start</span><span class="dl">"</span><span class="p">:</span> <span class="k">async</span> <span class="p">({</span> <span class="nx">module</span><span class="p">,</span> <span class="nx">content</span> <span class="p">})</span> <span class="o">=&gt;</span> <span class="p">{</span>
     <span class="k">try</span> <span class="p">{</span>
       <span class="c1">// Fetch latest version info from package registry</span>
-      <span class="kd">const</span> <span class="nx">pkgInfo</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">fetch</span><span class="p">(</span><span class="s2">`https://registry.npmjs.org/</span><span class="p">${</span><span class="nx">module</span><span class="p">}</span><span class="s2">`</span><span class="p">);</span>
-      <span class="kd">const</span> <span class="p">{</span> <span class="nx">version</span><span class="p">,</span> <span class="nx">downloads</span> <span class="p">}</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">pkgInfo</span><span class="p">.</span><span class="nx">json</span><span class="p">();</span>
+      <span class="kd">const</span> <span class="nx">pkgInfo</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">fetch</span><span class="p">(</span><span class="s2">`https://registry.npmjs.org/</span><span class="p">${</span><span class="nx">module</span><span class="p">}</span><span class="s2">`</span><span class="p">)</span>
+      <span class="kd">const</span> <span class="p">{</span> <span class="nx">version</span><span class="p">,</span> <span class="nx">downloads</span> <span class="p">}</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">pkgInfo</span><span class="p">.</span><span class="nx">json</span><span class="p">()</span>
 
       <span class="c1">// Add the data to the documentation</span>
       <span class="nx">content</span><span class="p">.</span><span class="nx">metadata</span> <span class="o">=</span> <span class="p">{</span>
          <span class="p">...</span><span class="nx">content</span><span class="p">.</span><span class="nx">metadata</span><span class="p">,</span>
          <span class="nx">version</span><span class="p">,</span>
          <span class="na">monthlyDownloads</span><span class="p">:</span> <span class="nx">downloads</span><span class="p">.</span><span class="nx">lastMonth</span>
-      <span class="p">};</span>
+      <span class="p">}</span>
 
       <span class="k">return</span> <span class="p">{</span>
          <span class="na">status</span><span class="p">:</span> <span class="dl">"</span><span class="s2">success</span><span class="dl">"</span><span class="p">,</span>
          <span class="na">message</span><span class="p">:</span> <span class="dl">"</span><span class="s2">Package info fetched successfully</span><span class="dl">"</span><span class="p">,</span>
-         <span class="nx">module</span><span class="p">,</span>
-         <span class="nx">content</span>
-      <span class="p">};</span>
+         <span class="na">result</span><span class="p">:</span> <span class="p">{</span> <span class="nx">module</span><span class="p">,</span> <span class="nx">content</span> <span class="p">}</span>
+      <span class="p">}</span>
     <span class="p">}</span> <span class="k">catch</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
       <span class="k">return</span> <span class="p">{</span>
          <span class="na">status</span><span class="p">:</span> <span class="dl">"</span><span class="s2">error</span><span class="dl">"</span><span class="p">,</span>
-         <span class="na">error</span><span class="p">:</span> <span class="nx">error</span><span class="p">,</span>
-      <span class="p">};</span>
+         <span class="na">message</span><span class="p">:</span> <span class="nx">error</span><span class="p">.</span><span class="nx">message</span>
+      <span class="p">}</span>
     <span class="p">}</span>
   <span class="p">},</span>
 
-  <span class="c1">// Transform content using AI service</span>
+  <span class="c1">// Hook called when loading a section</span>
   <span class="dl">"</span><span class="s2">section_load</span><span class="dl">"</span><span class="p">:</span> <span class="k">async</span> <span class="p">({</span> <span class="nx">section</span> <span class="p">})</span> <span class="o">=&gt;</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">section</span><span class="p">.</span><span class="nx">description</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span><span class="nx">section</span><span class="p">.</span><span class="nx">description</span><span class="p">)</span> <span class="p">{</span>
       <span class="c1">// Get improved description from AI service</span>
       <span class="k">try</span> <span class="p">{</span>
-        <span class="kd">const</span> <span class="nx">improved</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">aiService</span><span class="p">.</span><span class="nx">enhance</span><span class="p">(</span><span class="nx">section</span><span class="p">.</span><span class="nx">description</span><span class="p">);</span>
-        <span class="nx">section</span><span class="p">.</span><span class="nx">description</span> <span class="o">=</span> <span class="nx">improved</span><span class="p">;</span>
+        <span class="kd">const</span> <span class="nx">improved</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">aiService</span><span class="p">.</span><span class="nx">enhance</span><span class="p">(</span><span class="nx">section</span><span class="p">.</span><span class="nx">description</span><span class="p">)</span>
+        <span class="nx">section</span><span class="p">.</span><span class="nx">description</span> <span class="o">=</span> <span class="nx">improved</span>
         <span class="k">return</span> <span class="p">{</span>
           <span class="na">status</span><span class="p">:</span> <span class="dl">"</span><span class="s2">success</span><span class="dl">"</span><span class="p">,</span>
           <span class="na">message</span><span class="p">:</span> <span class="dl">"</span><span class="s2">Section description enhanced</span><span class="dl">"</span><span class="p">,</span>
-          <span class="nx">section</span>
-        <span class="p">};</span>
-      <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
+          <span class="na">result</span><span class="p">:</span> <span class="p">{</span> <span class="nx">section</span> <span class="p">}</span>
+        <span class="p">}</span>
+      <span class="p">}</span> <span class="k">catch</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
         <span class="k">return</span> <span class="p">{</span>
           <span class="na">status</span><span class="p">:</span> <span class="dl">"</span><span class="s2">error</span><span class="dl">"</span><span class="p">,</span>
-          <span class="na">error</span><span class="p">:</span> <span class="nx">error</span><span class="p">,</span>
-        <span class="p">};</span>
+          <span class="na">message</span><span class="p">:</span> <span class="nx">error</span><span class="p">.</span><span class="nx">message</span>
+        <span class="p">}</span>
       <span class="p">}</span>
     <span class="p">}</span>
   <span class="p">}</span>
-<span class="p">};</span>
+<span class="p">}</span>
 
-<span class="k">export</span> <span class="p">{</span> <span class="nx">print</span> <span class="p">};</span>
+<span class="k">export</span> <span class="p">{</span> <span class="nx">print</span> <span class="p">}</span>
 </code></pre></div>    </div>
-
-    <p>This example shows how hooks can interact with external services (like npm
-registry or AI services) to enrich documentation during generation. The async
-nature of hooks means these external calls don’t block the main process.</p>
   </li>
-  <li>
-    <p><strong>VS Code Integration</strong>:
-Use BeDoc as a Visual Studio Code extension. The <code class="language-plaintext highlighter-rouge">Generate Documentation</code>
-command allows you to parse and print files directly from the editor,
-enhancing your productivity.</p>
+  <li><strong>Creating BeDoc Plugins</strong>:
+Create parsers and printers as npm packages following the BeDoc convention:
+    <div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"bedoc-markdown-printer"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1.0.0"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"module"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Markdown printer for BeDoc"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"bedoc"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"printers"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+      </span><span class="s2">"./bedoc-markdown-printer.js"</span><span class="w">
+    </span><span class="p">]</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div>    </div>
+
+    <p>Or combine multiple plugins in one package:</p>
+    <div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"bedoc-markdown-wikitext-printers"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1.0.0"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"module"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Markdown and Wikitext printers for BeDoc"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"bedoc"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"printers"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+      </span><span class="s2">"./bedoc-markdown-printer.js"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"./bedoc-wikitext-printer.js"</span><span class="w">
+    </span><span class="p">]</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div>    </div>
   </li>
   <li><strong>Custom Extensions</strong>:
-Develop and register your own parsers and printers to expand BeDoc’s
-capabilities:
+Develop your own parsers and printers:
     <div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// my-custom-parser.js</span>
 <span class="k">export</span> <span class="kd">const</span> <span class="nx">meta</span> <span class="o">=</span> <span class="p">{</span>
   <span class="na">language</span><span class="p">:</span> <span class="dl">"</span><span class="s2">mylang</span><span class="dl">"</span><span class="p">,</span>
   <span class="na">languageExtension</span><span class="p">:</span> <span class="dl">"</span><span class="s2">.ml</span><span class="dl">"</span>
-<span class="p">};</span>
+<span class="p">}</span>
 
 <span class="k">export</span> <span class="kd">class</span> <span class="nx">Parser</span> <span class="p">{</span>
   <span class="k">async</span> <span class="nx">parse</span><span class="p">(</span><span class="nx">file</span><span class="p">,</span> <span class="nx">content</span><span class="p">)</span> <span class="p">{</span>
@@ -210,7 +233,7 @@ capabilities:
     <span class="k">return</span> <span class="p">{</span>
       <span class="na">status</span><span class="p">:</span> <span class="dl">"</span><span class="s2">success</span><span class="dl">"</span><span class="p">,</span>
       <span class="na">result</span><span class="p">:</span> <span class="p">{</span> <span class="cm">/* parsed data */</span> <span class="p">}</span>
-    <span class="p">};</span>
+    <span class="p">}</span>
   <span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>    </div>
@@ -230,8 +253,8 @@ parsers and printers.</li>
 hooks.</li>
   <li><strong><a href="#">Configuration Guide</a></strong>: Understand how to leverage JSON configuration
 files for advanced setups.</li>
-  <li><strong><a href="#">Response Types</a></strong>: Understand BeDoc’s type-safe response system for
-better error handling.</li>
+  <li><strong><a href="#">Response Format</a></strong>: Understand BeDoc’s response format for better error
+handling.</li>
 </ul>
 
 <h2 id="contribute">Contribute</h2>
