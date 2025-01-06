@@ -14,11 +14,11 @@
     "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   },
   "eslint.options": {
-    "overrideConfigFile": "eslint.config.mjs"
+    "overrideConfigFile": "eslint.config.js"
   },
   "eslint.useFlatConfig": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
+    "source.fixAll.eslint": "always"
   },
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,

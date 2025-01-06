@@ -24,162 +24,80 @@ and powerful solution.
 - **Multi-Environment Support**: Operate BeDoc via the command line interface
   (CLI), embed it in Visual Studio Code as an extension, or integrate it into
   GitHub Actions for automated workflows.
-- **Dynamic Configuration**: Configure BeDoc using JSON files or a rich set of CLI
-  options. You can specify input files, directories, output paths, and more to
-  suit your workflow.
+- **Dynamic Configuration**: Configure BeDoc using JSON files or CLI options to
+  specify input files, output paths, and more to suit your workflow.
 - **Automatic Module Discovery**: BeDoc identifies and loads parsers and printers
-  from npm packages that follow the BeDoc naming convention and structure,
-  streamlining the integration process.
-- **Enhanced Debugging Tools**: Benefit from detailed logging and error handling
-  to make troubleshooting straightforward and transparent.
+  from npm packages that follow the BeDoc naming convention, streamlining the
+  integration process.
+- **Enhanced Debugging**: Detailed logging and error handling make troubleshooting
+  straightforward and transparent.
 
 ## Getting Started
 
 1. **Installation**:
-   - To install BeDoc globally via npm, run:
-     ```bash
-     npm install -g bedoc
-     ```
-   - Alternatively, include it as a dependency in your project's `package.json`.
+   ```bash
+   # Install globally
+   npm install -g bedoc
 
-2. **CLI Usage**:
-   The CLI offers a straightforward interface for generating documentation:
+   # Or add to your project
+   npm install --save-dev bedoc
+   ```
+
+2. **Basic Usage**:
    ```bash
    # Generate documentation from JavaScript files
    bedoc -l javascript -f markdown -i src/*.js -o docs
-
-   # Use mock mode for testing parsers/printers
-   bedoc --mock ./mock-modules -l lpc -f markdown -i test/*.c -o test/docs
-
-   # Use local parser and printer files directly (no installation needed)
-   bedoc --parser ./my-parser.js --printer ./my-printer.js -i src/*.c -o docs
-   # Or use the short form
-   bedoc -p ./my-parser.js -P ./my-printer.js -i src/*.c -o docs
    ```
 
-3. **Hook System**:
-   Customize the documentation process by adding hooks at any stage:
-   ```javascript
-   // my_custom_hooks.js
-   const print = {
-     // Hook called when printing starts
-     "start": async ({ module, content }) => {
-       try {
-         // Fetch latest version info from package registry
-         const pkgInfo = await fetch(`https://registry.npmjs.org/${module}`)
-         const { version, downloads } = await pkgInfo.json()
-
-         // Add the data to the documentation
-         content.metadata = {
-            ...content.metadata,
-            version,
-            monthlyDownloads: downloads.lastMonth
-         }
-
-         return {
-            status: "success",
-            message: "Package info fetched successfully",
-            result: { module, content }
-         }
-       } catch(error) {
-         return {
-            status: "error",
-            message: error.message
-         }
-       }
-     },
-
-     // Hook called when loading a section
-     "section_load": async ({ section }) => {
-       if(section.description) {
-         // Get improved description from AI service
-         try {
-           const improved = await aiService.enhance(section.description)
-           section.description = improved
-           return {
-             status: "success",
-             message: "Section description enhanced",
-             result: { section }
-           }
-         } catch(error) {
-           return {
-             status: "error",
-             message: error.message
-           }
-         }
-       }
-     }
-   }
-
-   export { print }
-   ```
-
-4. **Creating BeDoc Plugins**:
-   Create parsers and printers as npm packages following the BeDoc convention:
+3. **Configuration**:
+   Create a `bedoc.config.json` for reusable settings:
    ```json
    {
-     "name": "bedoc-markdown-printer",
-     "version": "1.0.0",
-     "type": "module",
-     "description": "Markdown printer for BeDoc",
-     "bedoc": {
-       "printers": [
-         "./bedoc-markdown-printer.js"
-       ]
-     }
+     "language": "javascript",
+     "format": "markdown",
+     "input": ["src/**/*.js"],
+     "output": "docs/api"
    }
    ```
 
-   Or combine multiple plugins in one package:
+   Or add a `bedoc` section to your `package.json`:
    ```json
    {
-     "name": "bedoc-markdown-wikitext-printers",
+     "name": "my-project",
      "version": "1.0.0",
-     "type": "module",
-     "description": "Markdown and Wikitext printers for BeDoc",
      "bedoc": {
-       "printers": [
-         "./bedoc-markdown-printer.js",
-         "./bedoc-wikitext-printer.js"
-       ]
+       "language": "javascript",
+       "format": "markdown",
+       "input": ["src/**/*.js"],
+       "output": "docs/api"
      }
    }
    ```
 
-5. **Custom Extensions**:
-   Develop your own parsers and printers:
-   ```javascript
-   // my-custom-parser.js
-   export const meta = {
-     language: "mylang",
-     languageExtension: ".ml"
-   }
+## Architecture
 
-   export class Parser {
-     async parse(file, content) {
-       // Parse the content
-       return {
-         status: "success",
-         result: { /* parsed data */ }
-       }
-     }
-   }
-   ```
+BeDoc's architecture is built around three core concepts:
+- **Parsers**: Convert source code into structured documentation data
+- **Printers**: Transform structured data into the desired output format
+- **Hooks**: Modify the documentation process at any point
+
+Plugins (parsers and printers) are discovered through npm packages that follow the
+BeDoc naming convention (`bedoc-*`) and include a `bedoc` field in their package.json.
+This modular design allows for maximum flexibility while maintaining clean interfaces
+and predictable behavior.
 
 ## Documentation
 
 Explore the full capabilities of BeDoc:
 
-- **[Command-Line Options](#)**: Learn how to tailor BeDoc to your specific needs
-  using its extensive CLI parameters.
-- **[Creating Custom Modules](#)**: Discover how to build and register custom
-  parsers and printers.
-- **[Hook System Guide](#)**: Learn how to extend BeDoc's functionality through
-  hooks.
-- **[Configuration Guide](#)**: Understand how to leverage JSON configuration
-  files for advanced setups.
-- **[Response Format](#)**: Understand BeDoc's response format for better error
-  handling.
+- **[Configuration Guide](configuration.md)**: Learn how to configure BeDoc using
+  CLI options or configuration files.
+- **[Creating Parsers](parsers.md)**: Build custom parsers to support new
+  languages or documentation styles.
+- **[Creating Printers](printers.md)**: Develop printers to output documentation
+  in your desired format.
+- **[Hook System](hooks.md)**: Extend BeDoc's functionality through hooks to
+  customize the documentation process.
 
 ## Contribute
 
