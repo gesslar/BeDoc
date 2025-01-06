@@ -18,8 +18,8 @@ workflow.
 - **Extensibility**: With its pluggable architecture, developers can create
   custom parsers and printers, and use hooks to modify the documentation process
   without changing core code.
-- **Type Safety**: Built with TypeScript, BeDoc provides consistent response
-  types and error handling across all operations, making debugging and
+- **Clean Design**: Built with pure JavaScript, BeDoc provides consistent response
+  patterns and error handling across all operations, making debugging and
   maintenance straightforward.
 - **Ease of Use**: Intuitive configuration, automatic module discovery, and a
   powerful hook system streamline setup and customization.
@@ -35,8 +35,10 @@ BeDoc's architecture is built around three core concepts:
 - **Printers**: Transform structured data into the desired output format
 - **Hooks**: Modify the documentation process at any point
 
-This modular design allows for maximum flexibility while maintaining type safety
-and predictable behavior.
+Plugins (parsers and printers) are discovered through npm packages that follow the
+BeDoc naming convention (`bedoc-*`) and include a `bedoc` field in their package.json
+that specifies their parsers and printers. This modular design allows for maximum
+flexibility while maintaining clean interfaces and predictable behavior.
 
 ## Join the Community
 

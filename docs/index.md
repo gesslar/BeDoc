@@ -18,8 +18,8 @@ and powerful solution.
 - **Pluggable Architecture**: Extend BeDoc's functionality with custom parsers and
   printers tailored to your project's needs. The hook system allows you to modify
   the documentation pipeline at any point without changing core code.
-- **Type-Safe Response System**: Every operation returns consistent, typed
-  responses with clear success/error states and detailed messages, making error
+- **Consistent Response System**: Every operation returns consistent response
+  objects with clear success/error states and detailed messages, making error
   handling and debugging straightforward.
 - **Multi-Environment Support**: Operate BeDoc via the command line interface
   (CLI), embed it in Visual Studio Code as an extension, or integrate it into
@@ -28,8 +28,8 @@ and powerful solution.
   options. You can specify input files, directories, output paths, and more to
   suit your workflow.
 - **Automatic Module Discovery**: BeDoc identifies and loads parsers and printers
-  from local and global `node_modules` directories, streamlining the integration
-  process.
+  from npm packages that follow the BeDoc naming convention and structure,
+  streamlining the integration process.
 - **Enhanced Debugging Tools**: Benefit from detailed logging and error handling
   to make troubleshooting straightforward and transparent.
 
@@ -54,7 +54,7 @@ and powerful solution.
    # Use local parser and printer files directly (no installation needed)
    bedoc --parser ./my-parser.js --printer ./my-printer.js -i src/*.c -o docs
    # Or use the short form
-   bedoc -p ./my-parser.js -r ./my-printer.js -i src/*.c -o docs
+   bedoc -p ./my-parser.js -P ./my-printer.js -i src/*.c -o docs
    ```
 
 3. **Hook System**:
@@ -62,77 +62,98 @@ and powerful solution.
    ```javascript
    // my_custom_hooks.js
    const print = {
-     // Enrich documentation with data from external API
+     // Hook called when printing starts
      "start": async ({ module, content }) => {
        try {
          // Fetch latest version info from package registry
-         const pkgInfo = await fetch(`https://registry.npmjs.org/${module}`);
-         const { version, downloads } = await pkgInfo.json();
+         const pkgInfo = await fetch(`https://registry.npmjs.org/${module}`)
+         const { version, downloads } = await pkgInfo.json()
 
          // Add the data to the documentation
          content.metadata = {
             ...content.metadata,
             version,
             monthlyDownloads: downloads.lastMonth
-         };
+         }
 
          return {
             status: "success",
             message: "Package info fetched successfully",
-            module,
-            content
-         };
+            result: { module, content }
+         }
        } catch(error) {
          return {
             status: "error",
-            error: error,
-         };
+            message: error.message
+         }
        }
      },
 
-     // Transform content using AI service
+     // Hook called when loading a section
      "section_load": async ({ section }) => {
-       if (section.description) {
+       if(section.description) {
          // Get improved description from AI service
          try {
-           const improved = await aiService.enhance(section.description);
-           section.description = improved;
+           const improved = await aiService.enhance(section.description)
+           section.description = improved
            return {
              status: "success",
              message: "Section description enhanced",
-             section
-           };
-         } catch (error) {
+             result: { section }
+           }
+         } catch(error) {
            return {
              status: "error",
-             error: error,
-           };
+             message: error.message
+           }
          }
        }
      }
-   };
+   }
 
-   export { print };
+   export { print }
    ```
 
-   This example shows how hooks can interact with external services (like npm
-   registry or AI services) to enrich documentation during generation. The async
-   nature of hooks means these external calls don't block the main process.
+4. **Creating BeDoc Plugins**:
+   Create parsers and printers as npm packages following the BeDoc convention:
+   ```json
+   {
+     "name": "bedoc-markdown-printer",
+     "version": "1.0.0",
+     "type": "module",
+     "description": "Markdown printer for BeDoc",
+     "bedoc": {
+       "printers": [
+         "./bedoc-markdown-printer.js"
+       ]
+     }
+   }
+   ```
 
-4. **VS Code Integration**:
-   Use BeDoc as a Visual Studio Code extension. The `Generate Documentation`
-   command allows you to parse and print files directly from the editor,
-   enhancing your productivity.
+   Or combine multiple plugins in one package:
+   ```json
+   {
+     "name": "bedoc-markdown-wikitext-printers",
+     "version": "1.0.0",
+     "type": "module",
+     "description": "Markdown and Wikitext printers for BeDoc",
+     "bedoc": {
+       "printers": [
+         "./bedoc-markdown-printer.js",
+         "./bedoc-wikitext-printer.js"
+       ]
+     }
+   }
+   ```
 
 5. **Custom Extensions**:
-   Develop and register your own parsers and printers to expand BeDoc's
-   capabilities:
+   Develop your own parsers and printers:
    ```javascript
    // my-custom-parser.js
    export const meta = {
      language: "mylang",
      languageExtension: ".ml"
-   };
+   }
 
    export class Parser {
      async parse(file, content) {
@@ -140,7 +161,7 @@ and powerful solution.
        return {
          status: "success",
          result: { /* parsed data */ }
-       };
+       }
      }
    }
    ```
@@ -157,8 +178,8 @@ Explore the full capabilities of BeDoc:
   hooks.
 - **[Configuration Guide](#)**: Understand how to leverage JSON configuration
   files for advanced setups.
-- **[Response Types](#)**: Understand BeDoc's type-safe response system for
-  better error handling.
+- **[Response Format](#)**: Understand BeDoc's response format for better error
+  handling.
 
 ## Contribute
 

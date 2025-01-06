@@ -6,9 +6,9 @@ nav_order: 3
 
 # Creating Parsers for BeDoc
 
-This guide explains how to create custom parsers for BeDoc. Parsers are responsible
-for analyzing source code and extracting documentation information in a structured
-format.
+This guide explains how to create custom parsers for BeDoc. Parsers are
+responsible for analyzing source code and extracting documentation information
+in a structured format.
 
 ## Parser Structure
 
@@ -24,12 +24,12 @@ Here's the basic structure:
 export const meta = {
   language: "mylang",      // Language identifier
   languageExtension: ".ml" // File extension
-};
+}
 
 // Implement the parser class
 export class Parser {
   constructor(core) {
-    this.core = core ; // Access to BeDoc core utilities
+    this.core = core // Access to BeDoc core utilities
   }
 
   async parse(file, content) {
@@ -41,7 +41,7 @@ export class Parser {
         raw: content,
         funcs: [] // Array of parsed functions
       }
-    } ;
+    }
   }
 }
 ```
@@ -100,8 +100,8 @@ The parser has access to BeDoc's core utilities through `this.core`:
 
 ## Hook Support
 
-Parsers automatically support [hooks](hooks.md), allowing users to modify the parsing process.
-Hook points include:
+Parsers automatically support [hooks](hooks.md), allowing users to modify the
+parsing process. Hook points include:
 
 - `START`: Before parsing begins
 - `FILE_LOAD`: When a file is loaded
@@ -116,52 +116,52 @@ Here's a simplified example of a documentation parser:
 export const meta = {
   language: "example",
   languageExtension: ".ex"
-} ;
+}
 
 export class Parser {
   constructor(core) {
-    this.core = core ;
+    this.core = core
     this.patterns = {
       docStart: /^\s*\/\*\*(.*)$/,    // /** Start of doc block
       docEnd: /^\s*\*\/\s*$/,         // */ End of doc block
       docLine: /^\s*\*\s?(.*)$/,      // * Documentation line
       funcDef: /^function\s+(\w+)/    // Function definition
-    } ;
+    }
   }
 
   async parse(file, content) {
     try {
-      const lines = content.split(/\r?\n/) ;
-      const funcs = [] ;
-      let currentFunc = null ;
-      let inDoc = false ;
+      const lines = content.split(/\r?\n/)
+      const funcs = []
+      let currentFunc = null
+      let inDoc = false
 
       for (let i = 0; i < lines.length; i++) {
-        const line = lines[i] ;
+        const line = lines[i]
 
         if (this.patterns.docStart.test(line)) {
-          inDoc = true ;
-          currentFunc = { description: [] } ;
-          continue ;
+          inDoc = true
+          currentFunc = { description: [] }
+          continue
         }
 
         if (inDoc && this.patterns.docEnd.test(line)) {
-          inDoc = false ;
-          continue ;
+          inDoc = false
+          continue
         }
 
         if (inDoc && this.patterns.docLine.test(line)) {
-          const [, content] = this.patterns.docLine.exec(line) ;
-          currentFunc.description.push(content) ;
-          continue ;
+          const [, content] = this.patterns.docLine.exec(line)
+          currentFunc.description.push(content)
+          continue
         }
 
         if (!inDoc && currentFunc) {
-          const funcMatch = this.patterns.funcDef.exec(line) ;
+          const funcMatch = this.patterns.funcDef.exec(line)
           if (funcMatch) {
-            currentFunc.name = funcMatch[1] ;
-            funcs.push(currentFunc) ;
-            currentFunc = null ;
+            currentFunc.name = funcMatch[1]
+            funcs.push(currentFunc)
+            currentFunc = null
           }
         }
       }
@@ -169,7 +169,7 @@ export class Parser {
       return {
         status: "success",
         result: { file, raw: content, funcs }
-      } ;
+      }
     } catch (error) {
       return {
         status: "error",
@@ -177,7 +177,7 @@ export class Parser {
         line: null,
         lineNumber: null,
         message: error.message
-      } ;
+      }
     }
   }
 }
@@ -196,8 +196,8 @@ export class Parser {
 
 4. **Logging**: Use the core logger for debugging and error tracking:
    ```javascript
-   this.core.logger.debug("Processing file...") ;
-   this.core.logger.error("Failed to parse line") ;
+   this.core.logger.debug("Processing file...")
+   this.core.logger.error("Failed to parse line")
    ```
 
 5. **State Management**: Keep track of parser state (e.g., inside comment block,
@@ -222,3 +222,24 @@ BeDoc provides multiple ways to test your parsers:
 These options allow you to rapidly iterate on your parser implementation without
 needing to package and install it first. The direct file usage is particularly
 helpful during initial development and debugging.
+
+## Publishing Your Parser
+
+When ready to publish, package your parser following BeDoc's naming and structure
+conventions:
+
+```json
+{
+  "name": "bedoc-mylang-parser",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "MyLang parser for BeDoc",
+  "bedoc": {
+    "parsers": [
+      "./bedoc-mylang-parser.js"
+    ]
+  }
+}
+```
+
+This structure allows BeDoc to automatically discover and load your parser when installed.
