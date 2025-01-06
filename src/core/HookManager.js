@@ -2,7 +2,7 @@ import FileUtil from "./util/FDUtil.js"
 import DataUtil from "./util/DataUtil.js"
 import StringUtil from "./util/StringUtil.js"
 
-import { Hooks, HookEvents, HookTypes, HookClasses, ClassToHook } from "./include/hooks.js"
+import { Hooks, HookEvents, HookTypes, HookClasses, ClassToHook } from "./include/Hooks.js"
 
 export default class HookManager {
   constructor(core) {

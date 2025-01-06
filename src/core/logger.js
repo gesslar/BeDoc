@@ -1,7 +1,7 @@
 import ModuleUtil from "./util/ModuleUtil.js"
-import { Environment } from "./include/environment.js"
+import { Environment } from "./include/Environment.js"
 import StringUtil from "./util/StringUtil.js"
-import { LoggerColors } from "./include/logger.js"
+import { LoggerColors } from "./include/Logger.js"
 
 export default class Logger {
   constructor(core) {

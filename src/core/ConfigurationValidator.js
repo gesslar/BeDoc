@@ -2,7 +2,7 @@ import ValidUtil from "./util/ValidUtil.js"
 import FDUtil from "./util/FDUtil.js"
 import ModuleUtil from "./util/ModuleUtil.js"
 import { ConfigurationParameters, ConfigurationPriorityKeys } from "./ConfigurationParameters.js"
-import { FdType, FdTypes } from "./include/fd.js"
+import { FdType, FdTypes } from "./include/FD.js"
 
 export class ConfigurationValidator {
   static async validate(options) {
