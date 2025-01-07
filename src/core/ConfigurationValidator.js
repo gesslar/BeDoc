@@ -1,4 +1,5 @@
 import ValidUtil from "./util/ValidUtil.js"
+import DataUtil from "./util/DataUtil.js"
 import FDUtil from "./util/FDUtil.js"
 import ModuleUtil from "./util/ModuleUtil.js"
 import { ConfigurationParameters, ConfigurationPriorityKeys } from "./ConfigurationParameters.js"
@@ -76,38 +77,13 @@ export class ConfigurationValidator {
             continue
         }
 
-        const types = type.split("|")
-        const allTypeMatches = types.map(type => {
-          const typeMatches = /(\w+)(\[\])?/.exec(type)
-          const [_, theType, theArray] = typeMatches
-          const result = {
-            type: theType,
-            array: theArray === "[]"
-          }
-          return result
-        })
-
-        const valueType = typeof value
-
-        const filteredTypeMatches = allTypeMatches.filter(typeMatch => {
-          if(typeMatch.type === valueType)
-            return true
-          if(typeMatch.array && ValidUtil.array(value, true))
-            return true
-          return false
-        })
-
-        const numTypeMatches = filteredTypeMatches.length
-        if(numTypeMatches === 0) {
-          errors.push(`Option \`${key}\` must be of type ${types.join("|")}, got ${valueType}`)
+        const configTypes = DataUtil.typeSpec(type)
+        const matched = DataUtil.typeMatch(configTypes, value)
+        if(!matched) {
+          const valueType = typeof value
+          errors.push(`Option \`${key}\` must be of type ${type}, got ${valueType}: ${JSON.stringify(value)}`)
           break
         }
-        if(numTypeMatches > 1) {
-          errors.push(`Option \`${key}\` must be of type ${types.join("|")}, got ${valueType}`)
-          break
-        }
-
-        const {type: typeName, array: allowArray} = filteredTypeMatches[0]
 
         // Additional path validation if needed
         if(path && !ValidUtil.nothing(value)) {
@@ -116,7 +92,8 @@ export class ConfigurationValidator {
           // Special for `input` because it can be a comma-separated list of
           // glob patterns.
           if(key === "input" || key === "exclude") {
-            if(allowArray && ValidUtil.array(value, true)) {
+            const array = configTypes.some(type => type.array)
+            if(array && ValidUtil.array(value, true)) {
               value = await Promise.all(value.map(pattern => FDUtil.getFiles(pattern)))
             } else {
               value = await FDUtil.getFiles(value)
@@ -223,24 +200,26 @@ export class ConfigurationValidator {
   static _fixOptionValues(options) {
     for(const [key, param] of Object.entries(ConfigurationParameters)) {
       if(options[key]) {
-        const typeMatches = /(\w+)(\[\])?/.exec(param.type)
-        if(!typeMatches || typeMatches.length !== 3)
-          throw new Error(`Invalid type: ${param.type}`)
+        const configTypes = DataUtil.typeSpec(param.type)
+        const arrayAllowed = Array.isArray(configTypes) ? configTypes.some(type => type.array) : configTypes.array
+        const typeNames = Array.isArray(configTypes) ? DataUtil.arrayUnique(configTypes.map(type => type.typeName)) : [configTypes.typeName]
 
-        const [_, typeName, allowArray] = typeMatches
+        if(typeNames.length > 1)
+          throw new Error(`Option \`${key}\` must be of a single type, got ${typeNames.join(", ")}`)
+
+        const configType = typeNames[0]
 
         let value = options[key]
-        if(typeof value === "string")
+        if(typeof value === "string" && arrayAllowed)
           if(/,/.test(value))
             value = value.split(",")
 
-        if(ValidUtil.array(value))
+        if(ValidUtil.array(value) && arrayAllowed)
           value = value.map(item => typeof item !== "string" ? JSON.parse(item) : item)
         else
-          if(typeName !== "string")
+          if(typeof value === "string" && configType !== "string")
             value = JSON.parse(value)
 
-        console.log("Final value:", value)
         options[key] = value
       }
     }

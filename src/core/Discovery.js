@@ -1,6 +1,7 @@
 import { execSync } from "child_process"
 import FDUtil from "./util/FDUtil.js"
 import ModuleUtil from "./util/ModuleUtil.js"
+import ModuleContract from "./ModuleContract.js"
 
 const isParserMeta = meta => "language" in meta
 const isPrinterMeta = meta => "format" in meta
@@ -59,26 +60,33 @@ export default class Discovery {
    * @returns A map of discovered modules
    */
   async discoverModules(mockPath) {
+    const modules = {parser: {}, printer: {}}
+
     if(mockPath) {
       this.logger.debug(`[discoverModules] Discovering mock modules in ${mockPath}`)
-      return await this.discoverMockModules(mockPath)
-    }
+      const {parser, printer} = await this.discoverMockModules(mockPath)
+      modules.parser = parser
+      modules.printer = printer
+    } else {
+      // TODO: Need to use workspace path instead of __dirname
+      // const localModuleDirectory = await FDUtil.resolveDirectory("node_modules")
+      const localModuleDirectory = await FDUtil.resolveDirectory("c:/temp")
+      const globalModuleDirectory = await FDUtil.resolveDirectory(execSync("npm root -g").toString().trim())
+      const discovered = { parser: {}, printer: {} }
 
-    // TODO: Need to use workspace path instead of __dirname
-    // const localModuleDirectory = await FDUtil.resolveDirectory("node_modules")
-    const localModuleDirectory = await FDUtil.resolveDirectory("c:/temp")
-    const globalModuleDirectory = await FDUtil.resolveDirectory(execSync("npm root -g").toString().trim())
-    const discovered = { parser: {}, printer: {} }
-
-    for(const moduleDirectory of [localModuleDirectory, globalModuleDirectory]) {
-      const {directories} = await FDUtil.ls(moduleDirectory.absolutePath)
-      const matchingModules = directories.filter(d => d.name.startsWith("bedoc-"))
-      for(const moduleSource of matchingModules) {
-        await this.processModule(discovered, moduleSource)
+      for(const moduleDirectory of [localModuleDirectory, globalModuleDirectory]) {
+        const {directories} = await FDUtil.ls(moduleDirectory.absolutePath)
+        const matchingModules = directories.filter(d => d.name.startsWith("bedoc-"))
+        for(const moduleSource of matchingModules) {
+          await this.processModule(discovered, moduleSource)
+        }
       }
+
+      modules.parser = discovered.parser
+      modules.printer = discovered.printer
     }
 
-    return discovered
+    return modules
   }
 
   /**

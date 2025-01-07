@@ -3,7 +3,7 @@ import HookManager from "./HookManager.js"
 import { Environment } from "./include/Environment.js"
 import Logger from "./Logger.js"
 import FDUtil from "./util/FDUtil.js"
-
+import ModuleContract from "./ModuleContract.js"
 export default class Core {
   constructor(options) {
     this.options = options
@@ -17,12 +17,16 @@ export default class Core {
     const discovery = new Discovery(instance)
     logger.debug(`[New] Discovering modules in ${options.mock}`, 4)
 
+    let requestedPrinter, requestedParser
+
     if(options.printer) {
+      requestedPrinter = options.printer
       const { printer } = await discovery.specificPrinter(options.printer)
       instance.printer = new printer(instance)
     }
 
     if(options.parser) {
+      requestedParser = options.parser
       const { parser } = await discovery.specificParser(options.parser)
       instance.parser = new parser(instance)
     }
@@ -42,13 +46,10 @@ export default class Core {
         if(!selectedParser)
           throw new Error(`[New] No parser found for language ${language}`)
 
-        // Initialize the parser
-        const parserClass = selectedParser.parser
-        if(!parserClass)
-          throw new Error(`[New] Invalid parser found for language ${language}`)
         // Instantiate the parser and assign it to the instance
-        const parser = new parserClass(instance)
+        const parser = new selectedParser.parser(instance)
         instance.parser = parser
+        requestedParser = selectedParser
       }
 
       if(!instance.printer) {
@@ -63,21 +64,23 @@ export default class Core {
         if(!selectedPrinter)
           throw new Error(`[New] No printer found for format ${format}`)
 
-        // Initialize the printer
-        const printerClass = selectedPrinter.printer
-        if(!printerClass)
-          throw new Error(`[New] Invalid printer found for format ${format}`)
         // Instantiate the printer and assign it to the instance
-        const printer = new printerClass(instance)
+        const printer = new selectedPrinter.printer(instance)
         instance.printer = printer
+        requestedPrinter = selectedPrinter
       }
     }
 
     if(!instance.parser)
-      throw new Error("[New] No parser found")
+      throw new Error("[New] No parser found for language " + instance.options.language)
 
     if(!instance.printer)
-      throw new Error("[New] No printer found")
+      throw new Error("[New] No printer found for format " + instance.options.format)
+
+    const contract = new ModuleContract(instance)
+    const result = contract.satisfies(requestedParser, requestedPrinter)
+    if(!result?.success)
+      throw new Error(`[New] Module contract failed: ${result?.errors?.join(", ")}`)
 
     // We need to initialize the hook manager after the parser and printer
     // are registered, since the hook manager injects hooks into the parser

@@ -18,4 +18,11 @@ export default class ModuleUtil {
     const json = JSON.parse(jsonContent)
     return json
   }
+
+  static loadPackageJson = async() => {
+    const packageJsonFileObject = await FDUtil.resolveFilename("./package.json")
+    const jsonContent = await FDUtil.readFile(packageJsonFileObject)
+    const json = JSON.parse(jsonContent)
+    return json
+  }
 }

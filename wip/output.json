@@ -1,0 +1,510 @@
+[
+  {
+    "file": "wip/sample/arrays.c",
+    "raw": "#include <simul_efun.h>\n\n/**\n * Returns a new array containing the distinct elements of the input\n * array.\n *\n * @param {mixed[]} arr - An array of mixed types.\n * @return {mixed[]} - A new array with distinct elements from the input array.\n */\nmixed *distinct_array(mixed *arr) {\n  mapping m ;\n\n  m = allocate_mapping(arr, 0) ;\n\n  return keys(m) ;\n}\n\n/**\n * Returns a new array containing the elements of the input array\n * from index 0 to start-1, and from end+1 to the end of the input\n * array. If start is greater than end, the new array will contain\n * all the elements of the input array.\n *\n * @param {mixed[]} arr - The input array.\n * @param {int} start - The starting index of elements to be removed.\n * @param {int} end - The ending index of elements to be removed. Defaults to\n *                      start if not specified.\n * @return {mixed[]} - A new array with specified elements removed.\n */\nvarargs mixed *remove_array_element(mixed *arr, int start, int end) {\n  if(!end) end = start ;\n  if(start > end) return arr ;\n  return arr[0..start-1] + arr[end+1..] ;\n}\n\n/**\n * Modifies the content of an array by removing existing elements\n * and/or adding new elements. Returns a new array with the\n * modifications.\n *\n * @param {mixed[]} arr - The array from which elements will be removed and to\n *                        which new elements may be added.\n * @param {int} start - The zero-based index at which to start changing the\n *                      array. If negative, it will begin that many elements\n *                      from the end.\n * @param {int} delete_count - The number of elements to remove from the array,\n *                             starting from the index specified by start. If\n *                             delete_count is 0, no elements are removed.\n * @param {mixed[]} items_to_add - An array of elements to add to the array at\n *                                   the start index. Can be omitted or passed as\n *                                   null if no elements are to be added.\n * @return {mixed[]} - A new array reflecting the desired modifications.\n */\nvarargs mixed *splice(mixed *arr, int start, int delete_count, mixed *items_to_add) {\n  mixed *before, *after ;\n  if(!pointerp(items_to_add))\n    items_to_add = ({}) ;\n\n  before = arr[0..start - 1] ;\n  after = arr[start + delete_count..] ;\n\n  return before + items_to_add + after ;\n}\n\n/**\n * Returns a new array with the elements of the input array in\n * reverse order.\n *\n * @param {mixed[]} arr - The input array.\n * @return {mixed[]} - A new array with elements in reverse order.\n */\nmixed *reverse_array(mixed *arr) {\n  int i, j, sz ;\n  mixed *ret ;\n\n  for(i = 0, j = sizeof(arr) - 1, sz = sizeof(arr), ret = allocate(sz); i < sz; i++, j--)\n    ret[i] = arr[j] ;\n\n  return ret ;\n}\n\n/**\n * Checks if all elements in the input array are of the specified\n * type. If the array is of size 0, it is considered uniform.\n *\n * @param {string} type - The type to check for.\n * @param {mixed*} arr - The array to check.\n * @return {int} - Returns 1 if all elements are of the specified type, 0\n *                  otherwise.\n */\nint uniform_array(string type, mixed *arr) {\n  int sz = sizeof(arr) ;\n\n  if(!sz)\n    return 1 ;\n\n  return sizeof(filter(arr, (: typeof($1) == $2 :), type)) == sz ;\n}\n\n/**\n * Returns an array filled with the specified value. If no array\n * is provided, an empty array is created. If no value is\n * provided, 0 is used as the value to fill the array with. If no\n * start index is provided, the array is filled from the end.\n *\n * @param {mixed*} arr - The array to fill.\n * @param {mixed} value - The value to fill the array with.\n * @param {int} start_index - The index at which to start filling the array. (optional)\n * @return {mixed} - The filled array.\n */\nvarargs mixed array_fill(mixed *arr, mixed value, int size, int start_index) {\n  mixed *work, *ret ;\n  int i ;\n  int len ;\n\n  if(!pointerp(arr))\n    arr = ({}) ;\n\n  if(nullp(value))\n    value = 0 ;\n\n  if(nullp(size))\n    error(\"array_fill: size is required\") ;\n\n  len = sizeof(arr) ;\n\n  if(nullp(start_index))\n    start_index = len ;\n\n  work = allocate(size) ;\n\n  while(size--)\n    work[size] = value ;\n\n  return arr[0..start_index-1] + work + arr[start_index..] ;\n}\n\n/**\n * Returns a new array of the specified size, filled with the\n * specified value. If the array is larger than the specified size,\n * the array is truncated to the specified size.\n *\n * @param {mixed*} arr - The array to pad.\n * @param {int} size - The size of the array to create.\n * @param {mixed} value - The value to fill the array with.\n * @param {int} beginning - Whether to fill the array from the beginning. (optional)\n * @return {mixed} - The padded array.\n */\nvarargs mixed array_pad(mixed *arr, int size, mixed value, int beginning) {\n  mixed *work, *ret ;\n  int i ;\n  int len ;\n\n  if(!pointerp(arr))\n    arr = ({}) ;\n\n  if(nullp(value))\n    value = 0 ;\n\n  len = sizeof(arr) ;\n\n  if(size <= len)\n    return arr[0..size-1] ;\n\n  work = allocate(size - len) ;\n\n  while(size--)\n    work[size] = value ;\n\n  if(beginning)\n    return work + arr ;\n  else\n    return arr + work ;\n}\n\n/**\n * Removes and returns the last element of the array.\n *\n * @param {mixed[]} arr - The array from which to pop an element.\n * @return {mixed} - The last element of the array.\n */\nmixed pop(mixed ref *arr) {\n  mixed ret ;\n\n  ret = arr[<1] ;\n  arr = arr[0..<2] ;\n\n  return ret ;\n}\n\n/**\n * Adds a new element to the end of the array and returns the new\n * size of the array.\n *\n * @param {mixed[]} arr - The array to which to push an element.\n * @param {mixed} value - The element to push onto the array.\n * @return {int} - The new size of the array.\n */\nint push(mixed ref *arr, mixed value) {\n  arr += ({ value }) ;\n  return sizeof(arr) ;\n}\n\n/**\n * Removes and returns the first element of the array.\n *\n * @param {mixed[]} arr - The array from which to shift an element.\n * @return {mixed} - The first element of the array.\n */\nmixed shift(mixed ref *arr) {\n  mixed ret ;\n\n  ret = arr[0] ;\n  arr = arr[1..] ;\n\n  return ret ;\n}\n\n/**\n * Adds a new element to the beginning of the array and returns\n * the new size of the array.\n *\n * @param {mixed[]} arr - The array to which to unshift an element.\n * @param {mixed} value - The element to unshift onto the array.\n * @return {int} - The new size of the array.\n */\nint unshift(mixed ref *arr, mixed value) {\n  arr = ({ value }) + arr ;\n  return sizeof(arr) ;\n}\n\n/**\n * Returns a new array containing the elements of the input array\n * from the start index to the end index. If the end index is\n * negative, it will start from the end of the array.\n *\n * @param {mixed[]} arr - The array to slice.\n * @param {int} start - The starting index of the slice.\n * @param {int} end - The ending index of the slice.\n * @return {mixed[]} - A new array with the specified elements.\n */\nvarargs mixed *array_slice(mixed *arr, int start, int end) {\n  if(nullp(arr))\n    return ({}) ;\n\n  if(end < 0)\n    end = sizeof(arr) + end ;\n\n  return arr[start..end] ;\n}\n\n/**\n * Merges two arrays into a single array.\n *\n * @param {mixed[]} arr1 - The first array to merge.\n * @param {mixed[]} arr2 - The second array to merge.\n * @return {mixed[]} - A new array with elements from both input arrays.\n */\nmixed *array_merge(mixed *arr1, mixed *arr2) {\n  return arr1 + arr2 ;\n}\n",
+    "functions": [
+      {
+        "description": [
+          "",
+          "Returns a new array containing the distinct elements of the input",
+          "array.",
+          ""
+        ],
+        "param": [
+          {
+            "type": "mixed[]",
+            "name": "arr",
+            "content": [
+              "An array of mixed types."
+            ]
+          }
+        ],
+        "return": {
+          "type": "mixed[]",
+          "content": [
+            "A new array with distinct elements from the input array."
+          ]
+        },
+        "name": "distinct_array"
+      },
+      {
+        "description": [
+          "",
+          "Returns a new array containing the elements of the input array",
+          "from index 0 to start-1, and from end+1 to the end of the input",
+          "array. If start is greater than end, the new array will contain",
+          "all the elements of the input array.",
+          ""
+        ],
+        "param": [
+          {
+            "type": "mixed[]",
+            "name": "arr",
+            "content": [
+              "The input array."
+            ]
+          },
+          {
+            "type": "int",
+            "name": "start",
+            "content": [
+              "The starting index of elements to be removed."
+            ]
+          },
+          {
+            "type": "int",
+            "name": "end",
+            "content": [
+              "The ending index of elements to be removed. Defaults to",
+              "                     start if not specified."
+            ]
+          }
+        ],
+        "return": {
+          "type": "mixed[]",
+          "content": [
+            "A new array with specified elements removed."
+          ]
+        },
+        "name": "remove_array_element"
+      },
+      {
+        "description": [
+          "",
+          "Modifies the content of an array by removing existing elements",
+          "and/or adding new elements. Returns a new array with the",
+          "modifications.",
+          ""
+        ],
+        "param": [
+          {
+            "type": "mixed[]",
+            "name": "arr",
+            "content": [
+              "The array from which elements will be removed and to",
+              "                       which new elements may be added."
+            ]
+          },
+          {
+            "type": "int",
+            "name": "start",
+            "content": [
+              "The zero-based index at which to start changing the",
+              "                     array. If negative, it will begin that many elements",
+              "                     from the end."
+            ]
+          },
+          {
+            "type": "int",
+            "name": "delete_count",
+            "content": [
+              "The number of elements to remove from the array,",
+              "                            starting from the index specified by start. If",
+              "                            delete_count is 0, no elements are removed."
+            ]
+          },
+          {
+            "type": "mixed[]",
+            "name": "items_to_add",
+            "content": [
+              "An array of elements to add to the array at",
+              "                                  the start index. Can be omitted or passed as",
+              "                                  null if no elements are to be added."
+            ]
+          }
+        ],
+        "return": {
+          "type": "mixed[]",
+          "content": [
+            "A new array reflecting the desired modifications."
+          ]
+        },
+        "name": "splice"
+      },
+      {
+        "description": [
+          "",
+          "Returns a new array with the elements of the input array in",
+          "reverse order.",
+          ""
+        ],
+        "param": [
+          {
+            "type": "mixed[]",
+            "name": "arr",
+            "content": [
+              "The input array."
+            ]
+          }
+        ],
+        "return": {
+          "type": "mixed[]",
+          "content": [
+            "A new array with elements in reverse order."
+          ]
+        },
+        "name": "reverse_array"
+      },
+      {
+        "description": [
+          "",
+          "Checks if all elements in the input array are of the specified",
+          "type. If the array is of size 0, it is considered uniform.",
+          ""
+        ],
+        "param": [
+          {
+            "type": "string",
+            "name": "type",
+            "content": [
+              "The type to check for."
+            ]
+          },
+          {
+            "type": "mixed*",
+            "name": "arr",
+            "content": [
+              "The array to check."
+            ]
+          }
+        ],
+        "return": {
+          "type": "int",
+          "content": [
+            "Returns 1 if all elements are of the specified type, 0",
+            "                 otherwise."
+          ]
+        },
+        "name": "uniform_array"
+      },
+      {
+        "description": [
+          "",
+          "Returns an array filled with the specified value. If no array",
+          "is provided, an empty array is created. If no value is",
+          "provided, 0 is used as the value to fill the array with. If no",
+          "start index is provided, the array is filled from the end.",
+          ""
+        ],
+        "param": [
+          {
+            "type": "mixed*",
+            "name": "arr",
+            "content": [
+              "The array to fill."
+            ]
+          },
+          {
+            "type": "mixed",
+            "name": "value",
+            "content": [
+              "The value to fill the array with."
+            ]
+          },
+          {
+            "type": "int",
+            "name": "start_index",
+            "content": [
+              "The index at which to start filling the array. (optional)"
+            ]
+          }
+        ],
+        "return": {
+          "type": "mixed",
+          "content": [
+            "The filled array."
+          ]
+        },
+        "name": "array_fill"
+      },
+      {
+        "description": [
+          "",
+          "Returns a new array of the specified size, filled with the",
+          "specified value. If the array is larger than the specified size,",
+          "the array is truncated to the specified size.",
+          ""
+        ],
+        "param": [
+          {
+            "type": "mixed*",
+            "name": "arr",
+            "content": [
+              "The array to pad."
+            ]
+          },
+          {
+            "type": "int",
+            "name": "size",
+            "content": [
+              "The size of the array to create."
+            ]
+          },
+          {
+            "type": "mixed",
+            "name": "value",
+            "content": [
+              "The value to fill the array with."
+            ]
+          },
+          {
+            "type": "int",
+            "name": "beginning",
+            "content": [
+              "Whether to fill the array from the beginning. (optional)"
+            ]
+          }
+        ],
+        "return": {
+          "type": "mixed",
+          "content": [
+            "The padded array."
+          ]
+        },
+        "name": "array_pad"
+      },
+      {
+        "description": [
+          "",
+          "Removes and returns the last element of the array.",
+          ""
+        ],
+        "param": [
+          {
+            "type": "mixed[]",
+            "name": "arr",
+            "content": [
+              "The array from which to pop an element."
+            ]
+          }
+        ],
+        "return": {
+          "type": "mixed",
+          "content": [
+            "The last element of the array."
+          ]
+        },
+        "name": "pop"
+      },
+      {
+        "description": [
+          "",
+          "Adds a new element to the end of the array and returns the new",
+          "size of the array.",
+          ""
+        ],
+        "param": [
+          {
+            "type": "mixed[]",
+            "name": "arr",
+            "content": [
+              "The array to which to push an element."
+            ]
+          },
+          {
+            "type": "mixed",
+            "name": "value",
+            "content": [
+              "The element to push onto the array."
+            ]
+          }
+        ],
+        "return": {
+          "type": "int",
+          "content": [
+            "The new size of the array."
+          ]
+        },
+        "name": "push"
+      },
+      {
+        "description": [
+          "",
+          "Removes and returns the first element of the array.",
+          ""
+        ],
+        "param": [
+          {
+            "type": "mixed[]",
+            "name": "arr",
+            "content": [
+              "The array from which to shift an element."
+            ]
+          }
+        ],
+        "return": {
+          "type": "mixed",
+          "content": [
+            "The first element of the array."
+          ]
+        },
+        "name": "shift"
+      },
+      {
+        "description": [
+          "",
+          "Adds a new element to the beginning of the array and returns",
+          "the new size of the array.",
+          ""
+        ],
+        "param": [
+          {
+            "type": "mixed[]",
+            "name": "arr",
+            "content": [
+              "The array to which to unshift an element."
+            ]
+          },
+          {
+            "type": "mixed",
+            "name": "value",
+            "content": [
+              "The element to unshift onto the array."
+            ]
+          }
+        ],
+        "return": {
+          "type": "int",
+          "content": [
+            "The new size of the array."
+          ]
+        },
+        "name": "unshift"
+      },
+      {
+        "description": [
+          "",
+          "Returns a new array containing the elements of the input array",
+          "from the start index to the end index. If the end index is",
+          "negative, it will start from the end of the array.",
+          ""
+        ],
+        "param": [
+          {
+            "type": "mixed[]",
+            "name": "arr",
+            "content": [
+              "The array to slice."
+            ]
+          },
+          {
+            "type": "int",
+            "name": "start",
+            "content": [
+              "The starting index of the slice."
+            ]
+          },
+          {
+            "type": "int",
+            "name": "end",
+            "content": [
+              "The ending index of the slice."
+            ]
+          }
+        ],
+        "return": {
+          "type": "mixed[]",
+          "content": [
+            "A new array with the specified elements."
+          ]
+        },
+        "name": "array_slice"
+      },
+      {
+        "description": [
+          "",
+          "Merges two arrays into a single array.",
+          ""
+        ],
+        "param": [
+          {
+            "type": "mixed[]",
+            "name": "arr1",
+            "content": [
+              "The first array to merge."
+            ]
+          },
+          {
+            "type": "mixed[]",
+            "name": "arr2",
+            "content": [
+              "The second array to merge."
+            ]
+          }
+        ],
+        "return": {
+          "type": "mixed[]",
+          "content": [
+            "A new array with elements from both input arrays."
+          ]
+        },
+        "name": "array_merge"
+      }
+    ]
+  },
+  {
+    "file": "wip/sample/base64.c",
+    "raw": "/**\n * Lovingly ripped off from http://lpmuds.net/smf/index.php?topic=1531.msg8465#msg8465\n * Minor modifications by Gesslar@ThresholdRPG\n */\n\n#include <simul_efun.h>\n\nprivate nosave string b64chars = \"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/\" ;\n\n/**\n * Encodes a given string or buffer into Base64 format.\n *\n * @param {mixed} source_str - The string or buffer to be encoded. This is a really long string. What do you think?\n *      I do be lovin' it, fo sho.\n * @return {string} - The Base64 encoded string.\n * @example\n * ```c\n * base64_encode(\"Hello, world!\")\n * // \"SGVsbG8sIHdvcmxkIQ==\"\n * ```\n */\nstring base64_encode(mixed source_str) {\n    string *b ;\n    string r = \"\" ;\n    int i ;\n    int n ;\n    int n1, n2, n3, n4 ;\n    int slen, plen ;\n    buffer source ;\n\n    if(stringp(source_str)) {\n        source = string_encode(source_str, \"UTF-8\") ;\n    } else if(bufferp(source_str)) {\n        source = source_str ;\n    } else {\n        error(\"Invalid argument 1 to base64encode\") ;\n    }\n\n    if(nullp(source_str) || !sizeof(source_str)) {\n        error(\"Missing argument 1 to base64encode\") ;\n    }\n\n    slen = sizeof(source) ;\n    plen = slen % 3 ;\n    b = explode(b64chars, \"\") ;\n\n    for(i = 0; i < slen; i += 3) {\n        n = source[i] << 16 ;\n\n        if((i + 1) < slen)\n            n += source[i + 1] << 8 ;\n\n        if((i + 2) < slen)\n            n += source[i + 2] ;\n\n        n1 = (n >> 18) & 63 ;\n        n2 = (n >> 12) & 63 ;\n        n3 = (n >> 6) & 63 ;\n        n4 = n & 63 ;\n\n        r += b[n1] + b[n2] ;\n\n        if((i + 1) < slen)\n            r += b[n3] ;\n\n        if((i + 2) < slen)\n            r += b[n4] ;\n    }\n\n    if(plen > 0)\n        for(; plen < 3; plen++) r += \"=\" ;\n\n    return r ;\n}\n\n/**\n * Decodes a given Base64 encoded string.\n *\n * @param {string} source - The Base64 encoded string to be decoded.\n * @return {string} - The decoded string.\n * @example\n * ```c\n * base64_decode(\"SGVsbG8sIHdvcmxkIQ==\")\n * // \"Hello, world!\"\n * ```\n */\nstring base64_decode(string source) {\n    string *b ;\n    string f = \"\" ;\n    int i, j ;\n    int c ;\n    int n ;\n    int plen = 0 ;\n    buffer result ;\n\n    if(nullp(source) || !strlen(source)) {\n        error(\"Missing argument 1 to base64decode\") ;\n    }\n\n    b = explode(b64chars, \"\") ;\n\n    for(i = 0; i < sizeof(source); i++) {\n        c = strsrch(b64chars, source[i]) ;\n        if(c == -1) {\n            // not found\n            if(source[i] == 61) {\n                // We found an \"=\", meaning we hit the padding.\n                // For decoding purposes, \"A\" is a zero pad value here.\n                f += \"A\" ;\n                plen++ ;\n                continue ;\n            } else if(source[i] == 32 || source[i] == 10 || source[i] == 9 || source[i] = 13) {\n                // We found whitespace, skip it\n                continue ;\n            } else {\n                // invalid character\n                return \"Invalid input.\" ;\n            }\n        } else {\n            f += b[c] ;\n        }\n    }\n\n    if(sizeof(f) % 4)\n        return \"Invalid input.\" ;\n\n    result = allocate_buffer(sizeof(f) / 4 * 3) ;\n    j = 0 ;\n    for(i = 0; i < sizeof(f); i += 4) {\n        c = strsrch(b64chars, f[i]) ;\n        n = c << 18 ;\n        c = strsrch(b64chars, f[i+1]) ;\n        n += c << 12 ;\n        c = strsrch(b64chars, f[i+2]) ;\n        n += c << 6 ;\n        c = strsrch(b64chars, f[i+3]) ;\n        n += c ;\n\n        result[j++] = (n >> 16) & 0xFF ;\n        result[j++] = (n >> 8) & 0xFF ;\n        result[j++] = n & 0xFF ;\n    }\n\n    return string_decode(result, \"UTF-8\") ;\n}\n",
+    "functions": [
+      {
+        "description": [
+          "",
+          "Encodes a given string or buffer into Base64 format.",
+          ""
+        ],
+        "param": [
+          {
+            "type": "mixed",
+            "name": "source_str",
+            "content": [
+              "The string or buffer to be encoded. This is a really long string. What do you think?",
+              "     I do be lovin' it, fo sho."
+            ]
+          }
+        ],
+        "return": {
+          "type": "string",
+          "content": [
+            "The Base64 encoded string."
+          ]
+        },
+        "example": [
+          "```c",
+          "base64_encode(\"Hello, world!\")",
+          "// \"SGVsbG8sIHdvcmxkIQ==\"",
+          "```"
+        ],
+        "name": "base64_encode"
+      },
+      {
+        "description": [
+          "",
+          "Decodes a given Base64 encoded string.",
+          ""
+        ],
+        "param": [
+          {
+            "type": "string",
+            "name": "source",
+            "content": [
+              "The Base64 encoded string to be decoded."
+            ]
+          }
+        ],
+        "return": {
+          "type": "string",
+          "content": [
+            "The decoded string."
+          ]
+        },
+        "example": [
+          "```c",
+          "base64_decode(\"SGVsbG8sIHdvcmxkIQ==\")",
+          "// \"Hello, world!\"",
+          "```"
+        ],
+        "name": "base64_decode"
+      }
+    ]
+  }
+]
