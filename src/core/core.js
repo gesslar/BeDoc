@@ -1,7 +1,7 @@
 import Discovery from "./Discovery.js"
 import HookManager from "./HookManager.js"
 import { Environment } from "./include/Environment.js"
-import Logger from "./logger.js"
+import Logger from "./Logger.js"
 import FDUtil from "./util/FDUtil.js"
 
 export default class Core {

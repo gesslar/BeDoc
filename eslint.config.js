@@ -1,4 +1,4 @@
-export default[
+export default [
   {
     files: ["**/*.js"],
     languageOptions: {
@@ -25,30 +25,29 @@ export default[
         "after": true,  // No space after keywords globally
         "overrides": {
           // Control statements
-          "return": { "after": true },
-          "if": { "after": false },
-          "else": { "before": true, "after": true },
-          "for": { "after": false },
-          "while": { "after": false },
-          "do": { "after": false },
-          "switch": { "after": false },
-          "case": { "after": false },
-          "default": { "after": false },
-          "throw": { "before": true, "after": false },
+          "return":  { "after": true },
+          "if":      { "after": false },
+          "else":    { "before": true, "after": true },
+          "for":     { "after": false },
+          "while":   { "after": false },
+          "do":      { "after": false },
+          "switch":  { "after": false },
+          "case":    { "after": false },
+          "throw":   { "before": true, "after": false } ,
 
           // Keywords
-          "as": { "before": true, "after": true },
-          "of": { "before": true, "after": true },
-          "from": { "before": true, "after": true },
-          "async": { "before": true, "after": false },
-          "await": { "before": true, "after": false },
-          "class": { "before": true, "after": false },
-          "const": { "before": true, "after": true },
-          "let": { "before": true, "after": true },
-          "var": { "before": true, "after": true },
+          "as":      { "before": true, "after": true },
+          "of":      { "before": true, "after": true },
+          "from":    { "before": true, "after": true },
+          "async":   { "before": true, "after": false },
+          "await":   { "before": true, "after": false },
+          "class":   { "before": true, "after": true },
+          "const":   { "before": true, "after": true },
+          "let":     { "before": true, "after": true },
+          "var":     { "before": true, "after": true },
 
           // Exception handling
-          "catch": { "before": true, "after": false },
+          "catch":   { "before": true, "after": false },
           "finally": { "before": true, "after": true },
         }
       }]
