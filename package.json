@@ -2,7 +2,7 @@
   "name": "bedoc",
   "version": "1.0.0",
   "description": "Pluggable documentation engine for any language and format",
-  "main": "./src/core/core.js",
+  "main": "./src/core/Core.js",
   "bin": {
     "bedoc": "./src/cli.js"
   },

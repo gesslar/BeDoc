@@ -29,22 +29,21 @@ const logger = new Logger(null);
         arg += parameter.required ? ` <${param}>` : ` [${param}]`
 
       const description = `${parameter.description} (${parameter.type})`
-      const defaultValue = parameter.default ?? null
+      const defaultValue = parameter.default
 
-      if(defaultValue === null)
-        program.option(arg, description)
-      else
-        program.option(arg, description,
-          typeof defaultValue === "number"
-            ? String(defaultValue)
-            : defaultValue
-        )
+      program.option(arg, description, defaultValue)
     }
 
     // Add version option last
     program.version(packageJson.version, "-v, --version", "Output the version number")
     program.helpOption("-h, --help", "Output usage information")
+    program.showHelpAfterError()
     program.parse()
+
+    // Show help if no arguments provided
+    if(!process.argv.slice(2).length) {
+      program.help()
+    }
 
     // Get options
     const options = program.opts()
