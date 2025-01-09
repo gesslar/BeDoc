@@ -169,12 +169,10 @@ export class ConfigurationValidator {
   static _findAllOptions = async options => {
     const allOptions = []
 
-    // First the environment variables
     const environmentVariables = this._getEnvironmentVariables()
     if(environmentVariables)
       allOptions.push({source: "environment", options: environmentVariables})
 
-    // Then the package.json
     const packageJson = await FDUtil.resolveFilename("./package.json")
     const packageJsonOptions = await ModuleUtil.loadJson(packageJson)
     if(packageJsonOptions.bedoc)
