@@ -6,7 +6,9 @@ nav_order: 5
 
 # BeDoc Configuration Guide
 
-BeDoc offers flexible configuration through both command-line arguments and configuration files. This guide explains both approaches and how they can be combined for optimal workflow.
+BeDoc offers flexible configuration through command-line arguments, environment
+variables, and configuration files. This guide explains all configuration methods
+and how they interact.
 
 ## Command Line Arguments
 
@@ -18,9 +20,11 @@ bedoc -l <language> -f <format> -i <input> -o <output>
 ### Core Options
 - `-l, --language <lang>`: Source code language (e.g., javascript, lpc)
 - `-f, --format <format>`: Output format (e.g., markdown, html)
-- `-i, --input <glob>`: Input file pattern(s). Multiple patterns can be comma-separated (e.g., "src/*.js,lib/*.js")
+- `-i, --input <glob>`: Input file pattern(s). Multiple patterns can be
+  comma-separated (e.g., "src/*.js,lib/*.js")
 - `-o, --output <dir>`: Output directory for generated docs
-- `-x, --exclude <glob>`: Patterns to exclude. Multiple patterns can be comma-separated (e.g., "**/*.test.js,**/*.spec.js")
+- `-x, --exclude <glob>`: Patterns to exclude. Multiple patterns can be
+  comma-separated (e.g., "**/*.test.js,**/*.spec.js")
 
 ### Module Options
 - `-p, --parser <file>`: Use local parser file
@@ -32,6 +36,7 @@ bedoc -l <language> -f <format> -i <input> -o <output>
 
 ### Debug Options
 - `-d, --debug`: Enable debug mode
+- `--debugLevel <level>`: Set debug verbosity level (default: 0)
 
 ## Configuration File
 
@@ -50,79 +55,93 @@ Create a `bedoc.config.json` in your project root for reusable settings:
   "exclude": [
     "**/*.test.js",
     "**/*.spec.js"
-  ]
+  ],
+  "debug": false,
+  "debugLevel": 0
 }
 ```
 
-### Configuration Options
+## Package.json Configuration
 
-#### Core Settings
-- `language`: Source code language
-- `format`: Output format
-- `input`: Single glob pattern or array of patterns
-- `output`: Output directory path
-
-#### Module Settings
-- `parser`: Path to local parser file
-- `printer`: Path to local printer file
-- `mockDir`: Directory for mock testing
-
-#### Hook Settings
-- `hooks`: Path to hooks file
-
-#### Filter Settings
-- `exclude`: Patterns to exclude from input
-- `include`: Patterns to explicitly include
-
-#### Debug Settings
-- `debug`: Enable debug mode
-
-## Using Multiple Configurations
-
-You can maintain different configurations for different purposes:
+You can include BeDoc configuration in your `package.json` under the `bedoc` key:
 
 ```json
 {
-  "default": {
+  "name": "your-project",
+  "version": "1.0.0",
+  "bedoc": {
     "language": "javascript",
     "format": "markdown",
+    "input": ["src/**/*.js"],
     "output": "docs/api"
-  },
-  "development": {
-    "extends": "default",
-    "debug": true
-  },
-  "production": {
-    "extends": "default",
-    "exclude": ["**/*.test.js"]
   }
 }
 ```
 
-Use specific configurations with the `--config` flag:
-```bash
-bedoc --config production
-```
-
 ## Environment Variables
 
-BeDoc also supports configuration through environment variables:
+BeDoc supports configuration through environment variables. Each variable must be
+prefixed with `BEDOC_` and uppercase:
 
 - `BEDOC_LANGUAGE`: Source language
 - `BEDOC_FORMAT`: Output format
 - `BEDOC_OUTPUT`: Output directory
 - `BEDOC_DEBUG`: Enable debug mode (true/false)
+- `BEDOC_DEBUGLEVEL`: Debug verbosity level
 
-Environment variables take precedence over config file settings.
+For example:
+```bash
+BEDOC_DEBUG=true BEDOC_DEBUGLEVEL=5 bedoc
+```
 
 ## Configuration Priority
 
 BeDoc applies settings in the following order (highest to lowest priority):
-1. Command line arguments
-2. Environment variables
-3. package.json
-4. Project config file (`bedoc.config.json`)
-5. Global user config (`~/.bedoc/config.json`)
 
-This allows you to override specific settings while maintaining a base
-configuration.
+1. Command line arguments (when explicitly set)
+2. Project config file (`bedoc.config.json`)
+3. package.json `bedoc` section
+4. Environment variables
+5. Command line defaults
+
+Important notes about priority:
+- Command line arguments only take precedence when explicitly set by the user
+- Default values from command line arguments have the lowest priority
+- Earlier sources are overridden by later ones in the configuration cascade
+
+For example, if `debug: true` is set in your config file and you don't specify
+`-d` on the command line, the config file's value will be used even though
+there's a command line default of `false`.
+
+## Example Configuration Cascade
+
+Here's how different configuration sources might combine:
+
+```bash
+# Environment (lowest priority)
+BEDOC_DEBUG=true
+BEDOC_LANGUAGE=python
+
+# package.json bedoc section
+{
+  "language": "typescript",
+  "debug": true
+}
+
+# bedoc.config.json
+{
+  "language": "javascript",
+  "debug": false,
+  "debugLevel": 3
+}
+
+# Command line (highest priority)
+bedoc --debugLevel 4
+
+# Final result
+{
+  "language": "javascript",  # from config file (overrides package.json and env)
+  "debug": false,           # from config file (overrides package.json and env)
+  "debugLevel": 4          # from command line (overrides config file)
+}
+```
