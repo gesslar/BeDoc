@@ -32,7 +32,7 @@ export default [
           "while":   { "after": false },
           "do":      { "after": false },
           "switch":  { "after": false },
-          "case":    { "after": false },
+          "case":    { "before": true, "after": true },
           "throw":   { "before": true, "after": false } ,
 
           // Keywords

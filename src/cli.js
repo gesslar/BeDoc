@@ -37,19 +37,23 @@ const logger = new Logger(null);
     // Add version option last
     program.version(packageJson.version, "-v, --version", "Output the version number")
     program.helpOption("-h, --help", "Output usage information")
-    program.showHelpAfterError()
     program.parse()
-
-    // Show help if no arguments provided
-    if(!process.argv.slice(2).length) {
-      program.help()
-    }
 
     // Get options
     const options = program.opts()
 
+    const sources = program._optionValueSources
+    const optionsWithSources = {}
+    for(const [key, value] of Object.entries(options)) {
+      const element = {
+        value,
+        source: sources[key]
+      }
+      optionsWithSources[key] = element
+    }
+
     // Validate options using ConfigValidator
-    const validatedConfig = await ConfigurationValidator.validate(options)
+    const validatedConfig = await ConfigurationValidator.validate(optionsWithSources)
     if(validatedConfig.status === "error") {
       console.error(`The following errors were found in the configuration:\n\n${validatedConfig.error}`)
       process.exit(0)

@@ -13,6 +13,7 @@ export class ConfigurationValidator {
     const finalOptions = this._mergeOptions(allOptions)
     this._fixOptionValues(finalOptions)
 
+
     // While the entry points do wrap the entire process in a try/catch, we
     // should also do this here, so we can trap everything and instead
     // of throwing, return friendly messages back!
@@ -168,33 +169,55 @@ export class ConfigurationValidator {
   static _findAllOptions = async options => {
     const allOptions = []
 
-    // First the package.json
+    // First the environment variables
+    const environmentVariables = this._getEnvironmentVariables()
+    if(environmentVariables)
+      allOptions.push({source: "environment", options: environmentVariables})
+
+    // Then the package.json
     const packageJson = await FDUtil.resolveFilename("./package.json")
     const packageJsonOptions = await ModuleUtil.loadJson(packageJson)
     if(packageJsonOptions.bedoc)
-      allOptions.push(packageJsonOptions.bedoc)
+      allOptions.push({source: "packageJson", options: packageJsonOptions.bedoc})
 
     // Then the config file, if the options specified a config file
-    if(options.config || packageJsonOptions?.bedoc?.config) {
+    const useConfig = options.config || packageJsonOptions?.bedoc?.config || environmentVariables?.config
+    if(useConfig) {
       const configFilename = packageJsonOptions?.bedoc?.config || options.config
       if(!configFilename)
         throw new Error("No config file specified")
 
       const configFile = await FDUtil.resolveFilename(configFilename)
       const config = await ModuleUtil.loadJson(configFile)
-      allOptions.push(config)
+      allOptions.push({source: "config", options: config})
     }
 
-    allOptions.push(options)
+    allOptions.push({source: "cli", options})
 
     return allOptions
   }
 
   static _mergeOptions = allOptions => {
-    const mergedOptions = allOptions.reduce((acc, options) => {
-      return { ...acc, ...options }
+    const cliIndex = allOptions.findIndex(option => option.source && option.source === "cli")
+    const cliOptions = allOptions[cliIndex].options
+    const rest = allOptions.filter(option => option.source && option.source !== "cli")
+    const optionsOnly = rest.map(option => option.options)
+    const mergedOptions = optionsOnly.reduce((acc, options) => {
+      for(const [key, value] of Object.entries(options))
+        acc[key] = value
+
+      return acc
     }, {})
-    return mergedOptions
+
+    return DataUtil.mapObject(mergedOptions, (option, value) => {
+      const {value: cliValue, source: cliSource} = cliOptions[option] ?? {value: undefined, source: undefined}
+      const cliDefaulted = cliSource === "default"
+
+      if(cliValue && value !== cliValue)
+        return cliDefaulted ? value : cliValue
+
+      return value
+    })
   }
 
   static _fixOptionValues(options) {
@@ -225,6 +248,20 @@ export class ConfigurationValidator {
     }
   }
 
+  static _getEnvironmentVariables() {
+    const environmentVariables = {}
+    const params = Object.keys(ConfigurationParameters).map(param => {
+      return {
+        param,
+        env: `bedoc_${param}`.toUpperCase()
+      }
+    })
+    for(const param of params) {
+      if(process.env[param.env])
+        environmentVariables[param.param] = process.env[param.env]
+    }
+    return environmentVariables
+  }
 
   static _decorateError = element => ` • ${element}`
 }

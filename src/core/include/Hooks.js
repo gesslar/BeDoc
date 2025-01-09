@@ -1,7 +1,7 @@
 import DataUtil from "../util/DataUtil.js"
 
 const freeze = Object.freeze
-const allocate = DataUtil.allocate
+const allocate = DataUtil.allocateObject
 
 export const HookClasses = freeze(["Printer", "Parser"])
 export const HookTypes = freeze(["print", "parse"])

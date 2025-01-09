@@ -56,43 +56,43 @@ describe("DataUtil", () => {
 
   describe("allocate", () => {
     it("should create object from arrays", () => {
-      const result = DataUtil.allocate(["a", "b"], ["x", "y"])
+      const result = DataUtil.allocateObject(["a", "b"], ["x", "y"])
       expect(result).to.deep.equal({ a: "x", b: "y" })
     })
 
     it("should handle function spec", () => {
-      const result = DataUtil.allocate(["test"], _ => [{}])
+      const result = DataUtil.allocateObject(["test"], _ => [{}])
       expect(result).to.deep.equal({ test: {} })
     })
 
     it("should convert numeric keys to strings", () => {
-      const result = DataUtil.allocate([1, 2], ["a", "b"], true)
+      const result = DataUtil.allocateObject([1, 2], ["a", "b"], true)
       expect(result).to.deep.equal({ "1": "a", "2": "b" })
     })
 
     it("should throw error for non-array source", () => {
-      expect(() => DataUtil.allocate("not an array", [])).to.throw("Source must be an array")
+      expect(() => DataUtil.allocateObject("not an array", [])).to.throw("Source must be an array")
     })
 
     it("should throw error for invalid spec", () => {
-      expect(() => DataUtil.allocate([], "not array or function")).to.throw("Spec must be an array or a function")
+      expect(() => DataUtil.allocateObject([], "not array or function")).to.throw("Spec must be an array or a function")
     })
 
     it("should throw error for mismatched lengths", () => {
-      expect(() => DataUtil.allocate(["a", "b"], ["x"])).to.throw("Source and spec must have the same number of elements")
+      expect(() => DataUtil.allocateObject(["a", "b"], ["x"])).to.throw("Source and spec must have the same number of elements")
     })
 
     it("should throw error for non-string keys without force conversion", () => {
-      expect(() => DataUtil.allocate([1], ["x"], false)).to.throw("Indices of an Object must be of type string")
+      expect(() => DataUtil.allocateObject([1], ["x"], false)).to.throw("Indices of an Object must be of type string")
     })
 
     it("should handle spec function returning array", () => {
-      const result = DataUtil.allocate(["a", "b"], arr => arr.map(k => k.toUpperCase()))
+      const result = DataUtil.allocateObject(["a", "b"], arr => arr.map(k => k.toUpperCase()))
       expect(result).to.deep.equal({ a: "A", b: "B" })
     })
 
     it("should throw error for spec function not returning array", () => {
-      expect(() => DataUtil.allocate(["a"], _ => "not an array")).to.throw("Spec resulting from function must be an array")
+      expect(() => DataUtil.allocateObject(["a"], _ => "not an array")).to.throw("Spec resulting from function must be an array")
     })
   })
 })

@@ -114,7 +114,7 @@ export const ConfigurationParameters = {
     description: "Debug level",
     type: "number",
     required: false,
-    default: 4,
+    default: 0,
   }
 }
 

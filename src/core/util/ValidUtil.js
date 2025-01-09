@@ -1,6 +1,7 @@
 export default class ValidUtil {
   /**
    * Validates a string
+   *
    * @param str - The string to validate
    * @param nonEmpty - Whether the string must be non-empty
    * @returns boolean
@@ -8,6 +9,7 @@ export default class ValidUtil {
   static string = (str, nonEmpty = false) => typeof str === "string" && (nonEmpty ? str.length > 0 : true)
 
   /**
+   * Validates a value if it is a function
    *
    * @param f - The value to check if is a function
    * @returns boolean
@@ -16,6 +18,7 @@ export default class ValidUtil {
 
   /**
    * Validates an array
+   *
    * @param arr - The array to validate
    * @param nonEmpty - Whether the array must be non-empty
    * @returns boolean
@@ -24,6 +27,7 @@ export default class ValidUtil {
 
   /**
    * Validates an array of uniform type
+   *
    * @param arr - The array to validate
    * @param type - The type of the array elements
    * @param nonEmpty - Whether the array must be non-empty
@@ -33,6 +37,7 @@ export default class ValidUtil {
 
   /**
    * Validates a value against a type
+   *
    * @param value - The value to validate
    * @param type - The expected type
    * @param required - Whether the value is required
@@ -43,14 +48,18 @@ export default class ValidUtil {
       return true
 
     switch(type) {
-    case"array":
+    case "array":
       return ValidUtil.array(value)
-    case"string":
+    case "string":
       return ValidUtil.string(value)
-    case"boolean":
+    case "boolean":
       return typeof value === "boolean"
-    case"number":
+    case "number":
       return typeof value === "number"
+    case "object":
+      return typeof value === "object"
+    case "function":
+      return ValidUtil.func(value)
     default:
       return false
     }
@@ -58,8 +67,34 @@ export default class ValidUtil {
 
   /**
    * Validates a value against nothing
+   *
    * @param value - The value to validate
    * @returns boolean
    */
   static nothing = value => value === undefined || value === null
+
+  static valid = (value, type, arg = null, required = false) => {
+    ValidUtil.assert(ValidUtil.type(value, type, required), `Value must be of type ${type}. Got ${value}`, arg)
+  }
+
+  /**
+   * Asserts a condition
+   *
+   * @param condition - The condition to assert
+   * @param message - The message to display if the condition is not met
+   * @param arg - The argument to display if the condition is not met (optional)
+   */
+  static assert = (condition, message, arg = null) => {
+    if(!ValidUtil.type(condition, "boolean", true))
+      throw new Error(`Condition must be a boolean. Got ${condition} (Arg: 1)`)
+
+    if(!ValidUtil.type(message, "string", true))
+      throw new Error(`Message must be a string. Got ${message} (Arg: 2)`)
+
+    if(!ValidUtil.type(arg, "number", true))
+      throw new Error(`Arg must be a number. Got ${arg} (Arg: 3)`)
+
+    if(!condition)
+      throw new Error(`${message}${arg ? `: ${arg}` : ""}`)
+  }
 }

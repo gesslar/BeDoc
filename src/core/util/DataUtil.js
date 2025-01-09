@@ -31,7 +31,7 @@ export default class DataUtil {
     return freeze ? Object.freeze(clone) : clone
   }
 
-  static allocate = (source, spec, forceConversion = true) => {
+  static allocateObject = (source, spec, forceConversion = true) => {
     const workSource = [], workSpec = [], result = {}
 
     if(!ValidUtil.array(source))
@@ -66,6 +66,19 @@ export default class DataUtil {
       throw new Error("Indices of an Object must be of type string.")
 
     workSource.forEach((element, index, arr) => result[element] = workSpec[index])
+
+    return result
+  }
+
+  static mapObject = (original, transformer, mutate = false) => {
+    ValidUtil.valid(original, "object", 1, true)
+    ValidUtil.valid(transformer, "function", 2, true)
+    ValidUtil.valid(mutate, "boolean", 3, true)
+
+    const result = mutate ? original : {}
+
+    for(const [key, value] of Object.entries(original))
+      result[key] = transformer(key, value)
 
     return result
   }

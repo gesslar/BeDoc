@@ -19,7 +19,7 @@ const tags = {
     Object.values(tags.convert).includes(tag)
 }
 
-export default{
+export default {
   meta: Object.freeze({
     language: "lpc",
     languageExtension: ".c",
@@ -32,7 +32,7 @@ export default{
   patterns,
   tags,
 
-  Parser: class{
+  Parser: class {
     constructor(core) {
       this._resetState()
       this.core = core
