@@ -1,7 +1,5 @@
 ---
-layout: bedoc
 title: Creating Printers
-nav_order: 4
 ---
 
 # Creating Printers for BeDoc

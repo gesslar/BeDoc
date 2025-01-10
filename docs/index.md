@@ -1,7 +1,6 @@
 ---
-layout: bedoc
-title: BeDoc
-nav_exclude: true
+layout: home
+# Index page
 ---
 
 # Welcome to BeDoc

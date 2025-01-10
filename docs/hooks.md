@@ -1,7 +1,5 @@
 ---
-layout: bedoc
 title: Hook System
-nav_order: 5
 ---
 
 # BeDoc Hook System

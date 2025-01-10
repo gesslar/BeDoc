@@ -1,6 +1,7 @@
 export default [
   {
     files: ["**/*.js"],
+    ignores: ["docs/", "_docs/"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module"

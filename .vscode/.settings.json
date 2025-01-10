@@ -4,9 +4,6 @@
   "[javascript]": {
     "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   },
-  "[json]": {
-    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-  },
   "[xml]": {
     "editor.defaultFormatter": "redhat.vscode-xml"
   },

@@ -1,7 +1,5 @@
 ---
-layout: bedoc
 title: Creating Parsers
-nav_order: 3
 ---
 
 # Creating Parsers for BeDoc
