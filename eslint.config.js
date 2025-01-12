@@ -3,7 +3,7 @@ import stylisticJs from "@stylistic/eslint-plugin-js"
 export default [
   {
     files: ["**/*.js"],
-    ignores: ["docs/", "_docs/"],
+    ignores: ["docs/**/*.js", "_docs/**/*.js"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module"
