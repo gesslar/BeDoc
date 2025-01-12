@@ -33,7 +33,7 @@ export default class Core {
 
     if(!instance.printer || !instance.parser) {
       const discovered = await discovery.discoverModules(options.mock)
-console.log(discovered)
+      console.log(discovered)
       if(!instance.parser) {
         const parsers = discovered.parser
         const numParsers = Object.keys(parsers).length

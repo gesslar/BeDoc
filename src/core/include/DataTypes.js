@@ -1,16 +1,16 @@
 const DataTypes = [
   // Primitives
-  'undefined', 'boolean', 'number', 'bigint', 'string', 'symbol',
+  "undefined", "boolean", "number", "bigint", "string", "symbol",
 
   // Object Categories from typeof
-  'object', 'function',
+  "object", "function",
 ]
 
 const Constructors = [
   // Object Constructors
-  'Object', 'Array', 'Function', 'Date', 'RegExp', 'Error',
-  'Map', 'Set', 'WeakMap', 'WeakSet', 'Promise',
-  'Int8Array', 'Uint8Array', 'Float32Array', 'Float64Array',
+  "Object", "Array", "Function", "Date", "RegExp", "Error",
+  "Map", "Set", "WeakMap", "WeakSet", "Promise",
+  "Int8Array", "Uint8Array", "Float32Array", "Float64Array",
 ]
 
 const types = [

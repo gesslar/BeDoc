@@ -30,13 +30,27 @@ class TypeSpec {
     }
   }
 
-  forEach(callback) { this.#specs.forEach(callback) }
-  every(callback) { return this.#specs.every(callback) }
-  some(callback) { return this.#specs.some(callback) }
-  filter(callback) { return this.#specs.filter(callback) }
-  map(callback) { return this.#specs.map(callback) }
-  reduce(callback, initialValue) { return this.#specs.reduce(callback, initialValue) }
-  find(callback) { return this.#specs.find(callback) }
+  forEach(callback) {
+    this.#specs.forEach(callback)
+  }
+  every(callback) {
+    return this.#specs.every(callback)
+  }
+  some(callback) {
+    return this.#specs.some(callback)
+  }
+  filter(callback) {
+    return this.#specs.filter(callback)
+  }
+  map(callback) {
+    return this.#specs.map(callback)
+  }
+  reduce(callback, initialValue) {
+    return this.#specs.reduce(callback, initialValue)
+  }
+  find(callback) {
+    return this.#specs.find(callback)
+  }
 
   match(value, options) {
     const allowEmpty = options?.allowEmpty ?? true
@@ -45,7 +59,7 @@ class TypeSpec {
     // If we have a list of types, because the string was validly parsed,
     // we need to ensure that all of the types that were parsed are valid types
     // in JavaScript.
-    if (this.length && !this.every(t => DataUtil.validType(t.typeName)))
+    if(this.length && !this.every(t => DataUtil.validType(t.typeName)))
       return false
 
     // Now, let's do some checking with the types, respecting the array flag
@@ -57,10 +71,10 @@ class TypeSpec {
     // in an array, if it is an array and an array is allowed.
     const matchingTypeSpec = this.filter(spec => {
       const { typeName: allowedType, array: allowedArray } = spec
-      if (valueType === allowedType && !isArray && !allowedArray)
+      if(valueType === allowedType && !isArray && !allowedArray)
         return !allowEmpty ? !isEmpty : true
 
-      if (isArray) {
+      if(isArray) {
         if(allowedType === "array")
           if(!allowedArray)
             return true
@@ -143,7 +157,7 @@ export default class DataUtil {
     return freeze ? Object.freeze(result) : result
   }
 
-  static allocateObject = async (source, spec, forceConversion = true) => {
+  static allocateObject = async(source, spec, forceConversion = true) => {
     // Function aliases
     const { type, arrayUniform } = DataUtil
     // Data
@@ -181,7 +195,7 @@ export default class DataUtil {
     return result
   }
 
-  static mapObject = async (original, transformer, mutate = false) => {
+  static mapObject = async(original, transformer, mutate = false) => {
     ValidUtil.type(original, "object", true)
     ValidUtil.type(transformer, "function")
     ValidUtil.type(mutate, "boolean")
@@ -245,10 +259,10 @@ export default class DataUtil {
 
   static type = (value, type, options) => {
     const typeSpec = type instanceof TypeSpec
-                     ? type
-                     : DataUtil.typeSpec(type, options)
-// we're comparing a typeSpec object to a File object. this will always
-// return false. do fix.
+      ? type
+      : DataUtil.typeSpec(type, options)
+    // we're comparing a typeSpec object to a File object. this will always
+    // return false. do fix.
     return typeSpec.match(value, options)
   }
 
@@ -261,28 +275,28 @@ export default class DataUtil {
     const valueType = DataUtil.typeOf(value)
 
     switch(type.toLowerCase()) {
-      case "array":
-        return Array.isArray(value) // Native array check
-      case "string":
-        return valueType === "string"
-      case "boolean":
-        return valueType === "boolean"
-      case "number":
-        return valueType === "number" && !isNaN(value) // Excludes NaN
-      case "object":
-        return value !== null && valueType === "object" && !Array.isArray(value) // Excludes arrays and null
-      case "function":
-        return valueType === "function"
-      case "symbol":
-        return valueType === "symbol" // ES6 Symbol type
-      case "bigint":
-        return valueType === "bigint" // BigInt support
-      case "null":
-        return value === null // Explicit null check
-      case "undefined":
-        return valueType === "undefined" // Explicit undefined check
-      default:
-        return false // Unknown type
+    case "array":
+      return Array.isArray(value) // Native array check
+    case "string":
+      return valueType === "string"
+    case "boolean":
+      return valueType === "boolean"
+    case "number":
+      return valueType === "number" && !isNaN(value) // Excludes NaN
+    case "object":
+      return value !== null && valueType === "object" && !Array.isArray(value) // Excludes arrays and null
+    case "function":
+      return valueType === "function"
+    case "symbol":
+      return valueType === "symbol" // ES6 Symbol type
+    case "bigint":
+      return valueType === "bigint" // BigInt support
+    case "null":
+      return value === null // Explicit null check
+    case "undefined":
+      return valueType === "undefined" // Explicit undefined check
+    default:
+      return false // Unknown type
     }
   }
 
@@ -300,14 +314,14 @@ export default class DataUtil {
       return true
 
     switch(DataUtil.typeOf(value)) {
-      case "array":
-        return value.length === 0
-      case "object":
-        return Object.keys(value).length === 0
-      case "string":
-        return value.trim().length === 0
-      default:
-        return false
+    case "array":
+      return value.length === 0
+    case "object":
+      return Object.keys(value).length === 0
+    case "string":
+      return value.trim().length === 0
+    default:
+      return false
     }
   }
 }

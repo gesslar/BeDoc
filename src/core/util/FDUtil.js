@@ -135,13 +135,13 @@ export default class FDUtil {
 
     const globbyArray = (
       DataUtil.type(globPattern, "array")
-      ? globPattern
-      : globPattern
-        .split("|")
-        .map(g => g.trim())
-        .filter(Boolean)
+        ? globPattern
+        : globPattern
+          .split("|")
+          .map(g => g.trim())
+          .filter(Boolean)
     )
-    .map(g => FDUtil.fixSlashes(g))
+      .map(g => FDUtil.fixSlashes(g))
 
     if(Array.isArray(globbyArray) && DataUtil.arrayUniform(globbyArray, "string", true) && !globbyArray.length)
       throw new Error("[getFiles] Invalid glob pattern: Array must contain only strings.")

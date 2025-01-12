@@ -1,3 +1,5 @@
+import stylisticJs from "@stylistic/eslint-plugin-js"
+
 export default [
   {
     files: ["**/*.js"],
@@ -6,22 +8,27 @@ export default [
       ecmaVersion: "latest",
       sourceType: "module"
     },
+    plugins: {
+      "@stylistic/js": stylisticJs
+    },
     rules: {
-      "quotes": ["error", "double", { "avoidEscape": true, "allowTemplateLiterals": true }],
-      "no-trailing-spaces": ["error"], // Prevent trailing spaces
-      "eol-last": ["error", "always"], // Ensure a newline at the end of files
-      "indent": ["error", 2],          // Enforce consistent indentation (e.g., 2 spaces)
-      "semi": ["error", "never"],
+      "@stylistic/js/quotes": ["error", "double", { "avoidEscape": true, "allowTemplateLiterals": true }],
+      "@stylistic/js/no-trailing-spaces": ["error"], // Prevent trailing spaces
+      "@stylistic/js/eol-last": ["error", "always"], // Ensure a newline at the end of files
+      "@stylistic/js/indent": ["error", 2],          // Enforce consistent indentation (e.g., 2 spaces)
+      "@stylistic/js/semi": ["error", "never"],
+      "@stylistic/js/array-bracket-spacing": ["error", "never"],
       "no-unexpected-multiline": "error",
+      "constructor-super": "error",
 
       // No space before function parentheses
-      "space-before-function-paren": ["error", "never"],
+      "@stylistic/js/space-before-function-paren": ["error", "never"],
 
       // Enforce one true brace style
-      "brace-style": ["error", "1tbs"],
+      "@stylistic/js/brace-style": ["error", "1tbs"],
 
       // Control keyword spacing
-      "keyword-spacing": ["error", {
+      "@stylistic/js/keyword-spacing": ["error", {
         "before": false, // No space before keywords
         "after": true,  // No space after keywords globally
         "overrides": {
@@ -40,7 +47,7 @@ export default [
           "as":      { "before": true, "after": true },
           "of":      { "before": true, "after": true },
           "from":    { "before": true, "after": true },
-          "async":   { "before": true, "after": false },
+          "async":   { "before": true, "after": true },
           "await":   { "before": true, "after": false },
           "class":   { "before": true, "after": true },
           "const":   { "before": true, "after": true },

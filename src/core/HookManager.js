@@ -26,7 +26,7 @@ export default class HookManager {
     this.hooks = hooks
   }
 
-  getAvailableHooks = async () =>
+  getAvailableHooks = async() =>
     this.hooks ||
     await DataUtil.allocateObject(HookTypes, _ => [])
 

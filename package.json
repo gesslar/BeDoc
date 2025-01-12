@@ -23,7 +23,8 @@
     "micromatch": "^4.0.8"
   },
   "devDependencies": {
-    "eslint": "^9.17.0"
+    "@stylistic/eslint-plugin-js": "^2.12.1",
+    "eslint": "^9.18.0"
   },
   "engines": {
     "vscode": "^1.80.0"

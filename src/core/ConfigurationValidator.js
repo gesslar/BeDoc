@@ -5,7 +5,9 @@ import { ConfigurationParameters, ConfigurationPriorityKeys } from "./Configurat
 import { FdType, FdTypes } from "./include/FD.js"
 import ValidUtil from "./util/ValidUtil.js"
 
-Object.prototype.insert = obj => {for (const [key, value] of Object.entries(obj)) this[key] = value}
+Object.prototype.insert = obj => {
+  for(const [key, value] of Object.entries(obj))this[key] = value
+}
 
 export class ConfigurationValidator {
   async validate(options) {
@@ -25,7 +27,7 @@ export class ConfigurationValidator {
     // (Edit: No, I mean the ConfigurationParameters object. It's trash. Fix it
     // if you get this error.)
     const configValidationErrors = this.#validateConfigurationParameters()
-    if (configValidationErrors.length > 0)
+    if(configValidationErrors.length > 0)
       throw new AggregateError(
         configValidationErrors,
         `ConfigurationParameters validation errors: ${configValidationErrors.join(", ")}`
@@ -41,10 +43,10 @@ export class ConfigurationValidator {
     // to the end of the priority array.
     const orderedSections = []
     ConfigurationPriorityKeys.forEach(key => {
-      if (!ConfigurationParameters[key])
+      if(!ConfigurationParameters[key])
         throw new Error(`Invalid priority key: ${key}`)
 
-      if (finalOptions[key])
+      if(finalOptions[key])
         orderedSections.push({ key, value: finalOptions[key] })
     })
 
@@ -54,12 +56,12 @@ export class ConfigurationValidator {
     }))
 
     // Check exclusive options
-    for (const [key, param] of Object.entries(ConfigurationParameters)) {
-      if (param.exclusiveOf && finalOptions[key] && finalOptions[param.exclusiveOf])
+    for(const [key, param] of Object.entries(ConfigurationParameters)) {
+      if(param.exclusiveOf && finalOptions[key] && finalOptions[param.exclusiveOf])
         throw new SyntaxError(`Options \`${key}\` and \`${param.exclusiveOf}\` are mutually exclusive`)
     }
 
-    for (const section of orderedSections) {
+    for(const section of orderedSections) {
       const {key} = section
 
       // Skipping config, we've already handled it
@@ -122,23 +124,23 @@ export class ConfigurationValidator {
   #validateConfigurationParameters() {
     const errors = []
 
-    for (const [key, param] of Object.entries(ConfigurationParameters)) {
+    for(const [key, param] of Object.entries(ConfigurationParameters)) {
       console.debug("validateConfigurationParameters", "key", key, "param", JSON.stringify(param))
       console.debug(param.type)
       // Type
-      if (!param.type) {
+      if(!param.type) {
         errors.push(`Option \`${key}\` has no type`)
         continue
       }
 
       // Paths
-      if (param.subtype?.path) {
+      if(param.subtype?.path) {
         const pathType = param.subtype.path?.type
         // Check if pathType is defined
-        if (!pathType)
+        if(!pathType)
           errors.push(`Option \`${key}\` has no path type`)
         // Check if pathType is a valid key in FdTypes
-        if (!(FdTypes.includes(pathType)))
+        if(!(FdTypes.includes(pathType)))
           errors.push(`Option \`${key}\` has invalid path type: ${pathType}`)
       }
     }
@@ -156,19 +158,19 @@ export class ConfigurationValidator {
     const allOptions = []
 
     const environmentVariables = this.#getEnvironmentVariables()
-    if (environmentVariables)
+    if(environmentVariables)
       allOptions.push({ source: "environment", options: environmentVariables })
 
     const packageJson = await FDUtil.resolveFilename("./package.json")
     const packageJsonOptions = await ModuleUtil.loadJson(packageJson)
-    if (packageJsonOptions.bedoc)
+    if(packageJsonOptions.bedoc)
       allOptions.push({ source: "packageJson", options: packageJsonOptions.bedoc })
 
     // Then the config file, if the options specified a config file
     const useConfig = cliOptions.config || packageJsonOptions?.bedoc?.config || environmentVariables?.config
-    if (useConfig) {
+    if(useConfig) {
       const configFilename = packageJsonOptions?.bedoc?.config || cliOptions.config
-      if (!configFilename)
+      if(!configFilename)
         throw new Error("No config file specified")
 
       const configFile = await FDUtil.resolveFilename(configFilename)
@@ -195,8 +197,8 @@ export class ConfigurationValidator {
       }
     })
 
-    for (const param of params) {
-      if (process.env[param.env])
+    for(const param of params) {
+      if(process.env[param.env])
         environmentVariables[param.param] = process.env[param.env]
     }
     return environmentVariables
@@ -214,7 +216,7 @@ export class ConfigurationValidator {
     const rest = allOptions.filter(option => option.source && option.source !== "cli")
     const optionsOnly = rest.map(option => option.options)
     const mergedOptions = optionsOnly.reduce((acc, options) => {
-      for (const [key, value] of Object.entries(options))
+      for(const [key, value] of Object.entries(options))
         acc[key] = value
 
       return acc
@@ -224,7 +226,7 @@ export class ConfigurationValidator {
       const { value: cliValue, source: cliSource } = cliOptions[option] ?? { value: undefined, source: undefined }
       const cliDefaulted = cliSource === "default"
 
-      if (cliValue && value !== cliValue)
+      if(cliValue && value !== cliValue)
         return cliDefaulted ? value : cliValue
 
       return value
@@ -237,9 +239,9 @@ export class ConfigurationValidator {
    * @param {object} options
    */
   #fixOptionValues(options) {
-    for (const [key, param] of Object.entries(ConfigurationParameters)) {
+    for(const [key, param] of Object.entries(ConfigurationParameters)) {
       // If the options passed includes this configuration parameter
-      if (options[key]) {
+      if(options[key]) {
 
       }
     }
