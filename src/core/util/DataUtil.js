@@ -1,6 +1,5 @@
 import ValidUtil from "./ValidUtil.js"
 import {types} from "../include/DataTypes.js"
-import util from "node:util"
 
 class TypeSpec {
   #specs
@@ -100,7 +99,6 @@ class TypeSpec {
         throw new TypeError(`Invalid type: ${part}`)
       if(!DataUtil.validType(typeMatches[1]))
         throw new TypeError(`Invalid type: ${typeMatches[1]}`)
-
       const [_, type, isArray] = typeMatches
 
       return {
@@ -116,10 +114,12 @@ export default class DataUtil {
    * Checks if all elements in an array are of a specified type
    *
    * @param arr - The array to check
-   * @param type - The type to check for (optional, defaults to the type of the first element)
+   * @param type - The type to check for (optional, defaults to the type of
+   *               the first element)
    * @returns Whether all elements are of the specified type
    */
-  static arrayUniform = (arr, type) => arr.every((item, index, arr) => typeof item === (type || typeof arr[0]))
+  static arrayUniform = (arr, type) => arr.every((item, _index, arr) =>
+    typeof item === (type || typeof arr[0]))
 
   /**
    * Checks if an array is unique
@@ -127,7 +127,8 @@ export default class DataUtil {
    * @param arr - The array of which to remove duplicates
    * @returns The unique elements of the array
    */
-  static arrayUnique = arr => arr.filter((item, index, self) => self.indexOf(item) === index)
+  static arrayUnique = arr => arr.filter((item, index, self) =>
+    self.indexOf(item) === index)
 
   /**
    *
@@ -135,7 +136,8 @@ export default class DataUtil {
    * @param {*[]} arr2
    * @returns
    */
-  static arrayIntersection = (arr1, arr2) => arr1.filter(value => arr2.includes(value))
+  static arrayIntersection = (arr1, arr2) => arr1.filter(value =>
+    arr2.includes(value))
 
   /**
    * Clones an object
@@ -231,7 +233,11 @@ export default class DataUtil {
 
   static typeMatch = (typeSpec, value, delimiter) => {
     const work = DataUtil.clone({typeSpec, value, delimiter})
-    let { typeSpec: workSpec, value: workValue, delimiter: workDelimiter } = work
+    let {
+      typeSpec: workSpec,
+      value: workValue,
+      delimiter: workDelimiter
+    } = work
 
     // Ensure that we have a typeSpec
     if(typeof workSpec === "string")

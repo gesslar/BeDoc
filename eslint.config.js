@@ -1,36 +1,36 @@
+import js from "@eslint/js"
+// https://www.npmjs.com/package/eslint-plugin-jsdoc
+// import jsdoc from "eslint-plugin-jsdoc";
 import stylisticJs from "@stylistic/eslint-plugin-js"
 
 export default [
+  js.configs.recommended,
+  // jsdoc.configs['flat/recommended'],
   {
-    files: ["**/*.js"],
-    ignores: ["docs/**/*.js", "_docs/**/*.js"],
+    name: "gesslar/bedoc/docs",
+    ignores: ["docs/", "_docs/"],
+  },
+  {
+    name: "gesslar/bedoc/lints",
+    files: ["src/**/*.js"],
+
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module"
     },
     plugins: {
-      "@stylistic/js": stylisticJs
+      "@stylistic/js": stylisticJs,
+      // "jsdoc": jsdoc
     },
     rules: {
-      "@stylistic/js/quotes": ["error", "double", { "avoidEscape": true, "allowTemplateLiterals": true }],
-      "@stylistic/js/no-trailing-spaces": ["error"], // Prevent trailing spaces
-      "@stylistic/js/eol-last": ["error", "always"], // Ensure a newline at the end of files
-      "@stylistic/js/indent": ["error", 2],          // Enforce consistent indentation (e.g., 2 spaces)
-      "@stylistic/js/semi": ["error", "never"],
-      "@stylistic/js/array-bracket-spacing": ["error", "never"],
-      "no-unexpected-multiline": "error",
-      "constructor-super": "error",
-
-      // No space before function parentheses
-      "@stylistic/js/space-before-function-paren": ["error", "never"],
-
-      // Enforce one true brace style
+      "@stylistic/js/arrow-spacing": ["error", { "before": true, "after": true }],
       "@stylistic/js/brace-style": ["error", "1tbs"],
-
-      // Control keyword spacing
+      "@stylistic/js/eol-last": ["error", "always"],
+      "@stylistic/js/indent": ["error", 2],
+      "@stylistic/js/key-spacing": ["error", { "beforeColon": false, "afterColon": true }],
       "@stylistic/js/keyword-spacing": ["error", {
-        "before": false, // No space before keywords
-        "after": true,  // No space after keywords globally
+        "before": false,
+        "after": true,
         "overrides": {
           // Control statements
           "return":  { "after": true },
@@ -58,7 +58,21 @@ export default [
           "catch":   { "before": true, "after": false },
           "finally": { "before": true, "after": true },
         }
-      }]
+      }],
+      "@stylistic/js/max-len": ["error", { "code": 80, "ignoreUrls": true, "ignoreStrings": true, "ignoreTemplateLiterals": true, "tabWidth": 2 }],
+      "@stylistic/js/no-tabs": "error",
+      "@stylistic/js/no-trailing-spaces": ["error"],
+      "@stylistic/js/quotes": ["error", "double", { "avoidEscape": true, "allowTemplateLiterals": true }],
+      "@stylistic/js/semi": ["error", "never"],
+      "@stylistic/js/space-before-function-paren": ["error", "never"],
+      "@stylistic/js/yield-star-spacing": ["error", { "before": true, "after": false }],
+      "constructor-super": "error",
+      "no-unexpected-multiline": "error",
+      "no-unused-vars": ["warn", { "argsIgnorePattern": "^_+", "destructuredArrayIgnorePattern": "^_+", "varsIgnorePattern": "^_+" }],
+      "no-useless-assignment": "error",
+
+      // JSDoc
+      // "jsdoc/require-description": "warn"
     }
   }
 ]

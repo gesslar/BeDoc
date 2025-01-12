@@ -1,11 +1,11 @@
+import {process} from "process"
+import {console} from "console"
 import path from "path"
-import fs, { glob } from "fs"
+import fs from "fs"
 import {globby} from "globby"
-import mm from "micromatch"
 
 import DataUtil from "./DataUtil.js"
 import ValidUtil from "./ValidUtil.js"
-import { on } from "events"
 
 export default class FDUtil {
   data = new DataUtil()
@@ -52,7 +52,7 @@ export default class FDUtil {
     if(stat.isFile())
       return {
         ...fileObject,
-        directory:directoryObject
+        directory: directoryObject
       }
 
     throw new Error(`File does not exist: \`${fileObject.absolutePath}\``)

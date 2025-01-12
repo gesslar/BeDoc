@@ -1,8 +1,6 @@
-console.log("ValidUtil.js")
 // Hi there agin
 //hi there
 import DataUtil from "./DataUtil.js"
-import {types} from "../include/DataTypes.js"
 import assert from "node:assert/strict"
 
 export default class ValidUtil {
@@ -10,8 +8,10 @@ export default class ValidUtil {
    * Validates a value against a type
    *
    * @param {*} value The value to validate
-   * @param {string} type The expected type in the form of "object", "object[]", "object|object[]"
-   * @param {boolean} [noEmptyValue=false] Whether the value is required to be non-empty
+   * @param {string} type The expected type in the form of "object",
+   *                      "object[]", "object|object[]"
+   * @param {boolean} [noEmptyValue=false] Whether the value is required to be
+   *                                       non-empty
    * @returns {boolean} True if valid, false otherwise
    */
   static type = (value, type, options) => {

@@ -1,3 +1,5 @@
+import {process} from "node:process"
+import {console} from "node:console"
 import Discovery from "./Discovery.js"
 import HookManager from "./HookManager.js"
 import { Environment } from "./include/Environment.js"
@@ -98,6 +100,8 @@ export default class Core {
   }
 
   async processFiles() {
+    let result
+
     this.logger.debug("Processing files...")
 
     // Get input files - these are already FileMap objects from validation
@@ -123,7 +127,10 @@ export default class Core {
 
       // Print the results
       this.logger.debug(`Printing results for: ${fileMap.path}`)
-      const printResult = await this.printer.print(fileMap.module, parseResult.result)
+      const printResult = await this.printer.print(
+        fileMap.module,
+        parseResult.result
+      )
 
       if(!printResult)
         throw new Error(`Failed to print ${fileMap.path}: ${printResult}`)
@@ -135,12 +142,13 @@ export default class Core {
       if(!destFile || !content)
         throw new Error(`Failed to print ${fileMap.path}: ${printResult.message}`)
 
-      const writeResult = await this.outputFile(output, destFile, content)
+      result = await this.outputFile(output, destFile, content)
     }
 
     return {
       status: "success",
       message: "Files processed successfully",
+      result
     }
   }
 

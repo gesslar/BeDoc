@@ -1,5 +1,4 @@
 import { createRequire } from "module"
-import { resolve } from "path"
 import FDUtil from "./FDUtil.js"
 
 export default class ModuleUtil {

@@ -1,3 +1,4 @@
+import {console} from "console"
 import ModuleUtil from "./util/ModuleUtil.js"
 import { Environment } from "./include/Environment.js"
 import StringUtil from "./util/StringUtil.js"
@@ -42,12 +43,11 @@ export default class Logger {
   }
 
   error(message) {
-    let stack
     try {
       throw new Error()
     } catch(e) {
       if(e instanceof Error) {
-        stack = e.stack
+        console.error(this.#compose("error", e.stack))
       }
     }
 

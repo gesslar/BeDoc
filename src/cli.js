@@ -1,14 +1,12 @@
 #!/usr/bin/env node
 
-import { program } from "commander"
+import {console} from "node:console"
+import {process} from "node:process"
+import {program} from "commander"
 import Core from "./core/Core.js"
-import Logger from "./core/Logger.js"
 import ModuleUtil from "./core/util/ModuleUtil.js"
-import { ConfigurationParameters } from "./core/ConfigurationParameters.js"
-import { ConfigurationValidator } from "./core/ConfigurationValidator.js"
-
-// We need our own logger instance, because we aren't the Core object.
-const logger = new Logger(null);
+import {ConfigurationParameters} from "./core/ConfigurationParameters.js"
+import {ConfigurationValidator} from "./core/ConfigurationValidator.js"
 
 // Main entry point
 (async() => {

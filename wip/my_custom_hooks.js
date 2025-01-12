@@ -1,11 +1,7 @@
-const parse = {
-  "enter": async({name, section, meta}) => {
-    // Do nothing
-  }
-}
+import {fetch, Headers} from "node-fetch"
 
 const print = {
-  "enter": async({name, section, meta}) => {
+  "enter": async({name, section}) => {
     if(name == "description") {
       const translated = await getDadJoke()
       if(translated.status == "success")
@@ -15,7 +11,7 @@ const print = {
   }
 }
 
-export { parse, print }
+export { print }
 
 async function getDadJoke() {
   const url = "https://icanhazdadjoke.com"

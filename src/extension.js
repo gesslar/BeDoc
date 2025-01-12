@@ -1,5 +1,6 @@
+const {require} = import.meta
+
 const vscode = require("vscode")
-const { generateDocs } = require("./core/Core.js")
 
 function activate(context) {
   context.subscriptions.push(
@@ -10,12 +11,13 @@ function activate(context) {
         return
       }
 
-      const content = editor.document.getText()
-      const language = editor.document.languageId
-      const format = "markdown" // Default format for now
+      // const content = editor.document.getText()
+      // const language = editor.document.languageId
+      // const format = "markdown" // Default format for now
 
       try {
-        const output = await generateDocs(language, format, content)
+        // TODO: Do something with the output
+        // const output = await generateDocs(language, format, content)
         vscode.window.showInformationMessage("Documentation generated!")
       } catch(err) {
         vscode.window.showErrorMessage(`Error: ${err.message}`)
@@ -24,4 +26,4 @@ function activate(context) {
   )
 }
 
-module.exports = { activate }
+export default { activate }

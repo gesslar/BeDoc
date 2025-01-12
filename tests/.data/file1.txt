@@ -1,7 +1,0 @@
-  Directory of D:\git\BeDoc\test
-
-2025-01-02  12:04 AM    <DIR>          .
-2025-01-02  12:04 AM    <DIR>          ..
-2025-01-02  12:04 AM                 0 file1.txt
-               1 File(s)              0 bytes
-               2 Dir(s)  488,063,111,168 bytes free

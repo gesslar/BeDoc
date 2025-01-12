@@ -19,7 +19,7 @@ class Printer {
   async print(module, content) {
     const work = content.funcs.sort((a, b) => a.name.localeCompare(b.name))
     const output = work.map(func => {
-      const { name, description, param, return: returns, example, meta } = func
+      const {name, description, param, return: returns, example} = func
 
       // First the function name
       const outputName = `== ${name} ==\n`

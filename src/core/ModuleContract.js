@@ -65,7 +65,7 @@ export default class ModuleContract {
 
   #sanityCheck = (contract) => {
     for(const [key, value] of Object.entries(contract)) {
-      if(!"dataType" in value)
+      if(!("dataType" in value))
         throw new Error(`Missing dataType for ${key}`)
       if(value.contains)
         this.#sanityCheck(value.contains)

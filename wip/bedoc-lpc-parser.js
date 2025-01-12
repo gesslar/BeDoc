@@ -48,18 +48,6 @@ export default {
       this.currentTag = null
     }
 
-    #getStack() {
-      let stack
-      try {
-        throw new Error()
-      } catch(e) {
-        stack = e.stack
-      }
-      // we don't need the first two lines of the stack, cos they'll just be the
-      // error message and the file name
-      return stack.split("\n")//.slice(2);
-    }
-
     /**
      * @param {Object} content
      */
@@ -150,7 +138,7 @@ export default {
      * @returns {string} - The formatted message
      */
     generateMessage(message, func, file, position, line) {
-      return `[${__filename}:${func}] ${message}: ${file}:${position + 1} - ${line}`
+      return `[${func}] ${message}: ${file}:${position + 1} - ${line}`
     }
 
     /**
@@ -287,9 +275,6 @@ export default {
       const match = this.regex.functionPattern.exec(line)
 
       if(match) {
-        const access = match.groups?.access || "public"
-        const modifiers = [match.groups?.modifier1, match.groups?.modifier2].filter(modifier => modifier !== undefined)
-        const type = match.groups?.type
         const name = match.groups?.name
 
         if(!name)
