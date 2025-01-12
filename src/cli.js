@@ -53,7 +53,8 @@ const logger = new Logger(null);
     }
 
     // Validate options using ConfigValidator
-    const validatedConfig = await ConfigurationValidator.validate(optionsWithSources)
+    const configValidator = new ConfigurationValidator()
+    const validatedConfig = await configValidator.validate(optionsWithSources)
     if(validatedConfig.status === "error") {
       console.error(`The following errors were found in the configuration:\n\n${validatedConfig.error}`)
       process.exit(0)

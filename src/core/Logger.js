@@ -20,7 +20,7 @@ export default class Logger {
     this.debugLevel = options.debugLevel
   }
 
-  _compose(level, message) {
+  #compose(level, message) {
     const tag = StringUtil.capitalize(level)
     return `[${this.name}] ${LoggerColors[level]}${tag}${LoggerColors.reset}: ${message}`
   }
@@ -28,16 +28,16 @@ export default class Logger {
   debug(message, level = 4, force = false) {
     (force || this.debugMode === true) &&
       (level <= (this.debugLevel ?? 4)) &&
-      console.debug(this._compose("debug", message))
+      console.debug(this.#compose("debug", message))
   }
 
   warn(message) {
-    console.warn(this._compose("warn", message))
+    console.warn(this.#compose("warn", message))
     this.vscodeWarn?.(JSON.stringify(message))
   }
 
   info(message) {
-    console.info(this._compose("info", message))
+    console.info(this.#compose("info", message))
     this.vscodeInfo?.(JSON.stringify(message))
   }
 
@@ -51,7 +51,7 @@ export default class Logger {
       }
     }
 
-    console.error(this._compose("error", message))
+    console.error(this.#compose("error", message))
     this.vscodeError?.(JSON.stringify(message))
   }
 }

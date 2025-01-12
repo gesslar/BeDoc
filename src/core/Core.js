@@ -33,7 +33,7 @@ export default class Core {
 
     if(!instance.printer || !instance.parser) {
       const discovered = await discovery.discoverModules(options.mock)
-
+console.log(discovered)
       if(!instance.parser) {
         const parsers = discovered.parser
         const numParsers = Object.keys(parsers).length
@@ -72,10 +72,10 @@ export default class Core {
     }
 
     if(!instance.parser)
-      throw new Error("[New] No parser found for language " + instance.options.language)
+      throw new Error(`[New] No parser found for language ${instance.options.language}`)
 
     if(!instance.printer)
-      throw new Error("[New] No printer found for format " + instance.options.format)
+      throw new Error(`[New] No printer found for format ${instance.options.format}`)
 
     const contract = new ModuleContract(instance)
     const result = contract.satisfies(requestedParser, requestedPrinter)
@@ -91,7 +91,8 @@ export default class Core {
     const parserHooks = hookManager.attachHooks(instance.parser)
     const printerHooks = hookManager.attachHooks(instance.printer)
 
-    instance.logger.debug(`[New] Attached ${parserHooks} parser hooks and ${printerHooks} printer hooks`)
+    instance.logger.debug(`[New] Attached ${parserHooks} parser hooks and `+
+      `${printerHooks} printer hooks`)
 
     return instance
   }
@@ -151,7 +152,8 @@ export default class Core {
    * @returns {Promise<Object>}
    */
   async outputFile(output, destFile, content) {
-    this.logger.debug(`[outputFile] Output: ${output?.path}, DestFile: ${destFile}, Content length: ${content.length}`)
+    this.logger.debug(`[outputFile] Output: ${output?.path}, DestFile: `+
+      `${destFile}, Content length: ${content.length}`)
     if(this.options.env === Environment.CLI && !output) {
       // Print to stdout if no output file is specified in CLI mode
       process.stdout.write(content + "\n")

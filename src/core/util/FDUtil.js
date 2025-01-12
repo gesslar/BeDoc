@@ -1,5 +1,5 @@
 import path from "path"
-import fs from "fs"
+import fs, { glob } from "fs"
 import {globby} from "globby"
 import mm from "micromatch"
 
@@ -38,8 +38,7 @@ export default class FDUtil {
    * @throws {Error}
    */
   static resolveFilename =  async(fileName, directoryObject = null) => {
-    if(!ValidUtil.string(fileName, true))
-      throw new Error("File path is required")
+    ValidUtil.type(fileName, "string", {allowEmpty: false})
 
     const fixedFileName = FDUtil.fixSlashes(fileName)
     const directoryNamePart = fixedFileName.split("/").slice(0, -1).join("/")
@@ -47,7 +46,7 @@ export default class FDUtil {
     if(!directoryObject)
       directoryObject = await FDUtil.resolveDirectory(directoryNamePart)
 
-    const fileObject = await FDUtil.composeFilename(directoryObject, fileNamePart)
+    const fileObject = FDUtil.composeFilename(directoryObject, fileNamePart)
     const stat = await fs.promises.stat(fileObject.absolutePath)
 
     if(stat.isFile())
@@ -66,11 +65,11 @@ export default class FDUtil {
    * @param fileName - The file
    * @returns A file object
    */
-  static composeFilename = async(directoryNameorObject, fileName) => {
+  static composeFilename = (directoryNameorObject, fileName) => {
     let dirObject
 
-    if(ValidUtil.string(directoryNameorObject)) {
-      dirObject = await FDUtil.composeDirectory(directoryNameorObject)
+    if(DataUtil.type(directoryNameorObject, "string|string[]")) {
+      dirObject = FDUtil.composeDirectory(directoryNameorObject)
     } else {
       if(!directoryNameorObject.isDirectory)
         throw new Error("Directory object is not a directory")
@@ -78,9 +77,9 @@ export default class FDUtil {
       dirObject = directoryNameorObject
     }
 
-    const fileObject = path.resolve(dirObject.path, fileName)
+    fileName = path.resolve(dirObject.path, fileName)
 
-    return FDUtil.mapFilename(fileObject)
+    return FDUtil.mapFilename(fileName)
   }
 
   /**
@@ -130,21 +129,21 @@ export default class FDUtil {
    */
   static getFiles = async(globPattern) => {
     // Validate input
-    if(!ValidUtil.string(globPattern, true) && !ValidUtil.array(globPattern, true))
-      throw new Error("[getFiles] Invalid glob pattern: Must be a string or a non-empty array of strings.")
+    console.debug("getFiles", globPattern)
+    console.debug("getFiles", DataUtil.type(globPattern, "string|string[]", {allowEmpty: false}))
+    ValidUtil.type(globPattern, "string|string[]", {allowEmpty: false})
 
-    const globbyArray = []
-    if(ValidUtil.string(globPattern)) {
-      globbyArray.push(...(globPattern
+    const globbyArray = (
+      DataUtil.type(globPattern, "array")
+      ? globPattern
+      : globPattern
         .split("|")
         .map(g => g.trim())
         .filter(Boolean)
-        .map(g => FDUtil.fixSlashes(g))))
-    } else {
-      globbyArray.push(...globPattern)
-    }
+    )
+    .map(g => FDUtil.fixSlashes(g))
 
-    if(Array.isArray(globbyArray) && !ValidUtil.arrayUniform(globbyArray, "string", true) && !globbyArray.length)
+    if(Array.isArray(globbyArray) && DataUtil.arrayUniform(globbyArray, "string", true) && !globbyArray.length)
       throw new Error("[getFiles] Invalid glob pattern: Array must contain only strings.")
 
     // Use Globby to fetch matching files
@@ -163,8 +162,7 @@ export default class FDUtil {
    * @throws {Error}
    */
   static resolveDirectory = async directoryName => {
-    if(!ValidUtil.string(directoryName, true))
-      throw new Error("Path is required")
+    ValidUtil.type(directoryName, "string", true)
 
     const directoryObject = FDUtil.mapDirectory(directoryName)
     const stat = await fs.promises.stat(directoryObject.absolutePath)
@@ -181,9 +179,9 @@ export default class FDUtil {
    * @param directory - The directory
    * @returns A directory object
    */
-  static composeDirectory = async(directory) => FDUtil.mapDirectory(directory)
+  static composeDirectory = directory => FDUtil.mapDirectory(directory)
 
-  static ls = async(directory) => {
+  static ls = async directory => {
     const found = await fs.promises.readdir(directory, {withFileTypes: true})
     const results = await Promise.all(found.map(async dirent => {
       const fullPath = path.join(directory, dirent.name)
@@ -210,8 +208,12 @@ export default class FDUtil {
    */
   static readFile = async(fileObject) => {
     const {absolutePath} = fileObject
-    if(!absolutePath) throw new Error("No absolute path in file map")
-    return await fs.promises.readFile(absolutePath, "utf8")
+    if(!absolutePath)
+      throw new Error("No absolute path in file map")
+
+    const content = await fs.promises.readFile(absolutePath, "utf8")
+    console.debug(content)
+    return content
   }
 
   /**

@@ -27,13 +27,13 @@ export default class ModuleContract {
     if(!receiverContract)
       throw new Error(`Accepts contract is not defined in ${receiverName}`)
 
-    this._sanityCheck(providerContract)
-    this._sanityCheck(receiverContract)
+    this.#sanityCheck(providerContract)
+    this.#sanityCheck(receiverContract)
 
-    return this._negotiate(providerContract, receiverContract)
+    return this.#negotiate(providerContract, receiverContract)
   }
 
-  _negotiate = (provides, accepts) => {
+  #negotiate = (provides, accepts) => {
     const errors = []
 
     for(const [key, value] of Object.entries(accepts)) {
@@ -54,7 +54,7 @@ export default class ModuleContract {
       }
 
       if(value.contains) {
-        const result = this._negotiate(provides[key], value.contains)
+        const result = this.#negotiate(provides[key], value.contains)
         if(!result.success)
           return { success: false, errors: [...errors, ...result.errors] }
       }
@@ -63,12 +63,12 @@ export default class ModuleContract {
     return { success: true, errors }
   }
 
-  _sanityCheck = (contract) => {
+  #sanityCheck = (contract) => {
     for(const [key, value] of Object.entries(contract)) {
       if(!"dataType" in value)
         throw new Error(`Missing dataType for ${key}`)
       if(value.contains)
-        this._sanityCheck(value.contains)
+        this.#sanityCheck(value.contains)
     }
   }
 }

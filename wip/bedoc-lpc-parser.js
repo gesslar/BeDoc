@@ -34,7 +34,7 @@ export default {
 
   Parser: class {
     constructor(core) {
-      this._resetState()
+      this.#resetState()
       this.core = core
       this.regex = {
         ...patterns,
@@ -42,13 +42,13 @@ export default {
       }
     }
 
-    _resetState() {
+    #resetState() {
       this.processingComment = false
       this.processingMultiline = false
       this.currentTag = null
     }
 
-    _getStack() {
+    #getStack() {
       let stack
       try {
         throw new Error()
@@ -64,7 +64,7 @@ export default {
      * @param {Object} content
      */
     parse(file, content) {
-      this._resetState()
+      this.#resetState()
       const result = {
         file,
         raw: content,
@@ -90,7 +90,7 @@ export default {
             // Restart with a new function
             func = this.newFunction()
           } else if(this.isCommentEnd(lineTrimmed)) {
-            this._resetState()
+            this.#resetState()
             continue
           } else if(this.isFunctionLine(lineTrimmed)) {
             const { status, message: functionName } = this.determineFunctionName(lineTrimmed)
@@ -136,7 +136,7 @@ export default {
      * @param {string} line
      */
     newFunction() {
-      this._resetState()
+      this.#resetState()
       this.processingComment = true
       return {}
     }

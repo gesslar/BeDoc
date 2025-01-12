@@ -26,9 +26,9 @@ export default class HookManager {
     this.hooks = hooks
   }
 
-  getAvailableHooks = () =>
+  getAvailableHooks = async () =>
     this.hooks ||
-    DataUtil.allocateObject(HookTypes, _ => [])
+    await DataUtil.allocateObject(HookTypes, _ => [])
 
   /**
    * Attach hooks to a target
@@ -36,7 +36,7 @@ export default class HookManager {
    * @param target - The target to attach hooks to
    * @returns The type of hooks attached
    */
-  attachHooks = target => {
+  attachHooks = async target => {
     if(!target.constructor?.name)
       throw new Error("[attachHooks] Target must have a constructor name")
 
@@ -44,7 +44,7 @@ export default class HookManager {
     if(!HookClasses.includes(name))
       throw new Error(`[attachHooks] Invalid target type: ${name}`)
 
-    const availableHooks = this.getAvailableHooks()
+    const availableHooks = await this.getAvailableHooks()
     if(!availableHooks)
       throw new Error("[attachHooks] No hooks available")
 

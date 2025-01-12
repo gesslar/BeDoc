@@ -1,115 +1,102 @@
-import ValidUtil from "./util/ValidUtil.js"
 import DataUtil from "./util/DataUtil.js"
 import FDUtil from "./util/FDUtil.js"
 import ModuleUtil from "./util/ModuleUtil.js"
 import { ConfigurationParameters, ConfigurationPriorityKeys } from "./ConfigurationParameters.js"
 import { FdType, FdTypes } from "./include/FD.js"
+import ValidUtil from "./util/ValidUtil.js"
+
+Object.prototype.insert = obj => {for (const [key, value] of Object.entries(obj)) this[key] = value}
 
 export class ConfigurationValidator {
-  static async validate(options) {
+  async validate(options) {
+    const finalOptions = {}
     const errors = []
-
-    const allOptions = await this._findAllOptions(options)
-    const finalOptions = this._mergeOptions(allOptions)
-    this._fixOptionValues(finalOptions)
-
+    const {nothing, typeSpec} = DataUtil
+    const {type: atype} = ValidUtil
 
     // While the entry points do wrap the entire process in a try/catch, we
     // should also do this here, so we can trap everything and instead
     // of throwing, return friendly messages back!
-    try {
-      const configErrors = this._validateConfigurationParameters()
-      if(configErrors.length > 0) {
-        errors.push(...configErrors)
-        return {
-          status: "error",
-          error: errors.map(ConfigurationValidator._decorateError).join("\n`")
-        }
-      }
 
-      // Priority keys are those which must be processed first. They are
-      // specified in order of priority.
-      // Find them and add them to an array; the rest will be in pushed
-      // to the end of the priority array.
-      const orderedSections = []
-      ConfigurationPriorityKeys.forEach(key => {
-        if(!ConfigurationParameters[key])
-          throw new Error(`Invalid priority key: ${key}`)
+    // If the configuration parameters are invalid, we can't proceed. No error
+    // collection is needed here, because the ConfigurationParameters object
+    // is a static object and should be correct. OUT WITH THE TRASH!!! (I mean
+    // the error collection, not the ConfigurationParameters object)
+    // (Edit: No, I mean the ConfigurationParameters object. It's trash. Fix it
+    // if you get this error.)
+    const configValidationErrors = this.#validateConfigurationParameters()
+    if (configValidationErrors.length > 0)
+      throw new AggregateError(
+        configValidationErrors,
+        `ConfigurationParameters validation errors: ${configValidationErrors.join(", ")}`
+      )
 
-        if(finalOptions[key])
-          orderedSections.push({key, value: finalOptions[key]})
-      })
+    const allOptions = await this.#findAllOptions(options)
+    Object.assign(finalOptions, await this.#mergeOptions(allOptions))
+    this.#fixOptionValues(finalOptions)
 
-      const remainingSections = Object.keys(ConfigurationParameters).filter(key => !ConfigurationPriorityKeys.includes(key))
-      orderedSections.push(...remainingSections.map(key => {
-        return { key, value: finalOptions[key] }
-      }))
+    // Priority keys are those which must be processed first. They are
+    // specified in order of priority.
+    // Find them and add them to an array; the rest will be in pushed
+    // to the end of the priority array.
+    const orderedSections = []
+    ConfigurationPriorityKeys.forEach(key => {
+      if (!ConfigurationParameters[key])
+        throw new Error(`Invalid priority key: ${key}`)
 
-      // Check exclusive options
-      for(const [key, param] of Object.entries(ConfigurationParameters)) {
-        if(param.exclusiveOf && finalOptions[key] && finalOptions[param.exclusiveOf])
-          errors.push(`Options \`${key}\` and \`${param.exclusiveOf}\` are mutually exclusive`)
-      }
+      if (finalOptions[key])
+        orderedSections.push({ key, value: finalOptions[key] })
+    })
 
-      for(const section of orderedSections) {
-        const {key} = section
+    const remainingSections = Object.keys(ConfigurationParameters).filter(key => !ConfigurationPriorityKeys.includes(key))
+    orderedSections.push(...remainingSections.map(key => {
+      return { key, value: finalOptions[key] }
+    }))
 
-        if(key === "config")
+    // Check exclusive options
+    for (const [key, param] of Object.entries(ConfigurationParameters)) {
+      if (param.exclusiveOf && finalOptions[key] && finalOptions[param.exclusiveOf])
+        throw new SyntaxError(`Options \`${key}\` and \`${param.exclusiveOf}\` are mutually exclusive`)
+    }
+
+    for (const section of orderedSections) {
+      const {key} = section
+
+      // Skipping config, we've already handled it
+      if(key === "config")
+        continue
+
+      let {value} = section
+      const isNothing = nothing(value)
+      const param = ConfigurationParameters[key]
+      const {type, required, path} = param
+
+      if(isNothing) {
+        if(required === true)
+          throw new SyntaxError(`Option \`${key}\` is required`)
+        else
           continue
+      }
 
-        let {value} = section
-        const param = ConfigurationParameters[key]
-        const {type,required,path} = param
+      atype(value, type, {allowEmpty: !required})
 
-        if(!type) {
-          // This is required for any validation to work. The ConfigurationParameters
-          // object must be valid.
-          errors.push(`Option \`${key}\` has no type`)
-          break
-        }
+      // Additional path validation if needed
+      if(path && !isNothing) {
+        const {mustExist, type: pathType} = path
 
-        if(required === true) {
-          if(ValidUtil.nothing(value)) {
-            errors.push(`Option \`${key}\` is required`)
-            break
-          }
+        // Special for `input` and `exclude` because they can be a comma-
+        // separated list of glob patterns.
+        if(key === "input" || key === "exclude") {
+          if(DataUtil.type(value, "array"))
+            value = await Promise.all(value.map(pattern => FDUtil.getFiles(pattern)))
+          else if(DataUtil.type(value, "string"))
+            value = await FDUtil.getFiles(value)
+          else
+            throw new TypeError(`Option \`${key}\` must be a string or an array of strings`)
+
+          finalOptions[key] = value.flat()
+          continue
         } else {
-          if(ValidUtil.nothing(value))
-            continue
-        }
-
-        const configTypes = DataUtil.typeSpec(type)
-        const matched = DataUtil.typeMatch(configTypes, value)
-        if(!matched) {
-          const valueType = typeof value
-          errors.push(`Option \`${key}\` must be of type ${type}, got ${valueType}: ${JSON.stringify(value)}`)
-          break
-        }
-
-        // Additional path validation if needed
-        if(path && !ValidUtil.nothing(value)) {
-          const {mustExist, type: pathType} = path
-
-          // Special for `input` because it can be a comma-separated list of
-          // glob patterns.
-          if(key === "input" || key === "exclude") {
-            const array = configTypes.some(type => type.array)
-            if(array && ValidUtil.array(value, true)) {
-              value = await Promise.all(value.map(pattern => FDUtil.getFiles(pattern)))
-            } else {
-              value = await FDUtil.getFiles(value)
-            }
-            finalOptions[key] = value.flat()
-            continue
-          }
-
-          if(required === true) {
-            if(ValidUtil.nothing(value)) {
-              errors.push(`Option \`${key}\` is required`)
-              break
-            }
-          }
-
           if(mustExist === true) {
             finalOptions[key] = pathType === FdType.FILE ?
               await FDUtil.resolveFilename(value) :
@@ -117,48 +104,41 @@ export class ConfigurationValidator {
           }
         }
       }
-    } catch(e) {
-      errors.push(e.message)
     }
 
-    if(errors.length > 0) {
-      return {
-        status: "error",
-        error: errors.map(this._decorateError).join("\n")
-      }
-    } else {
-      return {
-        status: "success",
-        validated: true,
-        ...finalOptions
-      }
+    return {
+      status: "success",
+      validated: true,
+      ...finalOptions
     }
   }
 
   /**
-   * Validate the ConfigurationParameters object. This is a sanity check to
-   * ensure that the ConfigurationParameters object is valid.
-   *
-   * @returns {Array<string>} Errors
-   */
-  static _validateConfigurationParameters() {
+  * Validate the ConfigurationParameters object. This is a sanity check to
+  * ensure that the ConfigurationParameters object is valid.
+  *
+  * @returns {string[]} Errors
+  */
+  #validateConfigurationParameters() {
     const errors = []
 
-    for(const [key, param] of Object.entries(ConfigurationParameters)) {
+    for (const [key, param] of Object.entries(ConfigurationParameters)) {
+      console.debug("validateConfigurationParameters", "key", key, "param", JSON.stringify(param))
+      console.debug(param.type)
       // Type
-      if(!param.type) {
+      if (!param.type) {
         errors.push(`Option \`${key}\` has no type`)
         continue
       }
 
       // Paths
-      if(param.subtype?.path) {
+      if (param.subtype?.path) {
         const pathType = param.subtype.path?.type
         // Check if pathType is defined
-        if(!pathType)
+        if (!pathType)
           errors.push(`Option \`${key}\` has no path type`)
         // Check if pathType is a valid key in FdTypes
-        if(!(FdTypes.includes(pathType)))
+        if (!(FdTypes.includes(pathType)))
           errors.push(`Option \`${key}\` has invalid path type: ${pathType}`)
       }
     }
@@ -166,87 +146,47 @@ export class ConfigurationValidator {
     return errors
   }
 
-  static _findAllOptions = async options => {
+  /**
+   * Find all options from all sources
+   *
+   * @param {object} cliOptions
+   * @returns {Promise<object[]>}
+   */
+  async #findAllOptions(cliOptions) {
     const allOptions = []
 
-    const environmentVariables = this._getEnvironmentVariables()
-    if(environmentVariables)
-      allOptions.push({source: "environment", options: environmentVariables})
+    const environmentVariables = this.#getEnvironmentVariables()
+    if (environmentVariables)
+      allOptions.push({ source: "environment", options: environmentVariables })
 
     const packageJson = await FDUtil.resolveFilename("./package.json")
     const packageJsonOptions = await ModuleUtil.loadJson(packageJson)
-    if(packageJsonOptions.bedoc)
-      allOptions.push({source: "packageJson", options: packageJsonOptions.bedoc})
+    if (packageJsonOptions.bedoc)
+      allOptions.push({ source: "packageJson", options: packageJsonOptions.bedoc })
 
     // Then the config file, if the options specified a config file
-    const useConfig = options.config || packageJsonOptions?.bedoc?.config || environmentVariables?.config
-    if(useConfig) {
-      const configFilename = packageJsonOptions?.bedoc?.config || options.config
-      if(!configFilename)
+    const useConfig = cliOptions.config || packageJsonOptions?.bedoc?.config || environmentVariables?.config
+    if (useConfig) {
+      const configFilename = packageJsonOptions?.bedoc?.config || cliOptions.config
+      if (!configFilename)
         throw new Error("No config file specified")
 
       const configFile = await FDUtil.resolveFilename(configFilename)
       const config = await ModuleUtil.loadJson(configFile)
-      allOptions.push({source: "config", options: config})
+      allOptions.push({ source: "config", options: config })
     }
 
-    allOptions.push({source: "cli", options})
+    allOptions.push({ source: "cli", options: cliOptions })
 
     return allOptions
   }
 
-  static _mergeOptions = allOptions => {
-    const cliIndex = allOptions.findIndex(option => option.source && option.source === "cli")
-    const cliOptions = allOptions[cliIndex].options
-    const rest = allOptions.filter(option => option.source && option.source !== "cli")
-    const optionsOnly = rest.map(option => option.options)
-    const mergedOptions = optionsOnly.reduce((acc, options) => {
-      for(const [key, value] of Object.entries(options))
-        acc[key] = value
-
-      return acc
-    }, {})
-
-    return DataUtil.mapObject(mergedOptions, (option, value) => {
-      const {value: cliValue, source: cliSource} = cliOptions[option] ?? {value: undefined, source: undefined}
-      const cliDefaulted = cliSource === "default"
-
-      if(cliValue && value !== cliValue)
-        return cliDefaulted ? value : cliValue
-
-      return value
-    })
-  }
-
-  static _fixOptionValues(options) {
-    for(const [key, param] of Object.entries(ConfigurationParameters)) {
-      if(options[key]) {
-        const configTypes = DataUtil.typeSpec(param.type)
-        const arrayAllowed = Array.isArray(configTypes) ? configTypes.some(type => type.array) : configTypes.array
-        const typeNames = Array.isArray(configTypes) ? DataUtil.arrayUnique(configTypes.map(type => type.typeName)) : [configTypes.typeName]
-
-        if(typeNames.length > 1)
-          throw new Error(`Option \`${key}\` must be of a single type, got ${typeNames.join(", ")}`)
-
-        const configType = typeNames[0]
-
-        let value = options[key]
-        if(typeof value === "string" && arrayAllowed)
-          if(/,/.test(value))
-            value = value.split(",")
-
-        if(ValidUtil.array(value) && arrayAllowed)
-          value = value.map(item => typeof item !== "string" ? JSON.parse(item) : item)
-        else
-          if(typeof value === "string" && configType !== "string")
-            value = JSON.parse(value)
-
-        options[key] = value
-      }
-    }
-  }
-
-  static _getEnvironmentVariables() {
+  /**
+   * Get environment variables
+   *
+   * @returns {object} Environment variables
+   */
+  #getEnvironmentVariables() {
     const environmentVariables = {}
     const params = Object.keys(ConfigurationParameters).map(param => {
       return {
@@ -254,12 +194,54 @@ export class ConfigurationValidator {
         env: `bedoc_${param}`.toUpperCase()
       }
     })
-    for(const param of params) {
-      if(process.env[param.env])
+
+    for (const param of params) {
+      if (process.env[param.env])
         environmentVariables[param.param] = process.env[param.env]
     }
     return environmentVariables
   }
 
-  static _decorateError = element => ` • ${element}`
+  /**
+   * Merge all options into one object
+   *
+   * @param {object[]} allOptions
+   * @returns {Promise<object>}
+   */
+  async #mergeOptions(allOptions) {
+    const cliIndex = allOptions.findIndex(option => option.source && option.source === "cli")
+    const cliOptions = allOptions[cliIndex].options
+    const rest = allOptions.filter(option => option.source && option.source !== "cli")
+    const optionsOnly = rest.map(option => option.options)
+    const mergedOptions = optionsOnly.reduce((acc, options) => {
+      for (const [key, value] of Object.entries(options))
+        acc[key] = value
+
+      return acc
+    }, {})
+
+    return await DataUtil.mapObject(mergedOptions, (option, value) => {
+      const { value: cliValue, source: cliSource } = cliOptions[option] ?? { value: undefined, source: undefined }
+      const cliDefaulted = cliSource === "default"
+
+      if (cliValue && value !== cliValue)
+        return cliDefaulted ? value : cliValue
+
+      return value
+    })
+  }
+
+  /**
+   * Fix option values. This operation is performed in place.
+   *
+   * @param {object} options
+   */
+  #fixOptionValues(options) {
+    for (const [key, param] of Object.entries(ConfigurationParameters)) {
+      // If the options passed includes this configuration parameter
+      if (options[key]) {
+
+      }
+    }
+  }
 }

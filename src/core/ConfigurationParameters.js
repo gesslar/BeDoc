@@ -1,10 +1,13 @@
+import DataUtil from "./util/DataUtil.js"
 
-export const ConfigurationParameters = {
+const type = DataUtil.typeSpec
+
+export const ConfigurationParameters = Object.freeze({
   input: {
     short: "i",
     param: "file",
     description: "Comma-separated glob patterns to match files",
-    type: "string|string[]",
+    type: type("string|string[]"),
     required: true,
     path: {
       type: "file",
@@ -15,21 +18,21 @@ export const ConfigurationParameters = {
     short: "x",
     param: "file",
     description: "Comma-separated glob patterns to exclude files",
-    type: "string|string[]",
+    type: type("string|string[]"),
     required: false,
   },
   language: {
     short: "l",
     param: "lang",
     description: "Language parser to use",
-    type: "string",
+    type: type("string"),
     required: false,
     exclusiveOf: "parser",
   },
   format: {
     short: "f",
     description: "Output format",
-    type: "string",
+    type: type("string"),
     required: false,
     exclusiveOf: "printer",
   },
@@ -37,7 +40,7 @@ export const ConfigurationParameters = {
     short: "k",
     param: "file",
     description: "Custom hooks JS file",
-    type: "string",
+    type: type("string"),
     required: false,
     path: {
       type: "file",
@@ -48,7 +51,7 @@ export const ConfigurationParameters = {
     short: "o",
     param: "dir",
     description: "Output directory",
-    type: "string",
+    type: type("string"),
     required: false,
     path: {
       type: "directory",
@@ -59,7 +62,7 @@ export const ConfigurationParameters = {
     short: "p",
     param: "file",
     description: "Custom parser JS file",
-    type: "string",
+    type: type("string"),
     required: false,
     exclusiveOf: "language",
     path: {
@@ -71,7 +74,7 @@ export const ConfigurationParameters = {
     short: "P",
     param: "file",
     description: "Custom printer JS file",
-    type: "string",
+    type: type("string"),
     required: false,
     exclusiveOf: "format",
     path: {
@@ -83,7 +86,7 @@ export const ConfigurationParameters = {
     short: "m",
     param: "dir",
     description: "Path to mock parsers and printers",
-    type: "string",
+    type: type("string"),
     required: false,
     path: {
       type: "directory",
@@ -94,7 +97,7 @@ export const ConfigurationParameters = {
     short: "c",
     param: "file",
     description: "Use JSON config file",
-    type: "string",
+    type: type("string"),
     required: false,
     path: {
       type: "file",
@@ -104,7 +107,7 @@ export const ConfigurationParameters = {
   debug: {
     short: "d",
     description: "Enable debug mode",
-    type: "boolean",
+    type: type("boolean"),
     required: false,
     default: false,
   },
@@ -112,11 +115,11 @@ export const ConfigurationParameters = {
     short: "D",
     param: "level",
     description: "Debug level",
-    type: "number",
+    type: type("number"),
     required: false,
     default: 0,
   }
-}
+})
 
 export const ConfigurationPriorityKeys = Object.freeze([
   "exclude",
