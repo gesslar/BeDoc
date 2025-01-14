@@ -8,6 +8,8 @@ on:
 jobs:
   create-pr:
     runs-on: ubuntu-latest
+    outputs:
+      pr-number: ${{ steps.create_pr.outputs.pull-request-number }}
 
     steps:
     - name: Checkout repository
@@ -25,12 +27,13 @@ jobs:
         base: main
 
     - name: Output PR number
-      run: echo "Pull Request Number: ${{ steps.create_pr.outputs.pull-request-number }}"
+      run: |
+        echo "Pull Request Number: ${{ steps.create_pr.outputs.pull-request-number }}"
 
   approve-pr:
     runs-on: ubuntu-latest
     needs: create-pr
-    if: ${{ needs.create-pr.outputs.pull-request-number != '' }}
+    if: ${{ needs.create-pr.outputs.pr-number != '' }}
 
     steps:
     - name: Checkout repository
@@ -40,12 +43,12 @@ jobs:
       uses: hmarr/auto-approve-action@v2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        pull-request-number: ${{ needs.create-pr.outputs.pull-request-number }}
+        pull-request-number: ${{ needs.create-pr.outputs.pr-number }}
 
   merge-pr:
     runs-on: ubuntu-latest
     needs: approve-pr
-    if: ${{ needs.create-pr.outputs.pull-request-number != '' }}
+    if: ${{ needs.create-pr.outputs.pr-number != '' }}
 
     steps:
     - name: Checkout repository
@@ -55,7 +58,7 @@ jobs:
       uses: actions/github-script@v6
       with:
         script: |
-          const pr_number = parseInt('${{ needs.create-pr.outputs.pull-request-number }}');
+          const pr_number = parseInt('${{ needs.create-pr.outputs.pr-number }}');
           const { data: pr } = await github.pulls.get({
             owner: context.repo.owner,
             repo: context.repo.repo,
