@@ -1,4 +1,4 @@
-name: Auto PR, Approve, and Merge from gh-pages
+name: Auto PR, Approve, and Merge from gh-pages 🤗
 
 on:
   push:
