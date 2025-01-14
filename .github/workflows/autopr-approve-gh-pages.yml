@@ -7,11 +7,14 @@ on:
 jobs:
   create-pr:
     runs-on: ubuntu-latest
+    outputs:
+      pr-number: ${{ steps.create-pr.outputs.pull-request-number }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
       - name: Create Pull Request
+        id: create-pr
         uses: peter-evans/create-pull-request@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -31,6 +34,7 @@ jobs:
         uses: hmarr/auto-approve-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ needs.create-pr.outputs.pr-number }}
 
   auto-merge:
     runs-on: ubuntu-latest
