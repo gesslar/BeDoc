@@ -15,14 +15,19 @@
     "lint:fix": "npx eslint . --fix"
   },
   "bedoc": {
-    "config": "./wip/bedoc.json"
+    "config": "./wip/bedoc.json",
+    "debugLevel": 4,
+    "debug": true
   },
   "dependencies": {
     "commander": "^13.0.0",
     "D": "^1.0.0",
+    "error-stack-parser": "^2.1.4",
     "eslint-plugin-jsdoc": "^50.6.1",
     "globby": "^14.0.2",
-    "micromatch": "^4.0.8"
+    "micromatch": "^4.0.8",
+    "node-fetch": "^3.3.2",
+    "yaml": "^2.7.0"
   },
   "devDependencies": {
     "@stylistic/eslint-plugin-js": "^2.12.1",

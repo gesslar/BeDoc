@@ -1,5 +1,3 @@
-import {fetch, Headers} from "node-fetch"
-
 const print = {
   "enter": async({name, section}) => {
     if(name == "description") {
@@ -13,6 +11,10 @@ const print = {
 
 export { print }
 
+/**
+ * Fetches a dad joke from the icanhazdadjoke API.
+ * @returns {Promise<object>} The result of the fetch operation.
+ */
 async function getDadJoke() {
   const url = "https://icanhazdadjoke.com"
 

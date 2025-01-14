@@ -1,16 +1,16 @@
-import {process} from "node:process"
+import process from "node:process"
+import { ConfigurationParameters, ConfigurationPriorityKeys } from "./ConfigurationParameters.js"
+import { FdType, FdTypes } from "./include/FD.js"
 import DataUtil from "./util/DataUtil.js"
 import FDUtil from "./util/FDUtil.js"
 import ModuleUtil from "./util/ModuleUtil.js"
-import { ConfigurationParameters, ConfigurationPriorityKeys } from "./ConfigurationParameters.js"
-import { FdType, FdTypes } from "./include/FD.js"
 import ValidUtil from "./util/ValidUtil.js"
 
 Object.prototype.insert = obj => {
   for(const [key, value] of Object.entries(obj))this[key] = value
 }
 
-export class ConfigurationValidator {
+export class Configuration {
   async validate(options) {
     const finalOptions = {}
     const {nothing} = DataUtil
@@ -120,11 +120,10 @@ export class ConfigurationValidator {
   }
 
   /**
-  * Validate the ConfigurationParameters object. This is a sanity check to
-  * ensure that the ConfigurationParameters object is valid.
-  *
-  * @returns {string[]} Errors
-  */
+   * Validate the ConfigurationParameters object. This is a sanity check to
+   * ensure that the ConfigurationParameters object is valid.
+   * @returns {string[]} Errors
+   */
   #validateConfigurationParameters() {
     const errors = []
 
@@ -152,9 +151,8 @@ export class ConfigurationValidator {
 
   /**
    * Find all options from all sources
-   *
-   * @param {object} cliOptions
-   * @returns {Promise<object[]>}
+   * @param {object} cliOptions - The command line options.
+   * @returns {Promise<object[]>} All options from all sources.
    */
   async #findAllOptions(cliOptions) {
     const allOptions = []
@@ -192,7 +190,6 @@ export class ConfigurationValidator {
 
   /**
    * Get environment variables
-   *
    * @returns {object} Environment variables
    */
   #getEnvironmentVariables() {
@@ -213,9 +210,8 @@ export class ConfigurationValidator {
 
   /**
    * Merge all options into one object
-   *
-   * @param {object[]} allOptions
-   * @returns {Promise<object>}
+   * @param {object[]} allOptions - All options from all sources.
+   * @returns {Promise<object>} The merged options.
    */
   async #mergeOptions(allOptions) {
     const cliIndex = allOptions.findIndex(option => option.source && option.source === "cli")
@@ -230,9 +226,14 @@ export class ConfigurationValidator {
     }, {})
 
     return await DataUtil.mapObject(mergedOptions, (option, value) => {
-      const { value: cliValue, source: cliSource } =
-        cliOptions[option]
-        ?? { value: undefined, source: undefined }
+      const {
+        value: cliValue,
+        source: cliSource
+      } = cliOptions[option]
+        ?? {
+          value: undefined,
+          source: undefined
+        }
 
       const cliDefaulted = cliSource === "default"
 
@@ -245,8 +246,7 @@ export class ConfigurationValidator {
 
   /**
    * Fix option values. This operation is performed in place.
-   *
-   * @param {object} options
+   * @param {object} options - The options to fix.
    */
   #fixOptionValues(options) {
     for(const [key, param] of Object.entries(ConfigurationParameters)) {

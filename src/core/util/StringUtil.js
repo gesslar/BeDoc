@@ -1,10 +1,10 @@
 export default class StringUtil {
   /**
    * Wraps text to a specified width with optional indentation
-   * @param str - The text to wrap
-   * @param wrapAt - The column at which to wrap the text
-   * @param indentAt - The number of spaces to indent wrapped lines
-   * @returns The wrapped text
+   * @param {string} str - The text to wrap
+   * @param {number} [wrapAt] - The column at which to wrap the text
+   * @param {number} [indentAt] - The number of spaces to indent wrapped lines
+   * @returns {string} The wrapped text
    */
   static wrap(str, wrapAt = 80, indentAt = 0) {
     const sections = str.split("\n").map(section => {
@@ -57,15 +57,15 @@ export default class StringUtil {
 
   /**
    * Capitalizes the first letter of a string
-   * @param str - The string to capitalize
-   * @returns The capitalized string
+   * @param {string} str - The string to capitalize
+   * @returns {string} The capitalized string
    */
   static capitalize = str => `${str.charAt(0).toUpperCase()}${str.slice(1)}`
 
   /**
    * Uncapitalizes the first letter of a string
-   * @param str - The string to uncapitalize
-   * @returns The uncapitalized string
+   * @param {string} str - The string to uncapitalize
+   * @returns {string} The uncapitalized string
    */
   static uncapitalize = str => `${str.charAt(0).toLowerCase()}${str.slice(1)}`
 }

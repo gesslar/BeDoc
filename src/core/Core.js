@@ -1,23 +1,33 @@
-import {process} from "node:process"
-import {console} from "node:console"
+import process from "node:process"
 import Discovery from "./Discovery.js"
 import HookManager from "./HookManager.js"
 import { Environment } from "./include/Environment.js"
 import Logger from "./Logger.js"
+import DataUtil from "./util/DataUtil.js"
 import FDUtil from "./util/FDUtil.js"
-import ModuleContract from "./ModuleContract.js"
+import ModuleUtil from "./util/ModuleUtil.js"
+
 export default class Core {
   constructor(options) {
-    this.options = options
+    this.options = { name: "bedoc", ...options }
+    this.logger = new Logger(options)
+    this.packageJson = this.#loadPackageJson()
   }
 
   static async new(options) {
-    const instance = new Core(options)
-    const logger = new Logger(instance)
-    instance.logger = logger
+    const instance = new Core({...options, name: "BeDoc"})
+
+    const debug = instance.logger.newDebug()
+
+    debug("Initializing Core instance", 1)
+    debug("Core passed options", 3, options)
 
     const discovery = new Discovery(instance)
-    logger.debug(`[New] Discovering modules in ${options.mock}`, 4)
+
+    if(options.mock)
+      debug("Initiating module discovery with mock path:", 2, options.mock)
+    else
+      debug("Initiating module discovery", 2)
 
     let requestedPrinter, requestedParser
 
@@ -25,167 +35,143 @@ export default class Core {
       requestedPrinter = options.printer
       const { printer } = await discovery.specificPrinter(options.printer)
       instance.printer = new printer(instance)
+      debug("Printer loaded", 3, options.printer)
     }
 
     if(options.parser) {
       requestedParser = options.parser
       const { parser } = await discovery.specificParser(options.parser)
       instance.parser = new parser(instance)
+      debug("Parser loaded:", 3, options.parser)
     }
 
     if(!instance.printer || !instance.parser) {
       const discovered = await discovery.discoverModules(options.mock)
-      console.log(discovered)
+      debug("Discovered modules:", 4, discovered)
+
       if(!instance.parser) {
-        const parsers = discovered.parser
-        const numParsers = Object.keys(parsers).length
-        if(numParsers === 0)
-          throw new Error("[New] No parsers discovered.")
-
-        // Select the parser based on the language
         const language = instance.options.language
-        const selectedParser = parsers[language]
-        if(!selectedParser)
-          throw new Error(`[New] No parser found for language ${language}`)
+        const selectedParser = discovered.parser[language]
 
-        // Instantiate the parser and assign it to the instance
-        const parser = new selectedParser.parser(instance)
-        instance.parser = parser
+        if(!selectedParser) {
+          instance.logger.error(`[Core.new] No parser found for language ${language}`)
+          throw new Error(`[Core.new] No parser found for language ${language}`)
+        }
+
+        instance.parser = new selectedParser.parser(instance)
         requestedParser = selectedParser
       }
 
       if(!instance.printer) {
-        const printers = discovered.printer
-        const numPrinters = Object.keys(printers).length
-        if(numPrinters === 0)
-          throw new Error("[New] No printers discovered.")
-
-        // Select the printer based on the format
         const format = instance.options.format
-        const selectedPrinter = printers[format]
-        if(!selectedPrinter)
-          throw new Error(`[New] No printer found for format ${format}`)
+        const selectedPrinter = discovered.printer[format]
 
-        // Instantiate the printer and assign it to the instance
-        const printer = new selectedPrinter.printer(instance)
-        instance.printer = printer
+        if(!selectedPrinter) {
+          instance.logger.error(`[Core.new] No printer found for format ${format}`)
+          throw new Error(`[Core.new] No printer found for format ${format}`)
+        }
+
+        instance.printer = new selectedPrinter.printer(instance)
         requestedPrinter = selectedPrinter
       }
     }
 
-    if(!instance.parser)
-      throw new Error(`[New] No parser found for language ${instance.options.language}`)
+    if(!requestedParser || !requestedPrinter)
+      throw new Error("[Core.new] No parser or printer loaded")
 
-    if(!instance.printer)
-      throw new Error(`[New] No printer found for format ${instance.options.format}`)
+    if(!requestedParser.contract)
+      throw new Error("[Core.new] Parser contract not defined")
 
-    const contract = new ModuleContract(instance)
-    const result = contract.satisfies(requestedParser, requestedPrinter)
-    if(!result?.success)
-      throw new Error(`[New] Module contract failed: ${result?.errors?.join(", ")}`)
+    if(!requestedPrinter.contract)
+      throw new Error("[Core.new] Printer contract not defined")
 
-    // We need to initialize the hook manager after the parser and printer
-    // are registered, since the hook manager injects hooks into the parser
-    // and printer.
+    const satisfied = DataUtil.schemaCompare(
+      requestedParser.contract,
+      requestedPrinter.contract
+    )
+
+    if(satisfied.status === "error") {
+      instance.logger.error(`[Core.new] Module contract failed: ${satisfied.errors}`)
+      throw new AggregateError(satisfied.errors, "Module contract failed")
+    } else if(satisfied.status !== "success") {
+      throw new Error(`[Core.new] Module contract failed: ${satisfied.message}`)
+    }
+
+    debug("Contracts satisfied between parser and printer", 2)
+
     const hookManager = new HookManager(instance)
     await hookManager.load()
 
-    const parserHooks = hookManager.attachHooks(instance.parser)
-    const printerHooks = hookManager.attachHooks(instance.printer)
+    await hookManager.attachHooks(instance.parser)
+    await hookManager.attachHooks(instance.printer)
 
-    instance.logger.debug(`[New] Attached ${parserHooks} parser hooks and `+
-      `${printerHooks} printer hooks`)
+    debug("Hooks attached to parser and printer", 2)
 
     return instance
   }
 
   async processFiles() {
-    let result
+    const debug = this.logger.newDebug()
+    debug("Starting file processing", 1)
 
-    this.logger.debug("Processing files...")
-
-    // Get input files - these are already FileMap objects from validation
     const { input, output } = this.options
 
-    if(!input) {
+    if(!input)
       throw new Error("No input files specified")
-    }
 
-    // Process each file
     for(const fileMap of input) {
-      this.logger.debug(`Processing file: ${fileMap.path}`)
+      debug("Processing file:", 2, fileMap.path)
 
-      // Read the file using the FileMap
       const fileContent = await FDUtil.readFile(fileMap)
+      debug(`Read file content: ${fileMap.path} (${fileContent.length} bytes)`, 2)
 
-      // Parse the file
-      this.logger.debug(`Parsing file: ${fileMap.path}`)
       const parseResult = await this.parser.parse(fileMap.path, fileContent)
-      if(parseResult.status === "error") {
-        throw new Error(`Failed to parse ${fileMap.path}: ${parseResult.message}`)
-      }
 
-      // Print the results
-      this.logger.debug(`Printing results for: ${fileMap.path}`)
+      if(parseResult.status === "error")
+        throw new Error(`Failed to parse ${fileMap.path}: ${parseResult.message}`)
+
+      debug("File parsed successfully:", 2, fileMap.path)
+      debug("Parse result for ${fileMap.path}:", 4, parseResult.result)
+
       const printResult = await this.printer.print(
         fileMap.module,
         parseResult.result
       )
 
-      if(!printResult)
-        throw new Error(`Failed to print ${fileMap.path}: ${printResult}`)
-
       if(printResult.status === "error")
-        throw new Error(`Failed to print ${fileMap.path}: ${printResult.message}`)
+        throw new Error(`[processFiles] Failed to print ${fileMap.path}: ${printResult.message}`)
+
+      debug(`File printed successfully: ${fileMap.path}`, 2)
+      debug(`Print result for ${fileMap.path}:`, 4, printResult)
 
       const { destFile, content } = printResult
-      if(!destFile || !content)
-        throw new Error(`Failed to print ${fileMap.path}: ${printResult.message}`)
 
-      result = await this.outputFile(output, destFile, content)
+      await this.#outputFile(output, destFile, content)
     }
 
-    return {
-      status: "success",
-      message: "Files processed successfully",
-      result
+    debug("File processing completed successfully", 1)
+  }
+
+  async #outputFile(output, destFile, content) {
+    const debug = this.logger.newDebug()
+
+    debug(`Preparing to write output to ${destFile}.`, 3, output)
+
+    if(this.options.env === Environment.CLI && !output) {
+      process.stdout.write(content + "\n")
+      debug("Output written to stdout", 2)
+    } else if(output && destFile) {
+      const destFileMap = FDUtil.composeFilename(output.path, destFile)
+      await FDUtil.writeFile(destFileMap, content)
+      debug(`Output written to file: ${destFileMap.path}`, 2)
+    } else {
+      throw new Error("Output path and destination file required")
     }
   }
 
-  /**
-   * Writes content to the output file or prints to stdout if in CLI mode.
-   * @param output
-   * @param destFile
-   * @param content
-   * @returns {Promise<Object>}
-   */
-  async outputFile(output, destFile, content) {
-    this.logger.debug(`[outputFile] Output: ${output?.path}, DestFile: `+
-      `${destFile}, Content length: ${content.length}`)
-    if(this.options.env === Environment.CLI && !output) {
-      // Print to stdout if no output file is specified in CLI mode
-      process.stdout.write(content + "\n")
-      this.logger.debug("[outputFile] Output written to stdout.")
-      return {
-        destFile: null,
-        status: "success",
-        message: "Output written to stdout.",
-      }
-    } else if(output && destFile) {
-      // Use the already resolved output directory
-      const destFileMap = await FDUtil.composeFilename(output.path, destFile)
-      this.logger.debug(`[outputFile] Resolved Dest File: ${destFileMap.path}`)
-      await FDUtil.writeFile(destFileMap, content)
-      this.logger.debug(`[outputFile] Successfully wrote to output: ${JSON.stringify(destFileMap)}`)
-      return {
-        destFile: destFileMap.path,
-        status: "success",
-        message: `Output written to file ${destFileMap.path}`,
-      }
-    }
-
-    // For non-CLI environments, an output file must be specified
-    throw new Error("[outputFile] Output path and destination file is " +
-      "required for non-CLI environments.")
+  async #loadPackageJson() {
+    const packageJsonFile = await FDUtil.resolveFilename("./package.json")
+    const packageJsonContent = await ModuleUtil.loadJson(packageJsonFile)
+    return DataUtil.deepFreeze(packageJsonContent)
   }
 }

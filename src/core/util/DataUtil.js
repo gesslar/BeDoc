@@ -1,5 +1,6 @@
+import Logger from "../Logger.js"
+import { types } from "../include/DataTypes.js"
 import ValidUtil from "./ValidUtil.js"
-import {types} from "../include/DataTypes.js"
 
 class TypeSpec {
   #specs
@@ -112,39 +113,51 @@ class TypeSpec {
 export default class DataUtil {
   /**
    * Checks if all elements in an array are of a specified type
-   *
-   * @param arr - The array to check
-   * @param type - The type to check for (optional, defaults to the type of
-   *               the first element)
-   * @returns Whether all elements are of the specified type
+   * @param {Array} arr - The array to check
+   * @param {string} type - The type to check for (optional, defaults to the
+   *                        type of the first element)
+   * @returns {boolean} Whether all elements are of the specified type
    */
   static arrayUniform = (arr, type) => arr.every((item, _index, arr) =>
     typeof item === (type || typeof arr[0]))
 
   /**
    * Checks if an array is unique
-   *
-   * @param arr - The array of which to remove duplicates
-   * @returns The unique elements of the array
+   * @param {Array} arr - The array of which to remove duplicates
+   * @returns {Array} The unique elements of the array
    */
   static arrayUnique = arr => arr.filter((item, index, self) =>
     self.indexOf(item) === index)
 
   /**
-   *
-   * @param {*[]} arr1
-   * @param {*[]} arr2
-   * @returns
+   * Returns the intersection of two arrays.
+   * @param {Array} arr1 - The first array.
+   * @param {Array} arr2 - The second array.
+   * @returns {Array} The intersection of the two arrays.
    */
   static arrayIntersection = (arr1, arr2) => arr1.filter(value =>
     arr2.includes(value))
 
+  static arrayPad = (arr, length, value, position = 0) => {
+    const diff = length - arr.length
+    if(diff <= 0)
+      return arr
+
+    const padding = Array(diff).fill(value)
+
+    if(position === 0) // prepend - default
+      return padding.concat(arr)
+    else if(position === -1) // append
+      return arr.concat(padding)
+    else // somewhere in the middle - THAT IS ILLEGAL
+      throw new SyntaxError("Invalid position")
+  }
+
   /**
    * Clones an object
-   *
-   * @param obj - The object to clone
-   * @param freeze - Whether to freeze the cloned object
-   * @returns The cloned object
+   * @param {object} obj - The object to clone
+   * @param {boolean} freeze - Whether to freeze the cloned object
+   * @returns {object} The cloned object
    */
   static clone = (obj, freeze = false) => {
     const type = DataUtil.type
@@ -214,18 +227,17 @@ export default class DataUtil {
 
   /**
    * Checks if an object is empty
-   *
-   * @param obj - The object to check
-   * @returns Whether the object is empty
+   * @param {object} obj - The object to check
+   * @returns {boolean} Whether the object is empty
    */
   static objectIsEmpty = obj => Object.keys(obj).length === 0
 
   /**
    * Creates a type spec from a string. A type spec is an array of objects
    * defining the type of a value and whether an array is expected.
-   *
-   * @param {string} string The string to parse into a type spec
-   * @returns {object[]} An array of type specs
+   * @param {string} string - The string to parse into a type spec.
+   * @param {object} options - Additional options for parsing.
+   * @returns {object[]} An array of type specs.
    */
   static typeSpec = (string, options) => {
     return new TypeSpec(string, options)
@@ -329,5 +341,76 @@ export default class DataUtil {
     default:
       return false
     }
+  }
+
+  static deepFreeze(obj) {
+    if(obj === null || typeof obj !== "object")
+      return obj // Skip null and non-objects
+
+    // Retrieve and freeze properties
+    const propNames = Object.getOwnPropertyNames(obj)
+    for(const name of propNames) {
+      const value = obj[name]
+      if(value && typeof value === "object") {
+        DataUtil.deepFreeze(value) // Recursively freeze
+      }
+    }
+
+    // Freeze the object itself
+    return Object.freeze(obj)
+  }
+
+  /**
+   * Validates that a schema matches the expected structure.
+   * @param {object} schema - The schema to validate.
+   * @param {object} definition - The expected structure.
+   * @param {Array} stack - The stack trace for nested validation.
+   * @param {object} logger - The logger to use.
+   * @returns {boolean} - True if valid, throws an error otherwise.
+   */
+  static schemaCompare(schema, definition, stack = [], logger = new Logger()) {
+    const breadcrumb = key => stack.length ? `@${stack.join(".")}` : key
+    const tag = "[DataUtil.schemaCompare]"
+    const pad = `${" ".repeat((stack.length*2))}${stack.length ? "└─ " : ""}`
+    const debug = (message, key) => logger.debug(`${tag}${pad}${message}${key ? " "+breadcrumb(key) : ""}`, 2, true)
+    const error = (message, key) => logger.error(`${tag}${pad}${message}${key ? " "+breadcrumb(key) : ""}`)
+
+    const errors = []
+
+    debug(`Keys in schema: ${Object.keys(schema).join(", ")}`)
+    debug(`Keys in definition: ${Object.keys(definition).join(", ")}`)
+
+    for(const [key, value] of Object.entries(definition)) {
+      debug(`Checking key: ${key} [required = ${value.required ?? false}]`)
+
+      if(value.required && key in schema === false) {
+        error(`❌  Required key not found in schema: ${key}`, key)
+        errors.push(new SyntaxError(`Missing required key: ${key} ${breadcrumb(key)}`))
+        continue
+      } else {
+        debug(`✔️  Required key found in schema: ${key}`)
+      }
+
+      if(key in schema) {
+        const expectedType = value.dataType
+        const actualType = schema[key]
+
+        if(!expectedType.match(actualType))
+          errors.push(new TypeError(`Type mismatch for key: ${key}. Expected: ${expectedType}, got: ${actualType} ${breadcrumb(key)}`))
+
+        // Recursive validation for nested objects
+        if(value.contains) {
+          debug(`Recursing into nested object: ${key}`)
+          const nestedResult = DataUtil.schemaCompare(
+            schema[key]?.contains, value.contains, [...stack, key], logger
+          )
+
+          if(nestedResult.errors.length)
+            errors.push(...nestedResult.errors)
+        }
+      }
+    }
+
+    return {status: errors.length === 0 ? "success" : "error", errors}
   }
 }

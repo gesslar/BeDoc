@@ -1,7 +1,6 @@
 import FileUtil from "./util/FDUtil.js"
 import DataUtil from "./util/DataUtil.js"
 import StringUtil from "./util/StringUtil.js"
-
 import { Hooks, HookEvents, HookTypes, HookClasses, ClassToHook } from "./include/Hooks.js"
 
 export default class HookManager {
@@ -9,55 +8,75 @@ export default class HookManager {
     this.core = core
     this.fileUtil = new FileUtil()
     this.hooks = {}
+    this.logger = core.logger
+    this.debug = this.logger.newDebug()
+
+    this.debug("Initialized HookManager", 2)
   }
 
   /**
    * Load hooks from a file
-   *
-   * @returns The type of hooks attached
+   * @returns {Promise<void>} The type of hooks attached
    */
-  load = async() => {
+  async load() {
+    const debug = this.debug
+    debug("Starting to load hooks file", 2)
+
     const hooksFile = this.core.options.hooks
-    if(!hooksFile)
+    if(!hooksFile) {
+      debug("No hooks file specified, exiting", 3)
       return
+    }
 
-    const hooks = await import(hooksFile.absoluteUri)
-
-    this.hooks = hooks
+    debug(`Loading hooks from \`${hooksFile.absoluteUri}\``, 3)
+    this.hooks = await import(hooksFile.absoluteUri)
+    debug("Hooks file loaded successfully", 2)
   }
 
-  getAvailableHooks = async() =>
-    this.hooks ||
-    await DataUtil.allocateObject(HookTypes, () => [])
+  /**
+   * Retrieves available hooks
+   * @returns {Promise<object>} The available hooks
+   */
+  async getAvailableHooks() {
+    this.debug("Retrieving available hooks", 3)
+    return this.hooks || await DataUtil.allocateObject(HookTypes, () => [])
+  }
 
   /**
    * Attach hooks to a target
-   *
-   * @param target - The target to attach hooks to
-   * @returns The type of hooks attached
+   * @param {object} target - The target to attach hooks to
+   * @returns {Promise<string>} The type of hooks attached
    */
-  attachHooks = async target => {
+  async attachHooks(target) {
+    const debug = this.debug
+
+    debug(`Attaching hooks to \`${target.constructor?.name}\``, 2)
+
     if(!target.constructor?.name)
-      throw new Error("[attachHooks] Target must have a constructor name")
+      throw new Error("Target must have a constructor name")
 
     const name = target.constructor.name
     if(!HookClasses.includes(name))
-      throw new Error(`[attachHooks] Invalid target type: ${name}`)
+      throw new Error(`[HookManager.attachHooks] Invalid target type: ${name}`)
 
     const availableHooks = await this.getAvailableHooks()
-    if(!availableHooks)
-      throw new Error("[attachHooks] No hooks available")
+    if(!availableHooks) {
+      debug("No hooks available", 2)
+      return
+    }
 
     const hookType = ClassToHook[name]
     target.hooks = target.hooks || {}
 
     const attachedHooks = target.hooks[hookType] || {}
     if(!DataUtil.objectIsEmpty(attachedHooks))
-      throw new Error(`[attachHooks] Hooks already attached for \`${hookType}\``)
+      throw new Error(`[HookManager.attachHooks] Hooks already attached for \`${hookType}\``)
 
     const hooksForClass = availableHooks[hookType]
-    if(!hooksForClass || DataUtil.objectIsEmpty(hooksForClass))
-      throw new Error(`[attachHooks] No hooks available for \`${hookType}\``)
+    if(!hooksForClass || DataUtil.objectIsEmpty(hooksForClass)) {
+      debug(`No hooks available for \`${hookType}\``, 2)
+      return
+    }
 
     attachedHooks[hookType] = hooksForClass
     target.hooks = attachedHooks
@@ -67,52 +86,98 @@ export default class HookManager {
     // Let's inject some utilities
     target.string = StringUtil
 
+    debug(`Successfully attached hooks for ${hookType}`, 2)
     return name
   }
 
   /**
    * Trigger a hook
-   *
-   * @param event - The type of hook to trigger
-   * @param ...args - The hook arguments
-   * @returns The result of the hook
+   * @param {string} event - The type of hook to trigger
+   * @param {...any} args - The hook arguments
+   * @returns {Promise<any>} The result of the hook
    */
   async on(event, ...args) {
+    const debug = this.logger.newDebug()
+
+    debug(`Triggering hook for event: ${event}`, 3)
+
     if(!event)
-      throw new Error("[on] Event type is required for hook invocation")
+      throw new Error("Event type is required for hook invocation")
+
     if(!HookEvents.includes(event))
-      throw new Error(`[on] Invalid event type: ${event}`)
+      throw new Error(`[HookManager.on] Invalid event type: ${event}`)
 
     const thisClass = this.constructor?.name
     if(!thisClass)
-      throw new Error("[on] This class must have a constructor name")
+      throw new Error("This class must have a constructor name")
 
     const allHooks = this.hooks
-    if(!allHooks)
+    if(!allHooks) {
+      debug("No hooks available to trigger", 3)
       return
+    }
 
     const hookType = ClassToHook[thisClass]
     const hooks = allHooks[hookType]
-    if(!hooks)
+    if(!hooks) {
+      debug(`No hooks found for type: ${hookType}`, 3)
       return
+    }
 
     const hook = hooks[event]
-    if(!hook)
+    if(!hook) {
+      debug(`No specific hook found for event: ${event}`, 3)
       return
-
-    if(hook) {
-      if(typeof hook !== "function")
-        throw new Error(`[on] Hook "${event}" is not a function`)
-
-      try {
-        const result = await hook(...args)
-        if(result?.status === "error")
-          throw result.error
-        return result
-      } catch(error) {
-        this.logger.error(`[on] Error executing hook "${event}": ${error.message}`)
-        throw error
-      }
     }
+
+    if(typeof hook !== "function")
+      throw new Error(`[HookManager.on] Hook "${event}" is not a function`)
+
+    const result = await hook(...args)
+    if(result?.status === "error")
+      throw result.error
+
+    debug(`Hook executed successfully for event: ${event}`, 3)
+    return result
+  }
+
+  /**
+   * Registers a hook for a specific event.
+   * @param {string} event - The event to register the hook for.
+   * @param {Function} callback - The callback function to execute when the
+   *                              event is triggered.
+   * @returns {void}
+   */
+  register(event, callback) {
+    if(!this.hooks[event]) {
+      this.hooks[event] = []
+    }
+    this.hooks[event].push(callback)
+  }
+
+  /**
+   * Unregisters a hook for a specific event.
+   * @param {string} event - The event to unregister the hook for.
+   * @param {Function} callback - The callback function to remove.
+   * @returns {void}
+   */
+  unregister(event, callback) {
+    if(!this.hooks[event]) {
+      return
+    }
+    this.hooks[event] = this.hooks[event].filter(cb => cb !== callback)
+  }
+
+  /**
+   * Triggers an event, executing all registered hooks.
+   * @param {string} event - The event to trigger.
+   * @param {...*} args - The arguments to pass to the hook callbacks.
+   * @returns {void}
+   */
+  trigger(event, ...args) {
+    if(!this.hooks[event]) {
+      return
+    }
+    this.hooks[event].forEach(callback => callback(...args))
   }
 }

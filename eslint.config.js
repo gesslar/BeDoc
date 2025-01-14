@@ -1,26 +1,32 @@
 import js from "@eslint/js"
 // https://www.npmjs.com/package/eslint-plugin-jsdoc
-// import jsdoc from "eslint-plugin-jsdoc";
+import jsdoc from "eslint-plugin-jsdoc";
 import stylisticJs from "@stylistic/eslint-plugin-js"
 
 export default [
   js.configs.recommended,
-  // jsdoc.configs['flat/recommended'],
+  jsdoc.configs['flat/recommended'],
   {
-    name: "gesslar/bedoc/docs",
-    ignores: ["docs/", "_docs/"],
+    name: "gesslar/bedoc/ignores",
+    ignores: ["docs/", "_docs/", "TODO/"],
+  },
+  {
+    name: "gesslar/bedoc/languageOptions",
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: {
+        fetch: "readonly",
+        Headers: "readonly",
+      },
+    },
   },
   {
     name: "gesslar/bedoc/lints",
     files: ["src/**/*.js"],
-
-    languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "module"
-    },
     plugins: {
       "@stylistic/js": stylisticJs,
-      // "jsdoc": jsdoc
+      "jsdoc": jsdoc
     },
     rules: {
       "@stylistic/js/arrow-spacing": ["error", { "before": true, "after": true }],
@@ -72,7 +78,7 @@ export default [
       "no-useless-assignment": "error",
 
       // JSDoc
-      // "jsdoc/require-description": "warn"
+      "jsdoc/require-description": "warn"
     }
   }
 ]

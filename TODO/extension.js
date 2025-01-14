@@ -2,6 +2,10 @@ const {require} = import.meta
 
 const vscode = require("vscode")
 
+/**
+ *
+ * @param context
+ */
 function activate(context) {
   context.subscriptions.push(
     vscode.commands.registerCommand("bedoc.generate", async() => {

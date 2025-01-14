@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-import {console} from "node:console"
-import {process} from "node:process"
 import {program} from "commander"
+import console from "node:console"
+import process from "node:process"
+import {Configuration} from "./core/Configuration.js"
+import {ConfigurationParameters} from "./core/ConfigurationParameters.js"
 import Core from "./core/Core.js"
 import ModuleUtil from "./core/util/ModuleUtil.js"
-import {ConfigurationParameters} from "./core/ConfigurationParameters.js"
-import {ConfigurationValidator} from "./core/ConfigurationValidator.js"
 
 // Main entry point
 (async() => {
@@ -51,8 +51,8 @@ import {ConfigurationValidator} from "./core/ConfigurationValidator.js"
     }
 
     // Validate options using ConfigValidator
-    const configValidator = new ConfigurationValidator()
-    const validatedConfig = await configValidator.validate(optionsWithSources)
+    const configuration = new Configuration()
+    const validatedConfig = await configuration.validate(optionsWithSources)
     if(validatedConfig.status === "error") {
       console.error(`The following errors were found in the configuration:\n\n${validatedConfig.error}`)
       process.exit(0)
@@ -63,10 +63,17 @@ import {ConfigurationValidator} from "./core/ConfigurationValidator.js"
     await core.processFiles()
   } catch(e) {
     if(e instanceof Error) {
-      if(e.stack)
+      if(e instanceof AggregateError) {
+        for(const error of e.errors) {
+          console.error(`Error: ${error.message}`)
+        }
+      } else if(e.stack) {
         console.error(e.stack)
-      else
+      } else {
         console.error(`Error: ${e.message}`)
+      }
+    } else {
+      console.error(`Error: ${e}`)
     }
     process.exit(1)
   }
