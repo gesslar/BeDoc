@@ -1,6 +1,8 @@
 name: Auto PR and Merge from gh-pages 🤗
 
 on:
+  pull_request:
+    branches: [gh-pages]
   push:
     branches: [gh-pages]
 
