@@ -1,0 +1,62 @@
+name: Auto PR and Merge from gh-pages 🤗
+
+on:
+  push:
+    branches: [gh-pages]
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Auto PR from gh-pages"
+          branch: auto-pr-gh-pages
+          title: "Auto PR from gh-pages"
+          body: "This is an automatically generated PR from gh-pages."
+
+  auto-approve:
+    runs-on: ubuntu-latest
+    needs: create-pr
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Auto Approve PR
+        uses: hmarr/auto-approve-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  auto-merge:
+    runs-on: ubuntu-latest
+    needs: auto-approve
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Merge Pull Request
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: pullRequests } = await github.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: 'auto-pr-gh-pages'
+            });
+
+            if (pullRequests.length > 0) {
+              const pullRequest = pullRequests[0];
+              await github.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pullRequest.number,
+                merge_method: 'squash'
+              });
+            }
