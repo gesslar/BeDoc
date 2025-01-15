@@ -3,7 +3,7 @@ layout: home
 # Index page
 ---
 
-# Welcome to BeDoc 🤗
+# Welcome to BeDoc
 
 BeDoc is a comprehensive and adaptable documentation engine that integrates
 effortlessly with any programming language or file format. Built on a robust
