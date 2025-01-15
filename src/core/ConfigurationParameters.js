@@ -82,6 +82,14 @@ export const ConfigurationParameters = Object.freeze({
       mustExist: true,
     }
   },
+  hookTimeout: {
+    short: "T",
+    param: "ms",
+    description: "Timeout in milliseconds for hook execution",
+    type: type("number"),
+    required: false,
+    default: 5000,
+  },
   mock: {
     short: "m",
     param: "dir",
