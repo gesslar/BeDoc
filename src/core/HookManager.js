@@ -2,6 +2,7 @@ import FileUtil from "./util/FDUtil.js"
 import DataUtil from "./util/DataUtil.js"
 import StringUtil from "./util/StringUtil.js"
 import { Hooks, HookEvents, HookTypes, HookClasses, ClassToHook } from "./include/Hooks.js"
+import {setTimeout} from "timers/promises"
 
 export default class HookManager {
   constructor(core) {
@@ -96,6 +97,9 @@ export default class HookManager {
    * @param {...any} args - The hook arguments
    * @returns {Promise<any>} The result of the hook
    */
+
+  //TODO: #24 Add timeouts to hook calls @gesslar
+
   async on(event, ...args) {
     const debug = this.logger.newDebug()
 
@@ -133,11 +137,20 @@ export default class HookManager {
     if(typeof hook !== "function")
       throw new Error(`[HookManager.on] Hook "${event}" is not a function`)
 
-    const result = await hook(...args)
+    const hookTimeout = this.core.options["hook-timeout"]
+    const hookExecution = hook(...args)
+    const result = await Promise.race([
+      hookExecution,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`Hook "${event}" timed out after ${hookTimeout}ms`)), hookTimeout)
+      )
+    ])
+
     if(result?.status === "error")
       throw result.error
 
     debug(`Hook executed successfully for event: ${event}`, 3)
+
     return result
   }
 }
