@@ -1,0 +1,50 @@
+# Workflow name - shows up in GitHub Actions UI
+name: Auto PR and Merge 🤗
+
+# Defines when this workflow will run
+on:
+  push:
+    branches:
+      - dev  # Only triggers when pushing to the 'test' branch
+
+jobs:
+  create-and-merge-pr:  # Job identifier
+    runs-on: ubuntu-latest  # Specifies the runner environment
+    steps:
+      # Step 1: Check out repository
+      - uses: actions/checkout@v4  # Official GitHub checkout action
+        with:
+          ref: main  # Checks out the main branch as we'll be creating a PR into it
+
+      # Step 2: Reset the main branch to match test branch
+      - name: Reset branch
+        run: |
+          git fetch origin dev:dev  # Fetches the test branch
+          git reset --hard dev      # Resets main to match test branch content
+
+      # Step 3: Create the Pull Request
+      - name: Create Pull Request
+        id: cpr  # Gives this step an ID so we can reference its outputs later
+        uses: peter-evans/create-pull-request@v7  # Uses peter-evans PR creation action
+        with:
+          branch: dev-to-main  # Name of the temporary branch for the PR
+          token: ${{ secrets.GITHUB_TOKEN }}  # Uses default GitHub token for authentication
+
+      # Step 4: Output PR details for logging/debugging
+      - name: Check outputs
+        if: ${{ steps.cpr.outputs.pull-request-number }}  # Only runs if a PR was created
+        run: |
+          echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
+          echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
+
+      # Step 5: Automatically merge the Pull Request
+      - name: Merge Pull Request
+        if: ${{ steps.cpr.outputs.pull-request-number }}  # Only runs if a PR was created
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Token for authentication
+          PR_NUMBER: ${{ steps.cpr.outputs.pull-request-number }}  # PR number from create step
+        run: |
+          # Merges PR, using --merge for standard merge commit
+          # --auto enables auto-merge if checks are required
+          # --delete-branch removes the temporary branch after merging
+          gh pr merge $PR_NUMBER --merge --auto --delete-branch
