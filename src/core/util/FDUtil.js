@@ -126,6 +126,7 @@ export default class FDUtil {
    * @param {string} directoryName - The directory to map
    * @returns {object} A directory object
    */
+  //CHORE: #29 Remove console.log statements
   static mapDirectory(directoryName) {
     return {
       path: directoryName,
