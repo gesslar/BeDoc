@@ -5,7 +5,7 @@ name: Auto PR and Merge - dev 🤗
 on:
   push:
     branches:
-      - dev  # Only triggers when pushing to the 'test' branch
+      - dev  # Only triggers when pushing to the 'dev' branch
 
 # Add this permissions block at the workflow level
 permissions:
@@ -21,11 +21,11 @@ jobs:
         with:
           ref: main  # Checks out the main branch as we'll be creating a PR into it
 
-      # Step 2: Reset the main branch to match test branch
+      # Step 2: Reset the main branch to match dev branch
       - name: Reset branch
         run: |
-          git fetch origin dev:dev  # Fetches the test branch
-          git reset --hard dev      # Resets main to match test branch content
+          git fetch origin dev:dev  # Fetches the dev branch
+          git reset --hard dev      # Resets main to match dev branch content
 
       # Step 3: Create the Pull Request
       - name: Create Pull Request
