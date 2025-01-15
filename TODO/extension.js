@@ -1,3 +1,4 @@
+// TODO: Implement the extension
 const {require} = import.meta
 
 const vscode = require("vscode")
