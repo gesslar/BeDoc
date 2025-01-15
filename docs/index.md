@@ -4,7 +4,7 @@ title: BeDoc
 nav_exclude: true
 ---
 
-# Welcome to BeDoc
+# Welcome to BeDoc 🤗
 
 BeDoc is a comprehensive and adaptable documentation engine that integrates
 effortlessly with any programming language or file format. Built on a robust
