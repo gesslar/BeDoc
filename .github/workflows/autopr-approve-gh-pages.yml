@@ -19,7 +19,7 @@ jobs:
       # Step 2: Reset the main branch to match test branch
       - name: Reset branch
         run: |
-          git fetch origin origin:gh-pages  # Fetches the test branch
+          git fetch origin gh-pages  # Fetches the test branch
           git reset --hard gh-pages       # Resets main to match test branch content
 
       # Step 3: Create the Pull Request
