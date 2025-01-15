@@ -16,7 +16,7 @@
   },
   "bedoc": {
     "config": "./wip/bedoc.json",
-    "debugLevel": 4,
+    "debugLevel": 0,
     "debug": true
   },
   "dependencies": {

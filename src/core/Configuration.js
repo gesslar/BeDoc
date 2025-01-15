@@ -213,7 +213,9 @@ export class Configuration {
    * @param {object[]} allOptions - All options from all sources.
    * @returns {Promise<object>} The merged options.
    */
+  //FIXME: #25 Merging may be squashing the input information. @gesslar
   async #mergeOptions(allOptions) {
+    console.debug(allOptions)
     const cliIndex = allOptions.findIndex(option => option.source && option.source === "cli")
     const cliOptions = allOptions[cliIndex].options
     const rest = allOptions.filter(option => option.source && option.source !== "cli")

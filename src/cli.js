@@ -50,6 +50,7 @@ import ModuleUtil from "./core/util/ModuleUtil.js"
       optionsWithSources[key] = element
     }
 
+    console.debug(`Options: ${JSON.stringify(optionsWithSources, null, 2)}`)
     // Validate options using ConfigValidator
     const configuration = new Configuration()
     const validatedConfig = await configuration.validate(optionsWithSources)
