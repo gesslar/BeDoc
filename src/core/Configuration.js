@@ -225,23 +225,33 @@ export class Configuration {
       return acc
     }, {})
 
-    return await DataUtil.mapObject(mergedOptions, (option, value) => {
-      const {
-        value: cliValue,
-        source: cliSource
-      } = cliOptions[option]
+    const mappedOptions = await DataUtil.mapObject(mergedOptions,
+      (option, value) => {
+        const {
+          value: cliValue,
+          source: cliSource
+        } = cliOptions[option]
         ?? {
           value: undefined,
           source: undefined
         }
 
-      const cliDefaulted = cliSource === "default"
+        const cliDefaulted = cliSource === "default"
 
-      if(cliValue && value !== cliValue)
-        return cliDefaulted ? value : cliValue
+        if(cliValue && value !== cliValue)
+          return cliDefaulted ? value : cliValue
 
-      return value
-    })
+        return value
+      })
+
+    // Last, but not least, add any defaulted options that are not in the
+    // mapped options
+    for(const [key, value] of Object.entries(cliOptions)) {
+      if(value.source === "default" && !mappedOptions[key])
+        mappedOptions[key] = value.value
+    }
+
+    return mappedOptions
   }
 
   /**
