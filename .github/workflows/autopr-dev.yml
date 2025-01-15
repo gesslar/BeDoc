@@ -1,5 +1,5 @@
 # Workflow name - shows up in GitHub Actions UI
-name: Auto PR and Merge 🤗
+name: Auto PR and Merge - dev 🤗
 
 # Defines when this workflow will run
 on:
