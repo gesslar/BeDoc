@@ -1,5 +1,5 @@
 ---
-layout: page
+layout: default
 title: Creating Printers
 ---
 
@@ -74,7 +74,7 @@ The printer has access to BeDoc's core utilities through `this.core`:
 
 ## Hook Support
 
-Printers automatically support [hooks](hooks.md), allowing users to modify the
+Printers automatically support [hooks](hooks), allowing users to modify the
 printing process. Hook points include:
 
 - `start`: Before printing begins
