@@ -1,4 +1,5 @@
 ---
+layout: default
 title: Creating Parsers
 ---
 
@@ -98,7 +99,7 @@ The parser has access to BeDoc's core utilities through `this.core`:
 
 ## Hook Support
 
-Parsers automatically support [hooks](hooks.md), allowing users to modify the
+Parsers automatically support [hooks](hooks), allowing users to modify the
 parsing process. Hook points include:
 
 - `START`: Before parsing begins

@@ -1,7 +1,6 @@
 ---
-layout: default
-title: BeDoc
-nav_exclude: true
+layout: home
+# Index page
 ---
 
 # Welcome to BeDoc
@@ -90,13 +89,13 @@ and predictable behavior.
 
 Explore the full capabilities of BeDoc:
 
-- **[Configuration Guide](configuration)**: Learn how to configure BeDoc using
+- **[Configuration Guide](configuration.md)**: Learn how to configure BeDoc using
   CLI options or configuration files.
-- **[Creating Parsers](parsers)**: Build custom parsers to support new
+- **[Creating Parsers](parsers.md)**: Build custom parsers to support new
   languages or documentation styles.
-- **[Creating Printers](printers)**: Develop printers to output documentation
+- **[Creating Printers](printers.md)**: Develop printers to output documentation
   in your desired format.
-- **[Hook System](hooks)**: Extend BeDoc's functionality through hooks to
+- **[Hook System](hooks.md)**: Extend BeDoc's functionality through hooks to
   customize the documentation process.
 
 ## Contribute
