@@ -153,44 +153,4 @@ export default class HookManager {
 
     return result
   }
-
-  /**
-   * Registers a hook for a specific event.
-   * @param {string} event - The event to register the hook for.
-   * @param {Function} callback - The callback function to execute when the
-   *                              event is triggered.
-   * @returns {void}
-   */
-  register(event, callback) {
-    if(!this.hooks[event]) {
-      this.hooks[event] = []
-    }
-    this.hooks[event].push(callback)
-  }
-
-  /**
-   * Unregisters a hook for a specific event.
-   * @param {string} event - The event to unregister the hook for.
-   * @param {Function} callback - The callback function to remove.
-   * @returns {void}
-   */
-  unregister(event, callback) {
-    if(!this.hooks[event]) {
-      return
-    }
-    this.hooks[event] = this.hooks[event].filter(cb => cb !== callback)
-  }
-
-  /**
-   * Triggers an event, executing all registered hooks.
-   * @param {string} event - The event to trigger.
-   * @param {...*} args - The arguments to pass to the hook callbacks.
-   * @returns {void}
-   */
-  trigger(event, ...args) {
-    if(!this.hooks[event]) {
-      return
-    }
-    this.hooks[event].forEach(callback => callback(...args))
-  }
 }

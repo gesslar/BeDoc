@@ -16,12 +16,11 @@
   },
   "bedoc": {
     "config": "./wip/bedoc.json",
-    "debugLevel": 4,
+    "debugLevel": 0,
     "debug": true
   },
   "dependencies": {
     "commander": "^13.0.0",
-    "D": "^1.0.0",
     "error-stack-parser": "^2.1.4",
     "eslint-plugin-jsdoc": "^50.6.1",
     "globby": "^14.0.2",
