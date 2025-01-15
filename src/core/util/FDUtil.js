@@ -127,12 +127,6 @@ export default class FDUtil {
    * @returns {object} A directory object
    */
   static mapDirectory(directoryName) {
-    console.log(`Mapping directory: ${directoryName}`)
-    console.log(`Normalized directory: ${path.normalize(directoryName)}`)
-    console.log("Parsed directory:", path.parse(directoryName))
-    console.log(`Resolved directory: ${path.resolve(process.cwd(), directoryName)}`)
-
-
     return {
       path: directoryName,
       uri: FDUtil.pathToUri(directoryName),
@@ -191,10 +185,7 @@ export default class FDUtil {
   static resolveDirectory(directoryName) {
     ValidUtil.type(directoryName, "string", true)
 
-    console.log(`Trying to open directory: ${directoryName}`)
     const directoryObject = FDUtil.mapDirectory(directoryName)
-    // const stat = fs.stat(directoryObject.absolutePath)
-    console.log(`Trying to open directory: ${directoryObject.absolutePath}`)
     fs.opendirSync(directoryObject.absolutePath).closeSync()
 
     return directoryObject
