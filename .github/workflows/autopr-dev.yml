@@ -5,7 +5,12 @@ name: Auto PR and Merge - dev 🤗
 on:
   push:
     branches:
-      - dev  # Only triggers when pushing to the 'test' branch
+      - dev  # Only triggers when pushing to the 'dev' branch
+
+# Add this permissions block at the workflow level
+permissions:
+  contents: write      # Needed for checking out code and pushing changes
+  pull-requests: write # Needed for creating and merging PRs
 
 jobs:
   create-and-merge-pr:  # Job identifier
@@ -16,16 +21,16 @@ jobs:
         with:
           ref: main  # Checks out the main branch as we'll be creating a PR into it
 
-      # Step 2: Reset the main branch to match test branch
+      # Step 2: Reset the main branch to match dev branch
       - name: Reset branch
         run: |
-          git fetch origin dev:dev  # Fetches the test branch
-          git reset --hard dev      # Resets main to match test branch content
+          git fetch origin dev:dev  # Fetches the dev branch
+          git reset --hard dev      # Resets main to match dev branch content
 
       # Step 3: Create the Pull Request
       - name: Create Pull Request
         id: cpr  # Gives this step an ID so we can reference its outputs later
-        uses: peter-evans/create-pull-request@v7  # Uses peter-evans PR creation action
+        uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f  # Uses peter-evans PR creation action
         with:
           branch: dev-to-main  # Name of the temporary branch for the PR
           token: ${{ secrets.GITHUB_TOKEN }}  # Uses default GitHub token for authentication
