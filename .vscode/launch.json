@@ -4,12 +4,26 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug BeDoc CLI",
+      "name": "Debug BeDoc CLI - LPC to Markdown",
       "skipFiles": [
         "<node_internals>/**"
       ],
       "program": "${workspaceFolder}/src/cli.js",
-      "args": [],
+      "args": [
+        "--debug",
+        "--debugLevel",
+        "1",
+        "--input",
+        "examples/lpc_source/**/*.c",
+        "--output",
+        "examples/output/markdown/",
+        "--language",
+        "lpc",
+        "--format",
+        "markdown",
+        "--hooks",
+        "examples/hooks/markdown-hooks.js"
+      ],
       "console": "integratedTerminal"
     }
   ]

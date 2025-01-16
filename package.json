@@ -8,16 +8,8 @@
   },
   "type": "module",
   "scripts": {
-    "mock": "node ./src/cli.js -c wip/bedoc.json",
-    "docs:build": "cd docs && bundle exec jekyll build",
-    "docs:serve": "cd docs && bundle exec jekyll s -l",
     "lint:check": "npx eslint .",
     "lint:fix": "npx eslint . --fix"
-  },
-  "bedoc": {
-    "config": "./wip/bedoc.json",
-    "debugLevel": 0,
-    "debug": true
   },
   "dependencies": {
     "commander": "^13.0.0",

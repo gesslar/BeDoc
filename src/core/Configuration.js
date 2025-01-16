@@ -216,8 +216,8 @@ export class Configuration {
   async #mergeOptions(allOptions) {
     const cliIndex = allOptions.findIndex(option => option.source && option.source === "cli")
     const cliOptions = allOptions[cliIndex].options
-    const rest = allOptions.filter(option => option.source && option.source !== "cli")
-    const optionsOnly = rest.map(option => option.options)
+    const nonCliOptions = allOptions.filter(option => option.source && option.source !== "cli")
+    const optionsOnly = nonCliOptions.map(option => option.options)
     const mergedOptions = optionsOnly.reduce((acc, options) => {
       for(const [key, value] of Object.entries(options))
         acc[key] = value
@@ -247,8 +247,13 @@ export class Configuration {
     // Last, but not least, add any defaulted options that are not in the
     // mapped options
     for(const [key, value] of Object.entries(cliOptions)) {
-      if(value.source === "default" && !mappedOptions[key])
-        mappedOptions[key] = value.value
+      if(!mappedOptions[key]) {
+        if(value.source)
+          mappedOptions[key] = value.value
+      } else {
+        if(value.source !== "default")
+          mappedOptions[key] = value.value
+      }
     }
 
     return mappedOptions
@@ -262,10 +267,13 @@ export class Configuration {
     for(const [key, param] of Object.entries(ConfigurationParameters)) {
       // If the options passed includes this configuration parameter
       if(options[key]) {
-        // TODO: FILLER UNTIL FIXED TO SATISFY LINTER
-        // If the parameter is a boolean, convert the string to a boolean
-        if(param.type === "boolean") {
-          options[key] = options[key] === "true"
+        if(typeof options[key] === "string" && param.type !== "string") {
+          switch(param.type.toString()) {
+          case "boolean":
+          case "number":
+            options[key] = JSON.parse(options[key])
+            break
+          }
         }
       }
     }
