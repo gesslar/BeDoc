@@ -1,6 +1,5 @@
 import fs from "fs"
 import { globby } from "globby"
-import console from "node:console"
 import path from "node:path"
 import process from "node:process"
 import { fileURLToPath, pathToFileURL } from "node:url"
@@ -126,7 +125,6 @@ export default class FDUtil {
    * @param {string} directoryName - The directory to map
    * @returns {object} A directory object
    */
-  //CHORE: #29 Remove console.log statements
   static mapDirectory(directoryName) {
     return {
       path: directoryName,

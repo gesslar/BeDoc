@@ -1,10 +1,10 @@
 {
   "language": "lpc",
-  "format": "wikitext",
+  "format": "markdown",
   "output": "output/",
   "input": [
     "wip/sample/arrays.c",
     "wip/sample/base64.c"
   ],
-  "hooks": "wip/my_custom_hooks.js"
+  "hooks": "wip/wikitext-hooks.js"
 }

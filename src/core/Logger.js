@@ -1,6 +1,5 @@
 import console from "console"
 import ErrorStackParser from "error-stack-parser"
-import path from "node:path"
 import { Environment } from "./include/Environment.js"
 import { LoggerColors } from "./include/Logger.js"
 import FDUtil from "./util/FDUtil.js"
@@ -23,9 +22,6 @@ import StringUtil from "./util/StringUtil.js"
  * - warn: Warning information
  * - info: Informational information
  * - error: Error information
- *
- *
- *
  */
 
 export default class Logger {
@@ -71,10 +67,8 @@ export default class Logger {
       columnNumber: col,
     } = frame
 
-    const {base, dir} = path.parse(file)
-    console.log({base, dir})
     const {module, absoluteUri} = Promise.resolve(FDUtil.resolveFilename(file))
-    console.log({module, absoluteUri})
+
     let functionName = func ?? "anonymous"
     if(functionName.startsWith("#"))
       functionName = `${module}.${functionName}`

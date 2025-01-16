@@ -116,6 +116,8 @@ export default class Core {
 
     const { input, output } = this.options
 
+    debug("Processing input files", 2, input)
+
     if(!input)
       throw new Error("No input files specified")
 

@@ -118,7 +118,7 @@ export default class Discovery {
 
     printers?.forEach(printer => {
       if(printer.Printer && printer.meta && isPrinterMeta(printer.meta)) {
-        debug(`[Found printer for format \`${printer.meta.format}\``, 1)
+        debug(`Found printer for format \`${printer.meta.format}\``, 1)
         discovered.printer[printer.meta.format] = {
           meta: printer.meta,
           printer: printer.Printer,

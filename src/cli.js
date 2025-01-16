@@ -7,6 +7,7 @@ import {Configuration} from "./core/Configuration.js"
 import {ConfigurationParameters} from "./core/ConfigurationParameters.js"
 import Core from "./core/Core.js"
 import ModuleUtil from "./core/util/ModuleUtil.js"
+import { Environment } from "./core/include/Environment.js"
 
 // Main entry point
 (async() => {
@@ -57,6 +58,9 @@ import ModuleUtil from "./core/util/ModuleUtil.js"
       console.error(`The following errors were found in the configuration:\n\n${validatedConfig.error}`)
       process.exit(0)
     }
+
+    // Set environment to CLI
+    validatedConfig.env = Environment.CLI
 
     // Create core instance with validated config
     const core = await Core.new(validatedConfig)
