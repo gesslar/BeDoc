@@ -1,6 +1,6 @@
 {
   "language": "lpc",
-  "format": "markdown",
+  "format": "wikitext",
   "output": "output/",
   "input": [
     "wip/sample/arrays.c",
