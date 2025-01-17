@@ -1,15 +1,21 @@
-const print = {
-  "enter": async({name, section}) => {
-    if(name == "description") {
-      const translated = await getDadJoke()
-      if(translated.status == "success")
-        section.description = [...section.description, translated.joke]
-      return translated
+export default class Hooks {
+  #logger
+
+  constructor({logger}) {
+    this.#logger = logger
+  }
+
+  print = {
+    async enter({name, section}) {
+      if(name === "description") {
+        const translated = await getDadJoke()
+        if(translated.status == "success")
+          section.description = [...section.description, translated.joke]
+        return translated
+      }
     }
   }
 }
-
-export { print }
 
 /**
  * Fetches a dad joke from the icanhazdadjoke API.

@@ -28,7 +28,7 @@ export default class ModuleUtil {
    * @returns {Promise<object>} The parsed package.json content
    */
   static async loadPackageJson() {
-    const packageJsonFileObject = await FDUtil.resolveFilename("./package.json")
+    const packageJsonFileObject = FDUtil.resolveFilename("./package.json")
     const jsonContent = await FDUtil.readFile(packageJsonFileObject)
     const json = JSON.parse(jsonContent)
     return json

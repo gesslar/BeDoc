@@ -1,8 +1,8 @@
 import FileUtil from "./util/FDUtil.js"
 import DataUtil from "./util/DataUtil.js"
-import StringUtil from "./util/StringUtil.js"
 import { Hooks, HookEvents, HookTypes, HookClasses, ClassToHook } from "./include/Hooks.js"
 import {setTimeout as timeOut} from "timers/promises"
+import Logger from "./Logger.js"
 
 export default class HookManager {
   constructor(core) {
@@ -25,13 +25,36 @@ export default class HookManager {
 
     const hooksFile = this.core.options.hooks
     if(!hooksFile) {
-      debug("No hooks file specified, exiting", 3)
+      debug("No hooks file specified, exiting", 2)
       return
     }
 
-    debug(`Loading hooks from \`${hooksFile.absoluteUri}\``, 3)
-    this.hooks = await import(hooksFile.absoluteUri)
+    debug(`Loading hooks from \`${hooksFile.absoluteUri}\``, 2)
+    const hooksFileContent = await import(hooksFile.absoluteUri)
+
     debug("Hooks file loaded successfully", 2)
+
+    if(!hooksFileContent)
+      throw new Error(`Hooks file is empty: ${hooksFile.absoluteUri}`)
+
+    const hooks = hooksFileContent.default || hooksFileContent.Hooks
+    if(!hooks)
+      throw new Error(`Hooks file does not contain hooks: ${hooksFile.absoluteUri}`)
+
+    const hooksObj = new hooks(Logger)
+    this.hooks = {}
+    HookTypes.forEach(type => {
+      if(hooksObj[type]) {
+        if(!DataUtil.empty(hooksObj[type])) {
+          debug(`Loading hook points for type \`${type}\``, 2)
+          this.hooks[type] = hooksObj[type]
+        } else {
+          debug(`No hook points found for type: \`${type}\``, 2)
+        }
+      }
+    })
+
+    debug("Hooks loaded successfully", 2)
   }
 
   /**
@@ -81,11 +104,8 @@ export default class HookManager {
 
     attachedHooks[hookType] = hooksForClass
     target.hooks = attachedHooks
-    target.hook = this.on
+    target.hook = this.on.bind(target)
     target.HOOKS = Hooks
-
-    // Let's inject some utilities
-    target.string = StringUtil
 
     debug(`Successfully attached hooks for ${hookType}`, 2)
     return name
@@ -99,7 +119,7 @@ export default class HookManager {
    */
 
   async on(event, ...args) {
-    const debug = this.logger.newDebug()
+    const debug = this.core.logger.newDebug()
 
     debug(`Triggering hook for event: ${event}`, 3)
 

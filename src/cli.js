@@ -63,8 +63,7 @@ import { Environment } from "./core/include/Environment.js"
     validatedConfig.env = Environment.CLI
 
     // Create core instance with validated config
-    const core = await Core.new(validatedConfig)
-    await core.processFiles()
+    Core.new(validatedConfig).then(core => core.processFiles())
   } catch(e) {
     if(e instanceof Error) {
       if(e instanceof AggregateError) {

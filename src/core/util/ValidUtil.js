@@ -10,7 +10,7 @@ export default class ValidUtil {
    * @param {object} [options] - Additional options for validation.
    */
   static type(value, type, options) {
-    assert(DataUtil.type(value, type, options), `Invalid type: ${type}, got ${JSON.stringify(value)}`)
+    assert(DataUtil.type(value, type, options), `Invalid type. Expected ${type}, got ${JSON.stringify(value)}`)
   }
 
   /**

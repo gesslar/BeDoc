@@ -1,6 +1,6 @@
 # BeDoc
 
-Check out the [WIP documentation site](https://gesslar.github.io/BeDoc/).
+Check out the [WIP documentation site](https://bedoc.gesslar.dev/).
 
 ## Future Ideas
 

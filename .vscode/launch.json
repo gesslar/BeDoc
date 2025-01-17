@@ -12,9 +12,9 @@
       "args": [
         "--debug",
         "--debugLevel",
-        "1",
+        "4",
         "--input",
-        "examples/lpc_source/**/*.c",
+        "examples/source/lpc/**/*.c",
         "--output",
         "examples/output/markdown/",
         "--language",
@@ -22,7 +22,57 @@
         "--format",
         "markdown",
         "--hooks",
-        "examples/hooks/markdown-hooks.js"
+        "examples/hooks/lpc-markdown-hooks.js"
+      ],
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug BeDoc CLI - LPC to Wikitext",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "program": "${workspaceFolder}/src/cli.js",
+      "args": [
+        "--debug",
+        "--debugLevel",
+        "3",
+        "--input",
+        "examples/source/lpc/**/*.c",
+        "--output",
+        "examples/output/wikitext/",
+        "--language",
+        "lpc",
+        "--format",
+        "wikitext",
+        "--hooks",
+        "examples/hooks/lpc-wikitext-hooks.js"
+      ],
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug BeDoc CLI - Lua to Markdown",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "program": "${workspaceFolder}/src/cli.js",
+      "args": [
+        "--debug",
+        "--debugLevel",
+        "2",
+        "--input",
+        "examples/source/lua/**/*.lua",
+        "--output",
+        "examples/output/markdown/",
+        "--language",
+        "lua",
+        "--format",
+        "markdown",
+        "--hooks",
+        "examples/hooks/lua-markdown-hooks.js"
       ],
       "console": "integratedTerminal"
     }

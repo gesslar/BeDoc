@@ -293,28 +293,28 @@ export default class DataUtil {
     const valueType = DataUtil.typeOf(value)
 
     switch(type.toLowerCase()) {
-    case "array":
-      return Array.isArray(value) // Native array check
-    case "string":
-      return valueType === "string"
-    case "boolean":
-      return valueType === "boolean"
-    case "number":
-      return valueType === "number" && !isNaN(value) // Excludes NaN
-    case "object":
-      return value !== null && valueType === "object" && !Array.isArray(value) // Excludes arrays and null
-    case "function":
-      return valueType === "function"
-    case "symbol":
-      return valueType === "symbol" // ES6 Symbol type
-    case "bigint":
-      return valueType === "bigint" // BigInt support
-    case "null":
-      return value === null // Explicit null check
-    case "undefined":
-      return valueType === "undefined" // Explicit undefined check
-    default:
-      return false // Unknown type
+      case "array":
+        return Array.isArray(value) // Native array check
+      case "string":
+        return valueType === "string"
+      case "boolean":
+        return valueType === "boolean"
+      case "number":
+        return valueType === "number" && !isNaN(value) // Excludes NaN
+      case "object":
+        return value !== null && valueType === "object" && !Array.isArray(value) // Excludes arrays and null
+      case "function":
+        return valueType === "function"
+      case "symbol":
+        return valueType === "symbol" // ES6 Symbol type
+      case "bigint":
+        return valueType === "bigint" // BigInt support
+      case "null":
+        return value === null // Explicit null check
+      case "undefined":
+        return valueType === "undefined" // Explicit undefined check
+      default:
+        return false // Unknown type
     }
   }
 
@@ -332,14 +332,14 @@ export default class DataUtil {
       return true
 
     switch(DataUtil.typeOf(value)) {
-    case "array":
-      return value.length === 0
-    case "object":
-      return Object.keys(value).length === 0
-    case "string":
-      return value.trim().length === 0
-    default:
-      return false
+      case "array":
+        return value.length === 0
+      case "object":
+        return Object.keys(value).length === 0
+      case "string":
+        return value.trim().length === 0
+      default:
+        return false
     }
   }
 
