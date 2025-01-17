@@ -4,7 +4,6 @@ import { FdType, FdTypes } from "./include/FD.js"
 import DataUtil from "./util/DataUtil.js"
 import FDUtil from "./util/FDUtil.js"
 import ModuleUtil from "./util/ModuleUtil.js"
-import ValidUtil from "./util/ValidUtil.js"
 
 Object.prototype.insert = obj => {
   for(const [key, value] of Object.entries(obj))this[key] = value
@@ -14,7 +13,6 @@ export class Configuration {
   async validate(options) {
     const finalOptions = {}
     const {nothing} = DataUtil
-    const {type: atype} = ValidUtil
 
     // While the entry points do wrap the entire process in a try/catch, we
     // should also do this here, so we can trap everything and instead
@@ -73,7 +71,7 @@ export class Configuration {
       let {value} = section
       const isNothing = nothing(value)
       const param = ConfigurationParameters[key]
-      const {type, required, path} = param
+      const {required, path} = param
 
       if(isNothing) {
         if(required === true)
@@ -81,8 +79,6 @@ export class Configuration {
         else
           continue
       }
-
-      atype(value, type, {allowEmpty: !required})
 
       // Additional path validation if needed
       if(path && !isNothing) {
@@ -105,8 +101,8 @@ export class Configuration {
         } else {
           if(mustExist === true) {
             finalOptions[key] = pathType === FdType.FILE ?
-              await FDUtil.resolveFilename(value) :
-              await FDUtil.resolveDirectory(value)
+              FDUtil.resolveFilename(value) :
+              FDUtil.resolveDirectory(value)
           }
         }
       }
@@ -161,7 +157,7 @@ export class Configuration {
     if(environmentVariables)
       allOptions.push({ source: "environment", options: environmentVariables })
 
-    const packageJson = await FDUtil.resolveFilename("./package.json")
+    const packageJson = FDUtil.resolveFilename("./package.json")
     const packageJsonOptions = await ModuleUtil.loadJson(packageJson)
     if(packageJsonOptions.bedoc)
       allOptions.push({ source: "packageJson", options: packageJsonOptions.bedoc })
@@ -178,7 +174,7 @@ export class Configuration {
       if(!configFilename)
         throw new Error("No config file specified")
 
-      const configFile = await FDUtil.resolveFilename(configFilename)
+      const configFile = FDUtil.resolveFilename(configFilename)
       const config = await ModuleUtil.loadJson(configFile)
       allOptions.push({ source: "config", options: config })
     }
@@ -269,10 +265,10 @@ export class Configuration {
       if(options[key]) {
         if(typeof options[key] === "string" && param.type !== "string") {
           switch(param.type.toString()) {
-          case "boolean":
-          case "number":
-            options[key] = JSON.parse(options[key])
-            break
+            case "boolean":
+            case "number":
+              options[key] = JSON.parse(options[key])
+              break
           }
         }
       }

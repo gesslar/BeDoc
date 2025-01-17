@@ -31,8 +31,8 @@ export default class Discovery {
       modules.printer = printer
     } else {
       debug("Discovering modules", 1)
-      const localModuleDirectory = await FDUtil.resolveDirectory("c:/temp")
-      const globalModuleDirectory = await FDUtil.resolveDirectory(execSync("npm root -g").toString().trim())
+      const localModuleDirectory = FDUtil.resolveDirectory("c:/temp")
+      const globalModuleDirectory = FDUtil.resolveDirectory(execSync("npm root -g").toString().trim())
       const discovered = { parser: {}, printer: {} }
 
       for(const moduleDirectory of [
@@ -67,7 +67,7 @@ export default class Discovery {
     const {absolutePath} = moduleSource
 
     // Load the package.json file that accompanies the module
-    const packageJsonFile = await FDUtil.resolveFilename(`${absolutePath}/package.json`)
+    const packageJsonFile = FDUtil.resolveFilename(`${absolutePath}/package.json`)
     const packageJson = await ModuleUtil.loadJson(packageJsonFile)
 
     const {
@@ -75,8 +75,8 @@ export default class Discovery {
       printers: printerFilenames
     } = packageJson.bedoc
 
-    const getFileObjects = async fileName =>
-      await FDUtil.resolveFilename(fileName, packageJsonFile.directory)
+    const getFileObjects = fileName =>
+      FDUtil.resolveFilename(fileName, packageJsonFile.directory)
     const parserFileObjects = parserFilenames
       ? await Promise.all(parserFilenames?.map(getFileObjects))
       : []
@@ -242,7 +242,7 @@ export default class Discovery {
 
       // Step 2: Check for an external YAML file
       const baseName = file.module
-      const contractFile = await FDUtil.resolveFilename(`${baseName}.yaml`, file.directory)
+      const contractFile = FDUtil.resolveFilename(`${baseName}.yaml`, file.directory)
       debug(`Using external YAML contract: ${contractFile.path}`, 2)
       const content = await FDUtil.readFile(contractFile)
       const documents = yaml.parseAllDocuments(content)

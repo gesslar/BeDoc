@@ -5,12 +5,15 @@ import { Environment } from "./include/Environment.js"
 import Logger from "./Logger.js"
 import DataUtil from "./util/DataUtil.js"
 import FDUtil from "./util/FDUtil.js"
+import StringUtil from "./util/StringUtil.js"
 import ModuleUtil from "./util/ModuleUtil.js"
+import ValidUtil from "./util/ValidUtil.js"
 
 export default class Core {
   constructor(options) {
-    this.options = { name: "bedoc", ...options }
-    this.logger = new Logger(options)
+    this.options = options
+    const {debug: debugMode, debugLevel} = options
+    this.logger = new Logger({name: "BeDoc", debugMode, debugLevel})
     this.packageJson = this.#loadPackageJson()
   }
 
@@ -107,6 +110,19 @@ export default class Core {
 
     debug("Hooks attached to parser and printer", 2)
 
+    debug("Injecting utilities", 2)
+    for(const target of [instance.parser, instance.printer]) {
+      // Let's inject some utilities
+      target.string = StringUtil
+      target.logger = new Logger({
+        name: target.constructor.name,
+        debugMode: instance.logger.debugMode,
+        debugLevel: instance.logger.debugLevel
+      })
+      target.data = DataUtil
+      target.valid = ValidUtil
+    }
+
     return instance
   }
 
@@ -122,15 +138,29 @@ export default class Core {
       throw new Error("No input files specified")
 
     for(const fileMap of input) {
-      debug("Processing file:", 2, fileMap.path)
+      debug(`Processing file \`${fileMap.path}\``, 2)
 
       const fileContent = await FDUtil.readFile(fileMap)
       debug(`Read file content: ${fileMap.path} (${fileContent.length} bytes)`, 2)
 
       const parseResult = await this.parser.parse(fileMap.path, fileContent)
 
-      if(parseResult.status === "error")
-        throw new Error(`Failed to parse ${fileMap.path}: ${parseResult.message}`)
+      switch(parseResult.status) {
+        case "fatal error": {
+          const {error} = parseResult
+          throw error
+        }
+        case "error": {
+          const {line,lineNumber,message} = parseResult
+          throw new Error(`Failed to parse ${fileMap.path}: ${message} at ${lineNumber}\nLine: ${line}\nMessage: ${message}`)
+        }
+
+        case "warning": {
+          const {line,lineNumber,message} = parseResult
+          this.logger.warn(`${fileMap.path}: ${message} at ${lineNumber}\nLine: ${line}\nMessage: ${message}`)
+          break
+        }
+      }
 
       debug("File parsed successfully:", 2, fileMap.path)
       debug("Parse result for ${fileMap.path}:", 4, parseResult.result)
@@ -156,6 +186,11 @@ export default class Core {
 
   async #outputFile(output, destFile, content) {
     const debug = this.logger.newDebug()
+    // try {
+    //   throw new Error()
+    // } catch(e){
+    //   console.log(e.stack)
+    // }
 
     debug(`Preparing to write output to ${destFile}.`, 3, output)
 
@@ -172,7 +207,7 @@ export default class Core {
   }
 
   async #loadPackageJson() {
-    const packageJsonFile = await FDUtil.resolveFilename("./package.json")
+    const packageJsonFile = FDUtil.resolveFilename("./package.json")
     const packageJsonContent = await ModuleUtil.loadJson(packageJsonFile)
     return DataUtil.deepFreeze(packageJsonContent)
   }

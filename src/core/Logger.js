@@ -25,7 +25,7 @@ import StringUtil from "./util/StringUtil.js"
  */
 
 export default class Logger {
-  #name
+  #name = null
   #debugMode = false
   #debugLevel = 0
 
@@ -42,9 +42,21 @@ export default class Logger {
     }
   }
 
+  get name() {
+    return this.#name
+  }
+
+  get debugMode() {
+    return this.#debugMode
+  }
+
+  get debugLevel() {
+    return this.#debugLevel
+  }
+
   setOptions(options) {
     this.#name = options.name ?? this.#name
-    this.#debugMode = options.debug
+    this.#debugMode = options.debugMode
     this.#debugLevel = options.debugLevel
   }
 
@@ -56,10 +68,13 @@ export default class Logger {
     return `[${this.#name}] ${LoggerColors[level]}${tag}${LoggerColors.reset}: ${message}`
   }
 
-  #extractFileFunction(level = 0) {
+  lastStackLine(stepsRemoved = 3) {
     const stack = ErrorStackParser.parse(new Error())
-    const frame = stack[2]
+    return stack[stepsRemoved]
+  }
 
+  extractFileFunction(level = 0) {
+    const frame = this.lastStackLine()
     const {
       functionName: func,
       fileName: file,
@@ -67,7 +82,7 @@ export default class Logger {
       columnNumber: col,
     } = frame
 
-    const {module, absoluteUri} = Promise.resolve(FDUtil.resolveFilename(file))
+    const {module, absoluteUri} = FDUtil.resolveFilename(file)
 
     let functionName = func ?? "anonymous"
     if(functionName.startsWith("#"))
@@ -93,22 +108,18 @@ export default class Logger {
     if(level >= 3)
       result = `${absoluteUri} ${result}`
 
-
     return result
   }
 
   newDebug(tag) {
-    return (message, level, ...arg) => {
-      if(this.#debugMode === true && level <= (this.#debugLevel ?? 4)) {
-        if(!tag)
-          tag = this.#extractFileFunction(this.#debugLevel)
-        this.debug(`[${tag}] ${message}`, level, ...arg)
-      }
-    }
+    return (function(message, level, ...arg) {
+      tag = this.extractFileFunction(this.#debugLevel)
+      this.debug(`[${tag}] ${message}`, level, ...arg)
+    }).bind(this)
   }
 
   debug(message, level = 0, ...arg) {
-    if(this.#debugMode === true && level <= (this.#debugLevel ?? 4))
+    if(this.debugMode === true && level <= (this.debugLevel ?? 4))
       console.debug(this.#compose("debug", message, level), ...arg)
   }
 
