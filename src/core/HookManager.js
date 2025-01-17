@@ -2,6 +2,7 @@ import FileUtil from "./util/FDUtil.js"
 import DataUtil from "./util/DataUtil.js"
 import { Hooks, HookEvents, HookTypes, HookClasses, ClassToHook } from "./include/Hooks.js"
 import {setTimeout as timeOut} from "timers/promises"
+import Logger from "./Logger.js"
 
 export default class HookManager {
   constructor(core) {
@@ -40,7 +41,7 @@ export default class HookManager {
     if(!hooks)
       throw new Error(`Hooks file does not contain hooks: ${hooksFile.absoluteUri}`)
 
-    const hooksObj = new hooks()
+    const hooksObj = new hooks(Logger)
     this.hooks = {}
     HookTypes.forEach(type => {
       if(hooksObj[type]) {
