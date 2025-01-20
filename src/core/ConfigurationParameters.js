@@ -1,13 +1,11 @@
-import DataUtil from "./util/DataUtil.js"
+import {newTypeSpec} from "#util"
 
-const type = DataUtil.typeSpec
-
-export const ConfigurationParameters = Object.freeze({
+const ConfigurationParameters = Object.freeze({
   input: {
     short: "i",
     param: "file",
     description: "Comma-separated glob patterns to match files",
-    type: type("string|string[]"),
+    type: newTypeSpec("string|string[]"),
     required: true,
     path: {
       type: "file",
@@ -18,21 +16,21 @@ export const ConfigurationParameters = Object.freeze({
     short: "x",
     param: "file",
     description: "Comma-separated glob patterns to exclude files",
-    type: type("string|string[]"),
+    type: newTypeSpec("string|string[]"),
     required: false,
   },
   language: {
     short: "l",
     param: "lang",
     description: "Language parser to use",
-    type: type("string"),
+    type: newTypeSpec("string"),
     required: false,
     exclusiveOf: "parser",
   },
   format: {
     short: "f",
     description: "Output format",
-    type: type("string"),
+    type: newTypeSpec("string"),
     required: false,
     exclusiveOf: "printer",
   },
@@ -40,7 +38,7 @@ export const ConfigurationParameters = Object.freeze({
     short: "k",
     param: "file",
     description: "Custom hooks JS file",
-    type: type("string"),
+    type: newTypeSpec("string"),
     required: false,
     path: {
       type: "file",
@@ -51,7 +49,7 @@ export const ConfigurationParameters = Object.freeze({
     short: "o",
     param: "dir",
     description: "Output directory",
-    type: type("string"),
+    type: newTypeSpec("string"),
     required: false,
     path: {
       type: "directory",
@@ -62,7 +60,7 @@ export const ConfigurationParameters = Object.freeze({
     short: "p",
     param: "file",
     description: "Custom parser JS file",
-    type: type("string"),
+    type: newTypeSpec("string"),
     required: false,
     exclusiveOf: "language",
     path: {
@@ -74,7 +72,7 @@ export const ConfigurationParameters = Object.freeze({
     short: "P",
     param: "file",
     description: "Custom printer JS file",
-    type: type("string"),
+    type: newTypeSpec("string"),
     required: false,
     exclusiveOf: "format",
     path: {
@@ -86,7 +84,7 @@ export const ConfigurationParameters = Object.freeze({
     short: "T",
     param: "ms",
     description: "Timeout in milliseconds for hook execution",
-    type: type("number"),
+    type: newTypeSpec("number"),
     required: false,
     default: 5000,
   },
@@ -94,7 +92,7 @@ export const ConfigurationParameters = Object.freeze({
     short: "m",
     param: "dir",
     description: "Path to mock parsers and printers",
-    type: type("string"),
+    type: newTypeSpec("string"),
     required: false,
     path: {
       type: "directory",
@@ -105,7 +103,7 @@ export const ConfigurationParameters = Object.freeze({
     short: "c",
     param: "file",
     description: "Use JSON config file",
-    type: type("string"),
+    type: newTypeSpec("string"),
     required: false,
     path: {
       type: "file",
@@ -115,7 +113,7 @@ export const ConfigurationParameters = Object.freeze({
   debug: {
     short: "d",
     description: "Enable debug mode",
-    type: type("boolean"),
+    type: newTypeSpec("boolean"),
     required: false,
     default: false,
   },
@@ -123,13 +121,18 @@ export const ConfigurationParameters = Object.freeze({
     short: "D",
     param: "level",
     description: "Debug level",
-    type: type("number"),
+    type: newTypeSpec("number"),
     required: false,
     default: 0,
   }
 })
 
-export const ConfigurationPriorityKeys = Object.freeze([
+const ConfigurationPriorityKeys = Object.freeze([
   "exclude",
   "input",
 ])
+
+export {
+  ConfigurationParameters,
+  ConfigurationPriorityKeys,
+}

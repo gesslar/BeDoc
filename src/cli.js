@@ -3,17 +3,14 @@
 import {program} from "commander"
 import console from "node:console"
 import process from "node:process"
-import {Configuration} from "./core/Configuration.js"
-import {ConfigurationParameters} from "./core/ConfigurationParameters.js"
-import Core from "./core/Core.js"
-import ModuleUtil from "./core/util/ModuleUtil.js"
-import { Environment } from "./core/include/Environment.js"
+import {Core, Configuration, ConfigurationParameters, Environment} from "#core"
+import {loadPackageJson} from "#util"
 
 // Main entry point
 (async() => {
   try {
     // Get package info
-    const packageJson = await ModuleUtil.loadPackageJson()
+    const packageJson = loadPackageJson()
 
     // Setup program
     program

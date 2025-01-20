@@ -6,6 +6,14 @@
   "bin": {
     "bedoc": "./src/cli.js"
   },
+  "exports": {
+    "./*": "./src/*"
+  },
+  "imports": {
+    "#core": "./src/core/index.js",
+    "#util": "./src/core/util/index.js",
+    "#action": "./src/core/action/index.js"
+  },
   "type": "module",
   "scripts": {
     "lint:check": "npx eslint .",
@@ -14,7 +22,7 @@
   "dependencies": {
     "commander": "^13.0.0",
     "error-stack-parser": "^2.1.4",
-    "eslint-plugin-jsdoc": "^50.6.1",
+    "eslint-plugin-jsdoc": "^50.6.2",
     "globby": "^14.0.2",
     "micromatch": "^4.0.8",
     "node-fetch": "^3.3.2",
