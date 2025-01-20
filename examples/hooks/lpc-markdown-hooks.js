@@ -1,11 +1,13 @@
-export default class Hooks {
-  #logger
+import console from "node:console"
 
-  constructor({logger}) {
-    this.#logger = logger
-  }
+export const Hooks = {
+  parse: {},
 
-  print = {
+  print: {
+    async init(arg) {
+      console.debug(arg)
+    },
+
     async enter({name, section}) {
       if(name === "description") {
         const translated = await getDadJoke()
@@ -33,6 +35,7 @@ async function getDadJoke() {
     })
     if(!response.ok)
       throw new Error(`HTTP error! status: ${response.status}`)
+
     const data = await response.json()
     return {
       status: "success",

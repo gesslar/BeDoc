@@ -1,10 +1,21 @@
 import console from "console"
 import ErrorStackParser from "error-stack-parser"
-import { Environment } from "./include/Environment.js"
-import { LoggerColors } from "./include/Logger.js"
-import FDUtil from "./util/FDUtil.js"
-import ModuleUtil from "./util/ModuleUtil.js"
-import StringUtil from "./util/StringUtil.js"
+import {Environment} from "#core"
+import {resolveFilename,capitalize} from "#util"
+
+const loggerColours = {
+  debug: [
+    "\x1b[38;5;19m",  // Debug level 0: Dark blue
+    "\x1b[38;5;27m",  // Debug level 1: Medium blue
+    "\x1b[38;5;33m",  // Debug level 2: Light blue
+    "\x1b[38;5;39m",  // Debug level 3: Teal
+    "\x1b[38;5;51m",  // Debug level 4: Bright cyan
+  ],
+  info: "\x1b[32m",   // Green
+  warn: "\x1b[33m",   // Yellow
+  error: "\x1b[31m",  // Red
+  reset: "\x1b[0m",   // Reset
+}
 
 /**
  * Logger class
@@ -24,7 +35,7 @@ import StringUtil from "./util/StringUtil.js"
  * - error: Error information
  */
 
-export default class Logger {
+class Logger {
   #name = null
   #debugMode = false
   #debugLevel = 0
@@ -34,7 +45,7 @@ export default class Logger {
     if(options) {
       this.setOptions(options)
       if(options.env === Environment.EXTENSION) {
-        const vscode = ModuleUtil.require("vscode")
+        const vscode = import("vscode")
         this.vscodeError = vscode.window.showErrorMessage
         this.vscodeWarn = vscode.window.showWarningMessage
         this.vscodeInfo = vscode.window.showInformationMessage
@@ -54,6 +65,14 @@ export default class Logger {
     return this.#debugLevel
   }
 
+  get options() {
+    return {
+      name: this.#name,
+      debugMode: this.#debugMode,
+      debugLevel: this.#debugLevel
+    }
+  }
+
   setOptions(options) {
     this.#name = options.name ?? this.#name
     this.#debugMode = options.debugMode
@@ -61,11 +80,11 @@ export default class Logger {
   }
 
   #compose(level, message, debugLevel = 0) {
-    const tag = StringUtil.capitalize(level)
+    const tag = capitalize(level)
 
     if(level === "debug")
-      return `[${this.#name}] ${LoggerColors[level][debugLevel]}${tag}${LoggerColors.reset}: ${message}`
-    return `[${this.#name}] ${LoggerColors[level]}${tag}${LoggerColors.reset}: ${message}`
+      return `[${this.#name}] ${loggerColours[level][debugLevel]}${tag}${loggerColours.reset}: ${message}`
+    return `[${this.#name}] ${loggerColours[level]}${tag}${loggerColours.reset}: ${message}`
   }
 
   lastStackLine(stepsRemoved = 3) {
@@ -82,7 +101,7 @@ export default class Logger {
       columnNumber: col,
     } = frame
 
-    const {module, absoluteUri} = FDUtil.resolveFilename(file)
+    const {module, absoluteUri} = resolveFilename(file)
 
     let functionName = func ?? "anonymous"
     if(functionName.startsWith("#"))
@@ -145,4 +164,8 @@ export default class Logger {
     console.error(this.#compose("error", message), ...arg)
     this.vscodeError?.(JSON.stringify(message))
   }
+}
+
+export {
+  Logger,
 }

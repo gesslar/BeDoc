@@ -1,18 +1,14 @@
 import process from "node:process"
-import { ConfigurationParameters, ConfigurationPriorityKeys } from "./ConfigurationParameters.js"
-import { FdType, FdTypes } from "./include/FD.js"
-import DataUtil from "./util/DataUtil.js"
-import FDUtil from "./util/FDUtil.js"
-import ModuleUtil from "./util/ModuleUtil.js"
+import {ConfigurationParameters,ConfigurationPriorityKeys} from "#core"
+import {isType,isNothing,getFiles,resolveFilename,resolveDirectory,fdType,fdTypes,loadJson,mapObject} from "#util"
 
 Object.prototype.insert = obj => {
   for(const [key, value] of Object.entries(obj))this[key] = value
 }
 
-export class Configuration {
+class Configuration {
   async validate(options) {
     const finalOptions = {}
-    const {nothing} = DataUtil
 
     // While the entry points do wrap the entire process in a try/catch, we
     // should also do this here, so we can trap everything and instead
@@ -31,27 +27,27 @@ export class Configuration {
         `ConfigurationParameters validation errors: ${configValidationErrors.join(", ")}`
       )
 
-    const allOptions = await this.#findAllOptions(options)
+    const allOptions = this.#findAllOptions(options)
     Object.assign(finalOptions, await this.#mergeOptions(allOptions))
     this.#fixOptionValues(finalOptions)
 
     // Priority keys are those which must be processed first. They are
     // specified in order of priority.
-    // Find them and add them to an array; the rest will be in pushed
-    // to the end of the priority array.
+    // Find them and add them to an array; the rest will be in pushed to the
+    // end of the priority array.
     const orderedSections = []
     ConfigurationPriorityKeys.forEach(key => {
       if(!ConfigurationParameters[key])
         throw new Error(`Invalid priority key: ${key}`)
 
       if(finalOptions[key])
-        orderedSections.push({ key, value: finalOptions[key] })
+        orderedSections.push({key, value: finalOptions[key]})
     })
 
     const remainingSections = Object.keys(ConfigurationParameters)
       .filter(key => !ConfigurationPriorityKeys.includes(key))
     orderedSections.push(...remainingSections.map(key => {
-      return { key, value: finalOptions[key] }
+      return {key, value: finalOptions[key]}
     }))
 
     // Check exclusive options
@@ -69,11 +65,11 @@ export class Configuration {
         continue
 
       let {value} = section
-      const isNothing = nothing(value)
+      const nothing = isNothing(value)
       const param = ConfigurationParameters[key]
       const {required, path} = param
 
-      if(isNothing) {
+      if(nothing) {
         if(required === true)
           throw new SyntaxError(`Option \`${key}\` is required`)
         else
@@ -81,18 +77,18 @@ export class Configuration {
       }
 
       // Additional path validation if needed
-      if(path && !isNothing) {
+      if(path && !nothing) {
         const {mustExist, type: pathType} = path
 
         // Special for `input` and `exclude` because they can be a comma-
         // separated list of glob patterns.
         if(key === "input" || key === "exclude") {
-          if(DataUtil.type(value, "array"))
+          if(isType(value, "array"))
             value = await Promise.all(value.map(pattern =>
-              FDUtil.getFiles(pattern))
+              getFiles(pattern))
             )
-          else if(DataUtil.type(value, "string"))
-            value = await FDUtil.getFiles(value)
+          else if(isType(value, "string"))
+            value = await getFiles(value)
           else
             throw new TypeError(`Option \`${key}\` must be a string or an array of strings`)
 
@@ -100,9 +96,9 @@ export class Configuration {
           continue
         } else {
           if(mustExist === true) {
-            finalOptions[key] = pathType === FdType.FILE ?
-              FDUtil.resolveFilename(value) :
-              FDUtil.resolveDirectory(value)
+            finalOptions[key] = pathType === fdType.FILE ?
+              resolveFilename(value) :
+              resolveDirectory(value)
           }
         }
       }
@@ -137,7 +133,7 @@ export class Configuration {
         if(!pathType)
           errors.push(`Option \`${key}\` has no path type`)
         // Check if pathType is a valid key in FdTypes
-        if(!(FdTypes.includes(pathType)))
+        if(!(fdTypes.includes(pathType)))
           errors.push(`Option \`${key}\` has invalid path type: ${pathType}`)
       }
     }
@@ -150,17 +146,17 @@ export class Configuration {
    * @param {object} cliOptions - The command line options.
    * @returns {Promise<object[]>} All options from all sources.
    */
-  async #findAllOptions(cliOptions) {
+  #findAllOptions(cliOptions) {
     const allOptions = []
 
     const environmentVariables = this.#getEnvironmentVariables()
     if(environmentVariables)
-      allOptions.push({ source: "environment", options: environmentVariables })
+      allOptions.push({source: "environment", options: environmentVariables})
 
-    const packageJson = FDUtil.resolveFilename("./package.json")
-    const packageJsonOptions = await ModuleUtil.loadJson(packageJson)
+    const packageJson = resolveFilename("./package.json")
+    const packageJsonOptions = loadJson(packageJson)
     if(packageJsonOptions.bedoc)
-      allOptions.push({ source: "packageJson", options: packageJsonOptions.bedoc })
+      allOptions.push({source: "packageJson", options: packageJsonOptions.bedoc})
 
     // Then the config file, if the options specified a config file
     const useConfig = cliOptions.config
@@ -174,12 +170,12 @@ export class Configuration {
       if(!configFilename)
         throw new Error("No config file specified")
 
-      const configFile = FDUtil.resolveFilename(configFilename)
-      const config = await ModuleUtil.loadJson(configFile)
-      allOptions.push({ source: "config", options: config })
+      const configFile = resolveFilename(configFilename)
+      const config = loadJson(configFile)
+      allOptions.push({source: "config", options: config})
     }
 
-    allOptions.push({ source: "cli", options: cliOptions })
+    allOptions.push({source: "cli", options: cliOptions})
 
     return allOptions
   }
@@ -221,7 +217,7 @@ export class Configuration {
       return acc
     }, {})
 
-    const mappedOptions = await DataUtil.mapObject(mergedOptions,
+    const mappedOptions = await mapObject(mergedOptions,
       (option, value) => {
         const {
           value: cliValue,
@@ -274,4 +270,8 @@ export class Configuration {
       }
     }
   }
+}
+
+export {
+  Configuration,
 }
