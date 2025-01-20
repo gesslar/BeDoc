@@ -1,5 +1,7 @@
 # BeDoc
 
+[![CodeQL Advanced](https://github.com/gesslar/BeDoc/actions/workflows/codeql.yml/badge.svg)](https://github.com/gesslar/BeDoc/actions/workflows/codeql.yml)
+
 Check out the [WIP documentation site](https://bedoc.gesslar.dev/).
 
 ## Future Ideas
