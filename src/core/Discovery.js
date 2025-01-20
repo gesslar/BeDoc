@@ -1,266 +1,190 @@
-import { execSync } from "child_process"
+// import {process} from "node:process"
 import yaml from "yaml"
-import DataUtil from "./util/DataUtil.js"
-import FDUtil from "./util/FDUtil.js"
-import ModuleUtil from "./util/ModuleUtil.js"
+import {execSync} from "child_process"
+import {actionMetaRequirements,actionTypes,assert,getFiles,isType} from "#util"
+import {loadJson,ls,resolveDirectory,resolveFilename} from "#util"
 
-const isParserMeta = meta => "language" in meta
-const isPrinterMeta = meta => "format" in meta
+let debug
 
-export default class Discovery {
+class Discovery {
   #logger
 
   constructor(core) {
+    this.core = core
     this.#logger = core.logger
+    debug = this.#logger.newDebug()
   }
 
   /**
-   * Discover modules from local or global node_modules
-   * @param {string} mockPath - The path to the mock modules
+   * Discover actions from local or global node_modules
    * @returns {Promise<object>} A map of discovered modules
    */
-  async discoverModules(mockPath) {
-    const debug = this.#logger.newDebug()
-    const modules = {parser: {}, printer: {}}
+  async discoverActions() {
+    const bucket = []
+    const options = this.core.options ?? {}
 
-    if(mockPath) {
-      debug(`Discovering mock modules in ${mockPath}`, 1)
+    if(options?.mockPath) {
+      debug(`Discovering mock actions in \`${options.mockPath}\``, 1)
 
-      const {parser, printer} = await this.#discoverMockModules(mockPath)
-      modules.parser = parser
-      modules.printer = printer
+      bucket.push(...(await getFiles([
+        `${options.mockPath}/bedoc-*-printer.js`,
+        `${options.mockPath}/bedoc-*-parser.js`
+      ])))
     } else {
-      debug("Discovering modules", 1)
-      const localModuleDirectory = FDUtil.resolveDirectory("c:/temp")
-      const globalModuleDirectory = FDUtil.resolveDirectory(execSync("npm root -g").toString().trim())
-      const discovered = { parser: {}, printer: {} }
+      debug("Discovering actions", 1)
 
-      for(const moduleDirectory of [
-        localModuleDirectory,
-        globalModuleDirectory]
-      ) {
-        const {directories} = await FDUtil.ls(moduleDirectory.absolutePath)
-        const matchingModules = directories.filter(d => d.name.startsWith("bedoc-"))
-        for(const moduleSource of matchingModules) {
-          await this.#processModule(discovered, moduleSource)
+      for(const actionType of actionTypes) {
+        if(this.core.packageJson[actionType]) {
+          const action = this.core.packageJson[actionType]
+          debug(`Found \`${actionType}\` action in package.json`, 3, action)
+          bucket.push(action)
         }
       }
 
-      modules.parser = discovered.parser
-      modules.printer = discovered.printer
+      const directories = [
+        // "c:/temp",
+        "./node_modules",
+        execSync("npm root -g").toString().trim()
+      ]
+
+      const moduleDirectories = directories.map(resolveDirectory)
+      for(const moduleDirectory of moduleDirectories) {
+        const {directories: dirs} = await ls(moduleDirectory.absolutePath)
+        debug(`Found ${dirs.length} directories in \`${moduleDirectory.absolutePath}\``, 2)
+        const bedocDirs = dirs.filter(d => d.name.startsWith("bedoc-"))
+        const exports = bedocDirs.map(d => this.#getModuleExports(d))
+        bucket.push(...exports.flat())
+      }
     }
 
-    return modules
+    return await this.#loadActionsAndContracts(bucket)
   }
 
   /**
-   * Process a module and register any discovered parsers/printers, loading
-   * contracts.
-   * @param {object} discovered - The current discovery state
-   * @param {object} moduleSource - The module source information
+   * Get the exports from a module's package.json file, resolved to file paths
+   * @param {object} dirMap The directory map object
+   * @returns {object[]} The discovered module exports
    */
-  async #processModule(discovered, moduleSource) {
-    const debug = this.#logger.newDebug()
-
-    debug(`Processing module: ${moduleSource.path}`, 1)
-
-    const {absolutePath} = moduleSource
-
-    // Load the package.json file that accompanies the module
-    const packageJsonFile = FDUtil.resolveFilename(`${absolutePath}/package.json`)
-    const packageJson = await ModuleUtil.loadJson(packageJsonFile)
-
-    const {
-      parsers: parserFilenames,
-      printers: printerFilenames
-    } = packageJson.bedoc
-
-    const getFileObjects = fileName =>
-      FDUtil.resolveFilename(fileName, packageJsonFile.directory)
-    const parserFileObjects = parserFilenames
-      ? await Promise.all(parserFilenames?.map(getFileObjects))
-      : []
-    const printerFileObjects = printerFilenames
-      ? await Promise.all(printerFilenames?.map(getFileObjects))
-      : []
-
-    const loadEngine = async fileObject => {
-      const engine = await import(fileObject.absoluteUri)
-      const contract = await this.#loadContract(fileObject)
-
-      const result = {...engine}
-
-      if(contract.status === "success") {
-        if(isParserMeta(engine.meta)) {
-          result.contract = DataUtil.deepFreeze(contract.provides)
-        } else if(isPrinterMeta(engine.meta)) {
-          result.contract = DataUtil.deepFreeze(contract.accepts)
-        }
-      } else
-        throw new Error(`Failed to load contract for ${fileObject.path}: ${contract.error.message}`)
-
-      return result
-    }
-
-    const parsers = await Promise.all(parserFileObjects?.map(loadEngine))
-    const printers = await Promise.all(printerFileObjects?.map(loadEngine))
-
-    parsers?.forEach(parser => {
-      if(parser.Parser && parser.meta && isParserMeta(parser.meta)) {
-        debug(`Found parser for language \`${parser.meta.language}\``, 1)
-        discovered.parser[parser.meta.language] = {
-          meta: parser.meta,
-          parser: parser.Parser,
-          contract: parser.contract
-        }
-      }
-    })
-
-    printers?.forEach(printer => {
-      if(printer.Printer && printer.meta && isPrinterMeta(printer.meta)) {
-        debug(`Found printer for format \`${printer.meta.format}\``, 1)
-        discovered.printer[printer.meta.format] = {
-          meta: printer.meta,
-          printer: printer.Printer,
-          contract: printer.contract
-        }
-      }
-    })
-  }
-
-  /**
-   * Discover modules from a mock path
-   * @param {string} mockPath - The path to the mock modules
-   * @returns {Promise<object>} A map of discovered modules
-   */
-  async #discoverMockModules(mockPath) {
-    const debug = this.#logger.newDebug()
-    const { getFiles } = FDUtil
-
-    debug(`Discovering mock modules in ${mockPath}`)
-
-    const files = await getFiles(
-      [`${mockPath}/bedoc-*-printer.js`, `${mockPath}/bedoc-*-parser.js`]
+  #getModuleExports(dirMap) {
+    const packageJsonFile = resolveFilename("package.json", dirMap)
+    const packageJson = loadJson(packageJsonFile)
+    const bedocPackageJsonModules = packageJson.bedoc?.modules ?? []
+    const bedocModuleFiles = bedocPackageJsonModules.map(
+      file => resolveFilename(file, dirMap)
     )
 
-    debug("Files:", 2, files)
+    return bedocModuleFiles
+  }
 
-    const discovered = { parser: {}, printer: {} }
+  /**
+   * Process the discovered file objects and return the action and their
+   * respective contracts.
+   * @param {object[]} moduleFiles The module file objects to process
+   * @returns {Promise<object>} The discovered action
+   */
+  async #loadActionsAndContracts(moduleFiles) {
+    const resultActions = {}
 
-    for(const file of files) {
-      if(!file.absoluteUri)
-        continue
+    actionTypes.forEach(actionType => resultActions[actionType] = [])
 
-      await this.#processModule(discovered, file)
+    for(const moduleFile of moduleFiles) {
+      const result = {total: 0, accepted: 0}
+      const {actions,contracts} = await import(moduleFile.absoluteUri)
+
+      debug(`Loaded actions from \`${moduleFile.absoluteUri}\``, 2)
+      debug(`Found ${actions.length} actions and ${contracts.length} contracts`, 3)
+
+      assert(actions.length === contracts.length,
+        "Actions and contracts must be the same length",
+        1
+      )
+
+      result.total = actions.length
+
+      for(let i = actions.length; i--;) {
+        const tempContract = contracts[i]
+        if(isType(tempContract, "string")) {
+          contracts[i] = yaml.parse(tempContract)
+        } else if(isType(tempContract, "object")) {
+          contracts[i] = tempContract
+        } else {
+          throw new Error(`Invalid contract type: ${typeof tempContract}`)
+        }
+
+        const curr = {
+          module: moduleFile.module,
+          action: actions[i],
+          contract: contracts[i]
+        }
+
+        const meta = curr.action.meta
+        const metaAction = meta?.action
+
+        debug(`Checking action \`${metaAction}\``, 2)
+
+        for(const actionType of actionTypes) {
+          const isValid = this.validMeta(actionType, curr)
+          debug(`Action \`${metaAction}\` in ${moduleFile.module} is ${isValid ? "valid" : "invalid"}`, 3)
+
+          if(isValid && metaAction === actionType) {
+            debug(`Action \`${metaAction}\` meets requirements`, 3)
+            result.accepted++
+            resultActions[actionType].push(curr)
+            continue
+          } else {
+            debug(`Action \`${metaAction}\` does not meet requirements`, 3)
+          }
+        }
+
+        debug(`Processed action \`${metaAction}\``, 2)
+        debug(`Result: ${result.accepted}/${result.total} actions accepted for \`${moduleFile.module}\``, 3)
+      }
+
+      debug(`Processed ${result.total} actions from \`${moduleFile.module}\``, 2)
     }
 
-    return discovered
-  }
-
-  /**
-   * Get a specific printer
-   * @param {object} fileMap - The FileMap object for the printer
-   * @returns {Promise<object>} The printer
-   */
-  async specificPrinter(fileMap) {
-    const debug = this.#logger.newDebug()
-
-    debug(`Loading printer: ${fileMap.path}`, 1)
-
-    if(!fileMap.path)
-      throw new Error(`[specificPrinter] No path specified in ${fileMap.path}`)
-
-    const printer = await this.#specificModule(fileMap)
-
-    return {
-      meta: printer.meta,
-      printer: printer.Printer
+    for(const actionType of actionTypes) {
+      const total = resultActions[actionType].length
+      debug(`Found ${total} \`${actionType}\` actions`, 1)
     }
+
+    const total = Object.keys(resultActions).reduce((acc, curr) => {
+      return acc + resultActions[curr].length
+    }, 0)
+
+    debug(`Loaded ${total} action definitions from ${moduleFiles.length} modules`, 1)
+
+    return resultActions
   }
 
-  /**
-   * Get a specific parser
-   * @param {object} fileMap - The FileMap object for the parser
-   * @returns {Promise<object>} The parser
-   */
-  async specificParser(fileMap) {
-    const debug = this.#logger.newDebug()
+  validMeta(actionType, toValidate) {
+    debug(`Checking meta requirements for \`${actionType}\``, 3)
+    const requirements = actionMetaRequirements[actionType]
+    if(!requirements)
+      throw new Error(`No meta requirements found for action type \`${actionType}\``)
 
-    debug(`Loading parser: ${fileMap.path}`, 1)
+    for(const requirement of requirements) {
+      debug("Checking requirement", 4, requirement)
 
-    if(!fileMap.path)
-      throw new Error(`[specificParser] No path specified in ${fileMap.path}`)
-
-    const parser = await this.#specificModule(fileMap)
-
-    return {
-      meta: parser.meta,
-      parser: parser.Parser
+      if(isType(requirement, "object")) {
+        for(const [key, value] of Object.entries(requirement)) {
+          debug(`Checking object requirement: ${key} = ${value}`, 4)
+          if(toValidate.action.meta[key] !== value)
+            return false
+          debug(`Requirement met: ${key} = ${value}`, 4)
+        }
+      } else if(isType(requirement, "string")) {
+        debug(`Checking string requirement: ${requirement}`, 4)
+        if(!toValidate.action.meta[requirement])
+          return false
+        debug(`Requirement met: ${requirement}`, 4)
+      }
     }
+
+    return true
   }
+}
 
-  /**
-   * Get a specific module
-   * @param {object} fileMap - The FileMap object for the module
-   * @returns {Promise<object>} The module
-   */
-  async #specificModule(fileMap) {
-    const debug = this.#logger.newDebug()
-
-    debug(`Loading module: ${fileMap.path}`, 1)
-
-    const result = await import(fileMap.absoluteUri)
-
-    if(result.Parser && result.meta && isParserMeta(result.meta))
-      return result
-
-    if(result.Printer && result.meta && isPrinterMeta(result.meta))
-      return result
-
-    throw new Error(`[specificModule] Module ${fileMap.path} does not export a Parser or Printer`)
-  }
-
-  /**
-   * Loads the contract for a given module.
-   * @param {string} moduleFile - Path to the module file.
-   * @returns {Promise<object>} - The loaded contract object.
-   */
-  async #loadContract(moduleFile) {
-    const debug = this.#logger.newDebug()
-
-    // Try to find and load the contract(s)
-    const contents = await (async function(file, debug) {
-      // Step 1: Extract embedded YAML block from the module file
-      const moduleContent = await FDUtil.readFile(file)
-      const yamlBlockRegex = /---\n([\s\S]+)?\n---/
-      const match = yamlBlockRegex.exec(moduleContent)
-
-      debug("Match:", 4, match)
-
-      if(match)
-        return [yaml.parseDocument(match[1]).toJS()]
-
-      // Step 2: Check for an external YAML file
-      const baseName = file.module
-      const contractFile = FDUtil.resolveFilename(`${baseName}.yaml`, file.directory)
-      debug(`Using external YAML contract: ${contractFile.path}`, 2)
-      const content = await FDUtil.readFile(contractFile)
-      const documents = yaml.parseAllDocuments(content)
-        .map(doc => doc.toJS())
-
-      return documents
-    })(moduleFile, debug)
-
-    debug("Contents:", 2, contents)
-    debug(`Number of documents: ${contents.length}`, 2)
-
-    const provides = contents.find(doc => doc.provides)?.provides || {}
-    debug("Provides:", 3, Object.keys(provides))
-    const accepts = contents.find(doc => doc.accepts)?.accepts || {}
-    debug("Accepts:", 3, Object.keys(accepts))
-
-    debug("Result:", 4, provides, accepts)
-
-    return {status: "success", provides, accepts}
-  }
+export {
+  Discovery,
 }
