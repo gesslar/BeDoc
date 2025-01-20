@@ -1,23 +1,14 @@
-// This file is created to demonstrate the usage of hooks in the Lua Markdown
+import console from "node:console"
 
-class Hooks {
-  #logger
+export const Hooks = {
+  parse: {},
 
-  constructor({logger}) {
-    this.#logger = logger
-  }
-
-  print = {
-    enter: async({name, section}) => {
-      const debug = this.#logger.newDebug()
-
+  print: {
+    async enter({name, section}) {
       if(name === "return") {
-        debug("section", JSON.stringify(section, null, 1))
+        console.debug("section", JSON.stringify(section, null, 1))
       }
     }
   }
 
-  parse = {}
 }
-
-export default Hooks

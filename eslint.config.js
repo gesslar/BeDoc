@@ -77,6 +77,10 @@ export default [
       }],
       "@stylistic/js/no-tabs": "error",
       "@stylistic/js/no-trailing-spaces": ["error"],
+      "@stylistic/js/object-curly-spacing": ["error", "never", {
+        "objectsInObjects": false,
+        "arraysInObjects": false
+      }],
       "@stylistic/js/quotes": ["error", "double", {
         avoidEscape: true, allowTemplateLiterals: true
       }],

@@ -1,126 +1,107 @@
 import process from "node:process"
-import Discovery from "./Discovery.js"
-import HookManager from "./HookManager.js"
-import { Environment } from "./include/Environment.js"
-import Logger from "./Logger.js"
-import DataUtil from "./util/DataUtil.js"
-import FDUtil from "./util/FDUtil.js"
-import StringUtil from "./util/StringUtil.js"
-import ModuleUtil from "./util/ModuleUtil.js"
-import ValidUtil from "./util/ValidUtil.js"
+import {Discovery,HooksManager,Logger} from "#core"
+import {ParseManager,PrintManager} from "#action"
+import {schemaCompare,composeFilename,readFile,writeFile,loadPackageJson} from "#util"
 
-export default class Core {
+const Environment = {
+  EXTENSION: "extension",
+  ACTION: "action",
+  CLI: "cli"
+}
+
+class Core {
   constructor(options) {
     this.options = options
     const {debug: debugMode, debugLevel} = options
     this.logger = new Logger({name: "BeDoc", debugMode, debugLevel})
-    this.packageJson = this.#loadPackageJson()
+    this.packageJson = loadPackageJson()?.bedoc ?? {}
+    this.debugOptions = this.logger.options
   }
 
   static async new(options) {
     const instance = new Core({...options, name: "BeDoc"})
-
     const debug = instance.logger.newDebug()
 
     debug("Initializing Core instance", 1)
     debug("Core passed options", 3, options)
 
     const discovery = new Discovery(instance)
+    const actionDefinitions = await discovery.discoverActions()
 
-    if(options.mock)
-      debug("Initiating module discovery with mock path:", 2, options.mock)
-    else
-      debug("Initiating module discovery", 2)
-
-    let requestedPrinter, requestedParser
-
-    if(options.printer) {
-      requestedPrinter = options.printer
-      const { printer } = await discovery.specificPrinter(options.printer)
-      instance.printer = new printer(instance)
-      debug("Printer loaded", 3, options.printer)
+    const filteredActions = {
+      parse: [],
+      print: [],
     }
-
-    if(options.parser) {
-      requestedParser = options.parser
-      const { parser } = await discovery.specificParser(options.parser)
-      instance.parser = new parser(instance)
-      debug("Parser loaded:", 3, options.parser)
-    }
-
-    if(!instance.printer || !instance.parser) {
-      const discovered = await discovery.discoverModules(options.mock)
-      debug("Discovered modules:", 4, discovered)
-
-      if(!instance.parser) {
-        const language = instance.options.language
-        const selectedParser = discovered.parser[language]
-
-        if(!selectedParser) {
-          instance.logger.error(`[Core.new] No parser found for language ${language}`)
-          throw new Error(`[Core.new] No parser found for language ${language}`)
-        }
-
-        instance.parser = new selectedParser.parser(instance)
-        requestedParser = selectedParser
-      }
-
-      if(!instance.printer) {
-        const format = instance.options.format
-        const selectedPrinter = discovered.printer[format]
-
-        if(!selectedPrinter) {
-          instance.logger.error(`[Core.new] No printer found for format ${format}`)
-          throw new Error(`[Core.new] No printer found for format ${format}`)
-        }
-
-        instance.printer = new selectedPrinter.printer(instance)
-        requestedPrinter = selectedPrinter
+    for(const search of [{parse: "language",print: "format"}]) {
+      for(const [actionType, criterion] of Object.entries(search)) {
+        filteredActions[actionType] = actionDefinitions[actionType].filter(
+          a => a.action.meta[criterion] === options[criterion]
+        )
       }
     }
 
-    if(!requestedParser || !requestedPrinter)
-      throw new Error("[Core.new] No parser or printer loaded")
+    const matches = []
+    // Now let us find the ones that agree to a contract
+    for(const printer of filteredActions.print) {
+      for(const parser of filteredActions.parse) {
+        const satisfied = schemaCompare(parser.contract, printer.contract)
+        if(satisfied.status === "success") {
+          matches.push({parse: parser, print: printer})
+        }
+      }
+    }
 
-    if(!requestedParser.contract)
-      throw new Error("[Core.new] Parser contract not defined")
+    // We only want one!
+    if(matches.length > 1) {
+      const message = `Multiple matching actions found: `+
+        `${matches.map(m => m.print.name).join(", ")}`
+      throw new Error(message)
+    }
 
-    if(!requestedPrinter.contract)
-      throw new Error("[Core.new] Printer contract not defined")
+    const chosenActions = matches[0]
 
-    const satisfied = DataUtil.schemaCompare(
-      requestedParser.contract,
-      requestedPrinter.contract
+    if(Object.values(chosenActions).some(a => !a))
+      throw new Error("No found matching parser and printer")
+
+    const satisfied = schemaCompare(
+      chosenActions.parse.contract,
+      chosenActions.print.contract
     )
 
     if(satisfied.status === "error") {
-      instance.logger.error(`[Core.new] Module contract failed: ${satisfied.errors}`)
-      throw new AggregateError(satisfied.errors, "Module contract failed")
+      instance.logger.error(`[Core.new] action contract failed: ${satisfied.errors}`)
+      throw new AggregateError(satisfied.errors, "Action contract failed")
     } else if(satisfied.status !== "success") {
-      throw new Error(`[Core.new] Module contract failed: ${satisfied.message}`)
+      throw new Error(`[Core.new] Action contract failed: ${satisfied.message}`)
     }
 
     debug("Contracts satisfied between parser and printer", 2)
 
-    const hookManager = new HookManager(instance)
-    await hookManager.load()
+    // Adding to instance
+    instance.parser = new ParseManager(chosenActions.parse, instance.logger)
+    debug(`Attaching parse action to instance: \`${chosenActions.parse.module}\``, 2)
+    instance.printer = new PrintManager(chosenActions.print, instance.logger)
+    debug(`Attaching print action to instance: \`${chosenActions.print.module}\``, 2)
 
-    await hookManager.attachHooks(instance.parser)
-    await hookManager.attachHooks(instance.printer)
+    // Setup and attach hooks
+    for(const target of [
+      {manager: instance.parser, action: "parse"},
+      {manager: instance.printer, action: "print"}
+    ]) {
+      if(options.hooks) {
+        const {manager,action} = target
+        const hooks = await HooksManager.new({
+          action: action,
+          hooksFile: options.hooks,
+          logger: new Logger(instance.debugOptions),
+          timeout: options.hooksTimeout
+        })
 
-    debug("Hooks attached to parser and printer", 2)
-
-    debug("Injecting utilities", 2)
-    for(const target of [instance.parser, instance.printer]) {
-      // Let's inject some utilities
-      target.string = StringUtil
-      target.logger = new Logger({
-        name: target.constructor.name,
-        debugMode: instance.logger.debugMode,
-        debugLevel: instance.logger.debugLevel
-      })
-      target.data = DataUtil
-      target.valid = ValidUtil
+        if(hooks)
+          manager.hooks = hooks
+        else
+          instance.logger.warn(`No hooks found for action: \`${action}\``)
+      }
     }
 
     return instance
@@ -130,7 +111,7 @@ export default class Core {
     const debug = this.logger.newDebug()
     debug("Starting file processing", 1)
 
-    const { input, output } = this.options
+    const {input, output} = this.options
 
     debug("Processing input files", 2, input)
 
@@ -140,8 +121,8 @@ export default class Core {
     for(const fileMap of input) {
       debug(`Processing file \`${fileMap.path}\``, 2)
 
-      const fileContent = await FDUtil.readFile(fileMap)
-      debug(`Read file content: ${fileMap.path} (${fileContent.length} bytes)`, 2)
+      const fileContent = readFile(fileMap)
+      debug(`Read file content \`${fileMap.path}\` (${fileContent.length} bytes)`, 2)
 
       const parseResult = await this.parser.parse(fileMap.path, fileContent)
 
@@ -162,8 +143,8 @@ export default class Core {
         }
       }
 
-      debug("File parsed successfully:", 2, fileMap.path)
-      debug("Parse result for ${fileMap.path}:", 4, parseResult.result)
+      debug(`File parsed successfully: \`${fileMap.path}\``, 2)
+      debug(`Parse result for \`${fileMap.path}\`:`, 4, parseResult.result)
 
       const printResult = await this.printer.print(
         fileMap.module,
@@ -176,21 +157,16 @@ export default class Core {
       debug(`File printed successfully: ${fileMap.path}`, 2)
       debug(`Print result for ${fileMap.path}:`, 4, printResult)
 
-      const { destFile, content } = printResult
+      const {destFile, content} = printResult
 
-      await this.#outputFile(output, destFile, content)
+      this.#outputFile(output, destFile, content)
     }
 
     debug("File processing completed successfully", 1)
   }
 
-  async #outputFile(output, destFile, content) {
+  #outputFile(output, destFile, content) {
     const debug = this.logger.newDebug()
-    // try {
-    //   throw new Error()
-    // } catch(e){
-    //   console.log(e.stack)
-    // }
 
     debug(`Preparing to write output to ${destFile}.`, 3, output)
 
@@ -198,17 +174,16 @@ export default class Core {
       process.stdout.write(content + "\n")
       debug("Output written to stdout", 2)
     } else if(output && destFile) {
-      const destFileMap = FDUtil.composeFilename(output.path, destFile)
-      await FDUtil.writeFile(destFileMap, content)
+      const destFileMap = composeFilename(output.path, destFile)
+      writeFile(destFileMap, content)
       debug(`Output written to file: ${destFileMap.path}`, 2)
     } else {
       throw new Error("Output path and destination file required")
     }
   }
+}
 
-  async #loadPackageJson() {
-    const packageJsonFile = FDUtil.resolveFilename("./package.json")
-    const packageJsonContent = await ModuleUtil.loadJson(packageJsonFile)
-    return DataUtil.deepFreeze(packageJsonContent)
-  }
+export {
+  Core,
+  Environment,
 }
