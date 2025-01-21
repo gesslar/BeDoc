@@ -1,6 +1,6 @@
-import {ActionManager} from "#core"
+import ActionManager from "../ActionManager.js"
 
-export class PrintManager extends ActionManager {
+export default class PrintManager extends ActionManager {
   constructor(actionDefinition, logger) {
     super(actionDefinition, logger)
   }

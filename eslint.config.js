@@ -8,7 +8,7 @@ export default [
   jsdoc.configs['flat/recommended'],
   {
     name: "gesslar/bedoc/ignores",
-    ignores: ["docs/", "_docs/", "TODO/"],
+    ignores: ["docs/", "_docs/", "TODO/", "examples/source/"],
   },
   {
     name: "gesslar/bedoc/languageOptions",
@@ -23,7 +23,7 @@ export default [
   },
   {
     name: "gesslar/bedoc/lints",
-    files: ["src/**/*.js", "examples/**/*.js"],
+    files: ["src/**/*.c?js", "examples/**/*.js"],
     plugins: {
       "@stylistic/js": stylisticJs,
       "jsdoc": jsdoc

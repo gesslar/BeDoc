@@ -10,10 +10,11 @@ export const Hooks = {
 
     async enter({name, section}) {
       if(name === "description") {
-        const translated = await getDadJoke()
-        if(translated.status == "success")
-          section.description = [...section.description, translated.joke]
-        return translated
+        // const translated = await getDadJoke()
+        // if(translated.status == "success")
+        //   section.description = [...section.description, translated.joke]
+        //   section.description = [...section.description, translated.joke]
+        // return translated
       }
     }
   }

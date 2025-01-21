@@ -1,6 +1,6 @@
-import {ActionManager} from "#core"
+import ActionManager from "../ActionManager.js"
 
-export class ParseManager extends ActionManager {
+export default class ParseManager extends ActionManager {
   constructor(actionDefinition, logger) {
     super(actionDefinition, logger)
   }

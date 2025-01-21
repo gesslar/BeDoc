@@ -1,6 +1,10 @@
-import {Logger} from "#core"
-import {TypeSpec} from "./TypeSpec.js"
-import {validType} from "#util"
+import Logger from "../Logger.js"
+import TypeSpec from "./TypeSpec.js"
+
+import * as ValidUtil from "./ValidUtil.js"
+
+const {validType} = ValidUtil
+
 
 const primitives = [
   // Primitives
@@ -392,8 +396,6 @@ function schemaCompare(schema, definition, stack = [], logger = new Logger()) {
 }
 
 export {
-  // Classes
-  TypeSpec,
   // Variables
   dataTypes,
   emptyableTypes,

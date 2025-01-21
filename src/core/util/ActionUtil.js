@@ -1,4 +1,6 @@
-import {readFile,resolveFilename} from "#util"
+import * as FDUtil from "./FDUtil.js"
+
+const {readFile,resolveFilename} = FDUtil
 
 const freeze = Object.freeze
 
@@ -23,10 +25,11 @@ function loadJson(jsonFileObject) {
 
 /**
  * Loads the package.json file asynchronously
+ * @param {string|object} basePath - The base path to use
  * @returns {object} The parsed package.json content
  */
-function loadPackageJson() {
-  const packageJsonFileObject = resolveFilename("./package.json")
+function loadPackageJson(basePath = null) {
+  const packageJsonFileObject = resolveFilename("./package.json", basePath)
   const jsonContent = readFile(packageJsonFileObject)
   const json = JSON.parse(jsonContent)
   return json

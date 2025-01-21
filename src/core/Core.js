@@ -1,7 +1,15 @@
-import process from "node:process"
-import {Discovery,HooksManager,Logger} from "#core"
-import {ParseManager,PrintManager} from "#action"
-import {schemaCompare,composeFilename,readFile,writeFile,loadPackageJson} from "#util"
+import Discovery from "./Discovery.js"
+import {HooksManager} from "./HooksManager.js"
+import Logger from "./Logger.js"
+import ParseManager from "./action/ParseManager.js"
+import PrintManager from "./action/PrintManager.js"
+import Conveyor from "./Conveyor.js"
+
+import * as ActionUtil from "./util/ActionUtil.js"
+import * as DataUtil from "./util/DataUtil.js"
+
+const {loadPackageJson} = ActionUtil
+const {schemaCompare} = DataUtil
 
 const Environment = {
   EXTENSION: "extension",
@@ -108,78 +116,20 @@ class Core {
   }
 
   async processFiles() {
-    const debug = this.logger.newDebug()
-    debug("Starting file processing", 1)
+    const debug = this.logger.newDebug();
+    debug("Starting file processing with conveyor", 1);
 
-    const {input, output} = this.options
+    const { input, output } = this.options;
 
-    debug("Processing input files", 2, input)
+    if (!input) throw new Error("No input files specified");
 
-    if(!input)
-      throw new Error("No input files specified")
+    // Instantiate the conveyor
+    const conveyor = new Conveyor(this.parser, this.printer, this.logger, output);
 
-    for(const fileMap of input) {
-      debug(`Processing file \`${fileMap.path}\``, 2)
+    // Initiate the conveyor
+    await conveyor.convey(input, 10); // Process with a max concurrency of 10
 
-      const fileContent = readFile(fileMap)
-      debug(`Read file content \`${fileMap.path}\` (${fileContent.length} bytes)`, 2)
-
-      const parseResult = await this.parser.parse(fileMap.path, fileContent)
-
-      switch(parseResult.status) {
-        case "fatal error": {
-          const {error} = parseResult
-          throw error
-        }
-        case "error": {
-          const {line,lineNumber,message} = parseResult
-          throw new Error(`Failed to parse ${fileMap.path}: ${message} at ${lineNumber}\nLine: ${line}\nMessage: ${message}`)
-        }
-
-        case "warning": {
-          const {line,lineNumber,message} = parseResult
-          this.logger.warn(`${fileMap.path}: ${message} at ${lineNumber}\nLine: ${line}\nMessage: ${message}`)
-          break
-        }
-      }
-
-      debug(`File parsed successfully: \`${fileMap.path}\``, 2)
-      debug(`Parse result for \`${fileMap.path}\`:`, 4, parseResult.result)
-
-      const printResult = await this.printer.print(
-        fileMap.module,
-        parseResult.result
-      )
-
-      if(printResult.status === "error")
-        throw new Error(`[processFiles] Failed to print ${fileMap.path}: ${printResult.message}`)
-
-      debug(`File printed successfully: ${fileMap.path}`, 2)
-      debug(`Print result for ${fileMap.path}:`, 4, printResult)
-
-      const {destFile, content} = printResult
-
-      this.#outputFile(output, destFile, content)
-    }
-
-    debug("File processing completed successfully", 1)
-  }
-
-  #outputFile(output, destFile, content) {
-    const debug = this.logger.newDebug()
-
-    debug(`Preparing to write output to ${destFile}.`, 3, output)
-
-    if(this.options.env === Environment.CLI && !output) {
-      process.stdout.write(content + "\n")
-      debug("Output written to stdout", 2)
-    } else if(output && destFile) {
-      const destFileMap = composeFilename(output.path, destFile)
-      writeFile(destFileMap, content)
-      debug(`Output written to file: ${destFileMap.path}`, 2)
-    } else {
-      throw new Error("Output path and destination file required")
-    }
+    debug("File processing completed successfully", 1);
   }
 }
 

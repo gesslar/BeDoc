@@ -1,5 +1,3 @@
-#include <simul_efun.h>
-
 /**
  * Returns a new array containing the distinct elements of the input
  * array.
@@ -7,13 +5,7 @@
  * @param {mixed[]} arr - An array of mixed types.
  * @return {mixed[]} - A new array with distinct elements from the input array.
  */
-mixed *distinct_array(mixed *arr) {
-  mapping m ;
-
-  m = allocate_mapping(arr, 0) ;
-
-  return keys(m) ;
-}
+mixed *distinct_array(mixed *arr) {}
 
 /**
  * Returns a new array containing the elements of the input array
@@ -27,11 +19,7 @@ mixed *distinct_array(mixed *arr) {
  *                      start if not specified.
  * @return {mixed[]} - A new array with specified elements removed.
  */
-varargs mixed *remove_array_element(mixed *arr, int start, int end) {
-  if(!end) end = start ;
-  if(start > end) return arr ;
-  return arr[0..start-1] + arr[end+1..] ;
-}
+varargs mixed *remove_array_element(mixed *arr, int start, int end) {}
 
 /**
  * Modifies the content of an array by removing existing elements
@@ -51,16 +39,7 @@ varargs mixed *remove_array_element(mixed *arr, int start, int end) {
  *                                   null if no elements are to be added.
  * @return {mixed[]} - A new array reflecting the desired modifications.
  */
-varargs mixed *splice(mixed *arr, int start, int delete_count, mixed *items_to_add) {
-  mixed *before, *after ;
-  if(!pointerp(items_to_add))
-    items_to_add = ({}) ;
-
-  before = arr[0..start - 1] ;
-  after = arr[start + delete_count..] ;
-
-  return before + items_to_add + after ;
-}
+varargs mixed *splice(mixed *arr, int start, int delete_count, mixed *items_to_add) {}
 
 /**
  * Returns a new array with the elements of the input array in
@@ -69,15 +48,7 @@ varargs mixed *splice(mixed *arr, int start, int delete_count, mixed *items_to_a
  * @param {mixed[]} arr - The input array.
  * @return {mixed[]} - A new array with elements in reverse order.
  */
-mixed *reverse_array(mixed *arr) {
-  int i, j, sz ;
-  mixed *ret ;
-
-  for(i = 0, j = sizeof(arr) - 1, sz = sizeof(arr), ret = allocate(sz); i < sz; i++, j--)
-    ret[i] = arr[j] ;
-
-  return ret ;
-}
+mixed *reverse_array(mixed *arr) {}
 
 /**
  * Checks if all elements in the input array are of the specified
@@ -88,14 +59,7 @@ mixed *reverse_array(mixed *arr) {
  * @return {int} - Returns 1 if all elements are of the specified type, 0
  *                  otherwise.
  */
-int uniform_array(string type, mixed *arr) {
-  int sz = sizeof(arr) ;
-
-  if(!sz)
-    return 1 ;
-
-  return sizeof(filter(arr, (: typeof($1) == $2 :), type)) == sz ;
-}
+int uniform_array(string type, mixed *arr) {}
 
 /**
  * Returns an array filled with the specified value. If no array
@@ -108,32 +72,7 @@ int uniform_array(string type, mixed *arr) {
  * @param {int} start_index - The index at which to start filling the array. (optional)
  * @return {mixed} - The filled array.
  */
-varargs mixed array_fill(mixed *arr, mixed value, int size, int start_index) {
-  mixed *work, *ret ;
-  int i ;
-  int len ;
-
-  if(!pointerp(arr))
-    arr = ({}) ;
-
-  if(nullp(value))
-    value = 0 ;
-
-  if(nullp(size))
-    error("array_fill: size is required") ;
-
-  len = sizeof(arr) ;
-
-  if(nullp(start_index))
-    start_index = len ;
-
-  work = allocate(size) ;
-
-  while(size--)
-    work[size] = value ;
-
-  return arr[0..start_index-1] + work + arr[start_index..] ;
-}
+varargs mixed array_fill(mixed *arr, mixed value, int size, int start_index) {}
 
 /**
  * Returns a new array of the specified size, filled with the
@@ -146,32 +85,7 @@ varargs mixed array_fill(mixed *arr, mixed value, int size, int start_index) {
  * @param {int} beginning - Whether to fill the array from the beginning. (optional)
  * @return {mixed} - The padded array.
  */
-varargs mixed array_pad(mixed *arr, int size, mixed value, int beginning) {
-  mixed *work, *ret ;
-  int i ;
-  int len ;
-
-  if(!pointerp(arr))
-    arr = ({}) ;
-
-  if(nullp(value))
-    value = 0 ;
-
-  len = sizeof(arr) ;
-
-  if(size <= len)
-    return arr[0..size-1] ;
-
-  work = allocate(size - len) ;
-
-  while(size--)
-    work[size] = value ;
-
-  if(beginning)
-    return work + arr ;
-  else
-    return arr + work ;
-}
+varargs mixed array_pad(mixed *arr, int size, mixed value, int beginning) {}
 
 /**
  * Removes and returns the last element of the array.
@@ -179,14 +93,7 @@ varargs mixed array_pad(mixed *arr, int size, mixed value, int beginning) {
  * @param {mixed[]} arr - The array from which to pop an element.
  * @return {mixed} - The last element of the array.
  */
-mixed pop(mixed ref *arr) {
-  mixed ret ;
-
-  ret = arr[<1] ;
-  arr = arr[0..<2] ;
-
-  return ret ;
-}
+mixed pop(mixed ref *arr) {}
 
 /**
  * Adds a new element to the end of the array and returns the new
@@ -196,10 +103,7 @@ mixed pop(mixed ref *arr) {
  * @param {mixed} value - The element to push onto the array.
  * @return {int} - The new size of the array.
  */
-int push(mixed ref *arr, mixed value) {
-  arr += ({ value }) ;
-  return sizeof(arr) ;
-}
+int push(mixed ref *arr, mixed value) {}
 
 /**
  * Removes and returns the first element of the array.
@@ -207,14 +111,7 @@ int push(mixed ref *arr, mixed value) {
  * @param {mixed[]} arr - The array from which to shift an element.
  * @return {mixed} - The first element of the array.
  */
-mixed shift(mixed ref *arr) {
-  mixed ret ;
-
-  ret = arr[0] ;
-  arr = arr[1..] ;
-
-  return ret ;
-}
+mixed shift(mixed ref *arr) {}
 
 /**
  * Adds a new element to the beginning of the array and returns
@@ -224,10 +121,7 @@ mixed shift(mixed ref *arr) {
  * @param {mixed} value - The element to unshift onto the array.
  * @return {int} - The new size of the array.
  */
-int unshift(mixed ref *arr, mixed value) {
-  arr = ({ value }) + arr ;
-  return sizeof(arr) ;
-}
+int unshift(mixed ref *arr, mixed value) {}
 
 /**
  * Returns a new array containing the elements of the input array
@@ -239,15 +133,7 @@ int unshift(mixed ref *arr, mixed value) {
  * @param {int} end - The ending index of the slice.
  * @return {mixed[]} - A new array with the specified elements.
  */
-varargs mixed *array_slice(mixed *arr, int start, int end) {
-  if(nullp(arr))
-    return ({}) ;
-
-  if(end < 0)
-    end = sizeof(arr) + end ;
-
-  return arr[start..end] ;
-}
+varargs mixed *array_slice(mixed *arr, int start, int end) {}
 
 /**
  * Merges two arrays into a single array.
@@ -256,6 +142,4 @@ varargs mixed *array_slice(mixed *arr, int start, int end) {
  * @param {mixed[]} arr2 - The second array to merge.
  * @return {mixed[]} - A new array with elements from both input arrays.
  */
-mixed *array_merge(mixed *arr1, mixed *arr2) {
-  return arr1 + arr2 ;
-}
+mixed *array_merge(mixed *arr1, mixed *arr2) {}

@@ -1,4 +1,6 @@
-import {newTypeSpec} from "#util"
+import * as DataUtil from "./util/DataUtil.js"
+
+const {newTypeSpec} = DataUtil
 
 const ConfigurationParameters = Object.freeze({
   input: {

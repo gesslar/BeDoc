@@ -1,12 +1,20 @@
 import process from "node:process"
-import {ConfigurationParameters,ConfigurationPriorityKeys} from "#core"
-import {isType,isNothing,getFiles,resolveFilename,resolveDirectory,fdType,fdTypes,loadJson,mapObject} from "#util"
 
-Object.prototype.insert = obj => {
-  for(const [key, value] of Object.entries(obj))this[key] = value
-}
+import {
+  ConfigurationParameters,
+  ConfigurationPriorityKeys
+} from "./ConfigurationParameters.js"
 
-class Configuration {
+import * as ActionUtil from "./util/ActionUtil.js"
+import * as DataUtil from "./util/DataUtil.js"
+import * as FDUtil from "./util/FDUtil.js"
+
+const {loadJson} = ActionUtil
+const {isNothing, isType, mapObject} = DataUtil
+const {getFiles, resolveDirectory, resolveFilename} = FDUtil
+const {fdType,fdTypes} = FDUtil
+
+export default class Configuration {
   async validate(options) {
     const finalOptions = {}
 
@@ -153,18 +161,17 @@ class Configuration {
     if(environmentVariables)
       allOptions.push({source: "environment", options: environmentVariables})
 
-    const packageJson = resolveFilename("./package.json")
-    const packageJsonOptions = loadJson(packageJson)
-    if(packageJsonOptions.bedoc)
-      allOptions.push({source: "packageJson", options: packageJsonOptions.bedoc})
+    const packageJson = cliOptions.packageJson
+    if(packageJson.bedoc)
+      allOptions.push({source: "packageJson", options: packageJson.bedoc})
 
     // Then the config file, if the options specified a config file
     const useConfig = cliOptions.config
-      || packageJsonOptions?.bedoc?.config
+      || packageJson?.bedoc?.config
       || environmentVariables?.config
 
     if(useConfig) {
-      const configFilename = packageJsonOptions?.bedoc?.config
+      const configFilename = packageJson?.bedoc?.config
         || cliOptions.config
 
       if(!configFilename)
@@ -270,8 +277,4 @@ class Configuration {
       }
     }
   }
-}
-
-export {
-  Configuration,
 }
