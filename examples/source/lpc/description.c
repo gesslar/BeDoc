@@ -1,90 +1,48 @@
-#include <simul_efun.h>
-
 /**
- * @simul_efun get_short
- * @description Returns the short description of an object, optionally
- *              including extra short descriptions in parentheses.
+ * Returns the short description of an object, optionally
+ * including extra short descriptions in parentheses.
  * @param {object} ob - The object to get the short description of.
- * @param {int} [extras=1] - Whether to include extra short descriptions.
- *                           Defaults to 1 (include extras).
- * @returns {string} - The short description of the object, including any
- *                     extra short descriptions.
+ * @param {int} extras - Whether to include extra short descriptions.
+ *                       Defaults to 1 (include extras).
+ * @return {string} - The short description of the object, including any
+ *                    extra short descriptions.
  */
-varargs string get_short(object ob, int extras) {
-    string result ;
-    string *extra_shorts ;
-
-    if(!ob)
-        ob = previous_object() ;
-    if(nullp(extras))
-        extras = 1 ;
-
-    result = ob->query_short() ;
-    if(!result) return "" ;
-
-    extras = !!extras ;
-    if(extras == 1) {
-        extra_shorts = ob->query_extra_shorts() || ({ }) ;
-        extra_shorts = filter(extra_shorts, (: stringp :)) ;
-        extra_shorts = filter(extra_shorts, (: $1 != "" :)) ;
-        extra_shorts -= ({ 0 }) ;
-        if(sizeof(extra_shorts)) {
-            extra_shorts = map(extra_shorts, (: sprintf("(%s)", $1) :)) ;
-            result += " " + implode(extra_shorts, " ") ;
-        }
-    }
-
-    return result ;
-}
+varargs string get_short(object ob, int extras) {}
 
 /**
- * @simul_efun get_long
- * @description Returns the long description of an object, optionally
- *              including extra long descriptions.
+ * Returns the long description of an object, optionally
+ * including extra long descriptions.
  * @param {object} ob - The object to get the long description of.
- * @param {int} [extras=1] - Whether to include extra long descriptions.
- *                           Defaults to 1 (include extras).
- * @returns {string} - The long description of the object, including any
- *                     extra long descriptions.
+ * @param {int} extras - Whether to include extra long descriptions.
+ *                       Defaults to 1 (include extras).
+ * @return {string} - The long description of the object, including any
+ *                    extra long descriptions.
  */
-string get_long(object ob, int extras) {
-    string result ;
-    string *extra_longs, *parts ; ;
+string get_long(object ob, int extras) {}
 
-    if(!ob)
-        ob = previous_object() ;
-    if(nullp(extras))
-        extras = 1 ;
+/**
+ * Generates a description for an object based on its properties.
+ * @param {object} obj - The object to generate a description for.
+ * @return {string} - The generated description.
+ */
+string generate_description(object obj) {}
 
-    result = ob->query_long() ;
-    if(!result) return "" ;
+/**
+ * Sets the description for an object.
+ * @param {object} obj - The object to set the description for.
+ * @param {string} desc - The description to set.
+ */
+void set_description(object obj, string desc) {}
 
-    // remove all double newlines
-    parts = explode(result, "\n\n") ;
-    parts = map(parts, function(string part) {
-        while(part[<1] == '\n') part = part[0..<2] ;
-        return part ;
-    }) ;
-    result = implode(parts, "\n\n") ;
+/**
+ * Appends additional information to an object's description.
+ * @param {object} obj - The object to append the description to.
+ * @param {string} additional_desc - The additional description to append.
+ */
+void append_description(object obj, string additional_desc) {}
 
-    extras = !!extras ;
-    if(extras == 1) {
-        extra_longs = ob->query_extra_longs() || ({ }) ;
-        extra_longs = filter(extra_longs, (: stringp :)) ;
-        extra_longs = filter(extra_longs, (: $1 != "" :)) ;
-        extra_longs -= ({ 0 }) ;
-        if(sizeof(extra_longs)) {
-            extra_longs = map(extra_longs, function(string extra_long) {
-                while(extra_long[<1] == '\n') extra_long = extra_long[0..<2] ;
-                return extra_long + "\n" ;
-            }) ;
-
-            result += "\n" + implode(extra_longs, "\n") ;
-        }
-    }
-
-    while(result[<1] == '\n')
-        result = result[0..<2] ;
-
-    return result ;
-}
+/**
+ * Clears the description of an object.
+ * @param {object} obj - The object to clear the description for.
+ */
+void clear_description(object obj) {}

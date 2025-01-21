@@ -1,11 +1,17 @@
-import {allocateObject, isArrayUniform, isType, validType} from "#util"
 import fs from "fs"
 import {globby} from "globby"
 import path from "node:path"
 import process from "node:process"
 import {fileURLToPath, pathToFileURL} from "node:url"
 
+import * as DataUtil from "./DataUtil.js"
+import * as ValidUtil from "./ValidUtil.js"
+
+const {isArrayUniform, isType, allocateObject} = DataUtil
+const {validType} = ValidUtil
+
 const freeze = ob => Object.freeze(ob)
+
 const fdTypes = freeze(["file", "directory"])
 const upperFdTypes = freeze(fdTypes.map(type => type.toUpperCase()))
 const fdType = freeze(await allocateObject(upperFdTypes, fdTypes))
@@ -68,7 +74,12 @@ function resolveFilename(fileName, directoryObject = null) {
     directoryObject = resolveDirectory(directoryNamePart)
 
   const fileObject = composeFilename(directoryObject, fileNamePart)
-  fs.opendirSync(directoryObject.absolutePath).closeSync()
+  try {
+    fs.opendirSync(directoryObject.absolutePath).closeSync()
+  } catch(e) {
+    void e
+    throw new Error(`Failed to resolve directory: ${directoryObject.absolutePath}, looking for file: ${fileNamePart}`)
+  }
 
   return {
     ...fileObject,
@@ -188,6 +199,13 @@ function resolveDirectory(directoryName) {
   validType(directoryName, "string", true)
 
   const directoryObject = mapDirectory(directoryName)
+
+  try {
+    fs.opendirSync(directoryObject.absolutePath).closeSync()
+  } catch(e) {
+    throw new Error(`Failed to resolve directory: ${directoryObject.absolutePath}, looking for file: ${directoryName}\n${e.message}`)
+  }
+
   fs.opendirSync(directoryObject.absolutePath).closeSync()
 
   return directoryObject

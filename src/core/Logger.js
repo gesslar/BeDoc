@@ -1,7 +1,13 @@
-import console from "console"
+import console from "node:console"
 import ErrorStackParser from "error-stack-parser"
-import {Environment} from "#core"
-import {resolveFilename,capitalize} from "#util"
+
+import {Environment} from "./Core.js"
+
+import * as FDUtil from "./util/FDUtil.js"
+import * as StringUtil from "./util/StringUtil.js"
+
+const {resolveFilename} = FDUtil
+const {capitalize} = StringUtil
 
 const loggerColours = {
   debug: [
@@ -35,7 +41,7 @@ const loggerColours = {
  * - error: Error information
  */
 
-class Logger {
+export default class Logger {
   #name = null
   #debugMode = false
   #debugLevel = 0
@@ -164,8 +170,4 @@ class Logger {
     console.error(this.#compose("error", message), ...arg)
     this.vscodeError?.(JSON.stringify(message))
   }
-}
-
-export {
-  Logger,
 }

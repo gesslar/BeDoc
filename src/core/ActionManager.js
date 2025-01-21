@@ -1,6 +1,6 @@
-import {hookPoints} from "#core"
+import {hookPoints} from "./HooksManager.js"
 
-class ActionManager {
+export default class ActionManager {
   #action = null
   #meta = {}
   #hooks = null
@@ -73,8 +73,4 @@ class ActionManager {
   get log() {
     return this.#log
   }
-}
-
-export {
-  ActionManager,
 }

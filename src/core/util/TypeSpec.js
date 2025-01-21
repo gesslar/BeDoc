@@ -1,6 +1,8 @@
-import {isEmpty,typeOf,isValidType,isArrayUniform} from "#util"
+import * as DataUtil from "./DataUtil.js"
 
-class TypeSpec {
+const {isEmpty, typeOf, isArrayUniform, isValidType} = DataUtil
+
+export default class TypeSpec {
   #specs
 
   constructor(string, options) {
@@ -98,16 +100,11 @@ class TypeSpec {
         throw new TypeError(`Invalid type: ${part}`)
       if(!isValidType(typeMatches[1]))
         throw new TypeError(`Invalid type: ${typeMatches[1]}`)
-      const [_, type, isArray] = typeMatches
 
       return {
-        typeName: type,
-        array: isArray === "[]"
+        typeName: typeMatches[1],
+        array: typeMatches[2] === "[]"
       }
     })
   }
-}
-
-export {
-  TypeSpec,
 }

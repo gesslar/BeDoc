@@ -3,14 +3,23 @@
 import {program} from "commander"
 import console from "node:console"
 import process from "node:process"
-import {Core, Configuration, ConfigurationParameters, Environment} from "#core"
-import {loadPackageJson} from "#util"
+
+import {Core,Environment} from "./core/Core.js"
+import Configuration from "./core/Configuration.js"
+import {ConfigurationParameters} from "./core/ConfigurationParameters.js"
+
+import * as ActionUtil from "./core/util/ActionUtil.js"
+import * as FDUtil from "./core/util/FDUtil.js"
+
+const {loadPackageJson} = ActionUtil
+const {resolveDirectory} = FDUtil
 
 // Main entry point
-(async() => {
+;(async() => {
   try {
     // Get package info
-    const packageJson = loadPackageJson()
+    const basePath = resolveDirectory(process.cwd())
+    const packageJson = loadPackageJson(basePath)
 
     // Setup program
     program
@@ -47,6 +56,10 @@ import {loadPackageJson} from "#util"
       }
       optionsWithSources[key] = element
     }
+
+    // Inject the basepath from the CLI
+    optionsWithSources.basePath = {value: basePath, source: "cli"}
+    optionsWithSources.packageJson = {value: packageJson, source: "cli"}
 
     // Validate options using ConfigValidator
     const configuration = new Configuration()

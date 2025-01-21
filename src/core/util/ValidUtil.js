@@ -1,5 +1,8 @@
 import _assert from "node:assert/strict"
-import {isType} from "#util"
+
+import * as DataUtil from "./DataUtil.js"
+
+const {isType} = DataUtil
 
 /**
  * Validates a value against a type

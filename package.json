@@ -2,17 +2,12 @@
   "name": "bedoc",
   "version": "1.0.0",
   "description": "Pluggable documentation engine for any language and format",
-  "main": "./src/core/Core.js",
+  "publisher": "gesslar",
   "bin": {
     "bedoc": "./src/cli.js"
   },
   "exports": {
     "./*": "./src/*"
-  },
-  "imports": {
-    "#core": "./src/core/index.js",
-    "#util": "./src/core/util/index.js",
-    "#action": "./src/core/action/index.js"
   },
   "type": "module",
   "scripts": {
@@ -26,6 +21,7 @@
     "globby": "^14.0.2",
     "micromatch": "^4.0.8",
     "node-fetch": "^3.3.2",
+    "vscode-uri": "^3.0.8",
     "yaml": "^2.7.0"
   },
   "devDependencies": {
@@ -35,14 +31,6 @@
   "engines": {
     "vscode": "^1.80.0"
   },
-  "contributes": {
-    "commands": [
-      {
-        "command": "bedoc.generate",
-        "title": "Generate Documentation"
-      }
-    ]
-  },
   "keywords": [
     "documentation",
     "plugin",
@@ -50,5 +38,18 @@
     "printer"
   ],
   "author": "gesslar",
-  "license": "Unlicense"
+  "license": "Unlicense",
+  "main": "./src/extension.cjs",
+  "contributes": {
+    "commands": [
+      {
+        "command": "vscode-bedoc.generateDocs",
+        "title": "BeDoc: Generate Documentation"
+      }
+    ]
+  },
+  "extensionKind": [
+    "workspace",
+    "ui"
+  ]
 }

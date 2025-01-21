@@ -1,12 +1,20 @@
 // import {process} from "node:process"
 import yaml from "yaml"
 import {execSync} from "child_process"
-import {actionMetaRequirements,actionTypes,assert,getFiles,isType} from "#util"
-import {loadJson,ls,resolveDirectory,resolveFilename} from "#util"
+
+import * as FDUtil from "./util/FDUtil.js"
+import * as ActionUtil from "./util/ActionUtil.js"
+import * as DataUtil from "./util/DataUtil.js"
+import * as ValidUtil from "./util/ValidUtil.js"
+
+const {ls, resolveDirectory, resolveFilename, getFiles} = FDUtil
+const {actionTypes,actionMetaRequirements,loadJson} = ActionUtil
+const {isType} = DataUtil
+const {assert} = ValidUtil
 
 let debug
 
-class Discovery {
+export default class Discovery {
   #logger
 
   constructor(core) {
@@ -183,8 +191,4 @@ class Discovery {
 
     return true
   }
-}
-
-export {
-  Discovery,
 }

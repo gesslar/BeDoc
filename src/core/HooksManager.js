@@ -1,5 +1,10 @@
-import {isEmpty,isType,assert, allocateObject} from "#util"
 import {setTimeout as timeoutPromise} from "timers/promises"
+
+import * as DataUtil from "./util/DataUtil.js"
+import * as ValidUtil from "./util/ValidUtil.js"
+
+const {isEmpty, isType, allocateObject} = DataUtil
+const {assert} = ValidUtil
 
 const freeze = Object.freeze
 
