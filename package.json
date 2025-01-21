@@ -15,7 +15,7 @@
     "lint:fix": "npx eslint . --fix"
   },
   "dependencies": {
-    "commander": "^13.0.0",
+    "commander": "^13.1.0",
     "error-stack-parser": "^2.1.4",
     "eslint-plugin-jsdoc": "^50.6.2",
     "globby": "^14.0.2",
