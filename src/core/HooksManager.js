@@ -9,10 +9,12 @@ const {assert} = ValidUtil
 const freeze = Object.freeze
 
 const hookEvents = freeze(["start", "section_load", "enter", "exit", "end"])
-const hookPoints = freeze(await allocateObject(
-  hookEvents.map(event => event.toUpperCase()),
-  hookEvents
-))
+const hookPoints = freeze(
+  await allocateObject(
+    hookEvents.map((event) => event.toUpperCase()),
+    hookEvents,
+  ),
+)
 
 class HooksManager {
   #hooksFile = null
@@ -21,7 +23,7 @@ class HooksManager {
   #action = null
   #timeout = 1
 
-  constructor({action,hooksFile,logger,timeOut: timeout}) {
+  constructor({action, hooksFile, logger, timeOut: timeout}) {
     this.#action = action
     this.#hooksFile = hooksFile
     this.#log = logger
@@ -75,8 +77,7 @@ class HooksManager {
 
     debug(`Hooks found for action: \`${instance.action}\``, 2)
 
-    if(!hooksObj)
-      return null
+    if(!hooksObj) return null
 
     instance.#hooks = hooksObj
 
@@ -97,8 +98,7 @@ class HooksManager {
 
     debug(`Triggering hook for event: ${event}`, 3)
 
-    if(!event)
-      throw new Error("Event type is required for hook invocation")
+    if(!event) throw new Error("Event type is required for hook invocation")
 
     if(!hookEvents.includes(event))
       throw new Error(`[HookManager.on] Invalid event type: ${event}`)
@@ -106,17 +106,21 @@ class HooksManager {
     const hook = this.hooks[event]
 
     if(hook) {
-      assert(isType(hook, "function"), `[HookManager.on] Hook "${event}" is not a function`, 1)
+      assert(
+        isType(hook, "function"),
+        `[HookManager.on] Hook "${event}" is not a function`,
+        1,
+      )
       const hookExecution = await hook(...args)
       const hookTimeout = this.parent.timeout
-      const expireAsync = () => timeoutPromise(
-        hookTimeout,
-        new Error(`Hook execution exceeded timeout of ${hookTimeout}ms`)
-      )
+      const expireAsync = () =>
+        timeoutPromise(
+          hookTimeout,
+          new Error(`Hook execution exceeded timeout of ${hookTimeout}ms`),
+        )
       const result = await Promise.race([hookExecution, expireAsync()])
 
-      if(result?.status === "error")
-        throw result.error
+      if(result?.status === "error") throw result.error
 
       debug(`Hook executed successfully for event: ${event}`, 3)
 
@@ -129,5 +133,5 @@ export {
   // Class
   HooksManager,
   // Constants
-  hookPoints
+  hookPoints,
 }

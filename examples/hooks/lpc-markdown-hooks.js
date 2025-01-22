@@ -16,8 +16,8 @@ export const Hooks = {
         //   section.description = [...section.description, translated.joke]
         // return translated
       }
-    }
-  }
+    },
+  },
 }
 
 /**
@@ -34,8 +34,7 @@ async function getDadJoke() {
       method: "GET",
       headers: headers,
     })
-    if(!response.ok)
-      throw new Error(`HTTP error! status: ${response.status}`)
+    if(!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
 
     const data = await response.json()
     return {

@@ -12,7 +12,7 @@ const ConfigurationParameters = Object.freeze({
     path: {
       type: "file",
       mustExist: true,
-    }
+    },
   },
   exclude: {
     short: "x",
@@ -36,6 +36,14 @@ const ConfigurationParameters = Object.freeze({
     required: false,
     exclusiveOf: "printer",
   },
+  maxConcurrent: {
+    short: "C",
+    param: "num",
+    description: "Maximum number of concurrent tasks",
+    type: newTypeSpec("number"),
+    required: false,
+    default: 10,
+  },
   hooks: {
     short: "k",
     param: "file",
@@ -45,7 +53,7 @@ const ConfigurationParameters = Object.freeze({
     path: {
       type: "file",
       mustExist: true,
-    }
+    },
   },
   output: {
     short: "o",
@@ -56,7 +64,7 @@ const ConfigurationParameters = Object.freeze({
     path: {
       type: "directory",
       mustExist: true,
-    }
+    },
   },
   parser: {
     short: "p",
@@ -68,7 +76,7 @@ const ConfigurationParameters = Object.freeze({
     path: {
       type: "file",
       mustExist: true,
-    }
+    },
   },
   printer: {
     short: "P",
@@ -80,7 +88,7 @@ const ConfigurationParameters = Object.freeze({
     path: {
       type: "file",
       mustExist: true,
-    }
+    },
   },
   hookTimeout: {
     short: "T",
@@ -99,7 +107,7 @@ const ConfigurationParameters = Object.freeze({
     path: {
       type: "directory",
       mustExist: true,
-    }
+    },
   },
   config: {
     short: "c",
@@ -110,7 +118,7 @@ const ConfigurationParameters = Object.freeze({
     path: {
       type: "file",
       mustExist: true,
-    }
+    },
   },
   debug: {
     short: "d",
@@ -126,15 +134,9 @@ const ConfigurationParameters = Object.freeze({
     type: newTypeSpec("number"),
     required: false,
     default: 0,
-  }
+  },
 })
 
-const ConfigurationPriorityKeys = Object.freeze([
-  "exclude",
-  "input",
-])
+const ConfigurationPriorityKeys = Object.freeze(["exclude", "input"])
 
-export {
-  ConfigurationParameters,
-  ConfigurationPriorityKeys,
-}
+export {ConfigurationParameters, ConfigurationPriorityKeys}

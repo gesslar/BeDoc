@@ -23,14 +23,11 @@ export default class ActionManager {
 
     const {action, contract, module, meta} = actionDefinition
 
-    if(!action)
-      throw new Error("Action is required")
+    if(!action) throw new Error("Action is required")
 
-    if(!contract)
-      throw new Error("Contract is required")
+    if(!contract) throw new Error("Contract is required")
 
-    if(!module)
-      throw new Error("Module is required")
+    if(!module) throw new Error("Module is required")
 
     this.#module = module
     this.#action = action
@@ -49,8 +46,7 @@ export default class ActionManager {
   }
 
   set hooks(hookManager) {
-    if(this.hooks)
-      throw new Error("Hooks already set")
+    if(this.hooks) throw new Error("Hooks already set")
 
     this.action.hook = hookManager.on.bind(this.action)
     this.action.HOOKS = hookPoints

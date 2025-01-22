@@ -1,10 +1,10 @@
 import * as FDUtil from "./FDUtil.js"
 
-const {readFile,resolveFilename} = FDUtil
+const {readFile, resolveFilename} = FDUtil
 
 const freeze = Object.freeze
 
-const actionTypes = freeze(["parse", "print",])
+const actionTypes = freeze(["parse", "print"])
 
 const actionMetaRequirements = freeze({
   parse: [{action: "parse"}, "language"],

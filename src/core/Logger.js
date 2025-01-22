@@ -11,16 +11,16 @@ const {capitalize} = StringUtil
 
 const loggerColours = {
   debug: [
-    "\x1b[38;5;19m",  // Debug level 0: Dark blue
-    "\x1b[38;5;27m",  // Debug level 1: Medium blue
-    "\x1b[38;5;33m",  // Debug level 2: Light blue
-    "\x1b[38;5;39m",  // Debug level 3: Teal
-    "\x1b[38;5;51m",  // Debug level 4: Bright cyan
+    "\x1b[38;5;19m", // Debug level 0: Dark blue
+    "\x1b[38;5;27m", // Debug level 1: Medium blue
+    "\x1b[38;5;33m", // Debug level 2: Light blue
+    "\x1b[38;5;39m", // Debug level 3: Teal
+    "\x1b[38;5;51m", // Debug level 4: Bright cyan
   ],
-  info: "\x1b[32m",   // Green
-  warn: "\x1b[33m",   // Yellow
-  error: "\x1b[31m",  // Red
-  reset: "\x1b[0m",   // Reset
+  info: "\x1b[32m", // Green
+  warn: "\x1b[33m", // Yellow
+  error: "\x1b[31m", // Red
+  reset: "\x1b[0m", // Reset
 }
 
 /**
@@ -75,7 +75,7 @@ export default class Logger {
     return {
       name: this.#name,
       debugMode: this.#debugMode,
-      debugLevel: this.#debugLevel
+      debugLevel: this.#debugLevel,
     }
   }
 
@@ -127,20 +127,18 @@ export default class Logger {
 
     let result = functionName
 
-    if(level >= 2)
-      result = `${result}:${line}:${col}`
+    if(level >= 2) result = `${result}:${line}:${col}`
 
-    if(level >= 3)
-      result = `${absoluteUri} ${result}`
+    if(level >= 3) result = `${absoluteUri} ${result}`
 
     return result
   }
 
   newDebug(tag) {
-    return (function(message, level, ...arg) {
+    return function(message, level, ...arg) {
       tag = this.extractFileFunction(this.#debugLevel)
       this.debug(`[${tag}] ${message}`, level, ...arg)
-    }).bind(this)
+    }.bind(this)
   }
 
   debug(message, level = 0, ...arg) {

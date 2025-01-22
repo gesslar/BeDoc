@@ -8,7 +8,6 @@ export const Hooks = {
       if(name === "return") {
         console.debug("section", JSON.stringify(section, null, 1))
       }
-    }
-  }
-
+    },
+  },
 }

@@ -2,7 +2,7 @@ import process from "node:process"
 
 import {
   ConfigurationParameters,
-  ConfigurationPriorityKeys
+  ConfigurationPriorityKeys,
 } from "./ConfigurationParameters.js"
 
 import * as ActionUtil from "./util/ActionUtil.js"
@@ -12,7 +12,7 @@ import * as FDUtil from "./util/FDUtil.js"
 const {loadJson} = ActionUtil
 const {isNothing, isType, mapObject} = DataUtil
 const {getFiles, resolveDirectory, resolveFilename} = FDUtil
-const {fdType,fdTypes} = FDUtil
+const {fdType, fdTypes} = FDUtil
 
 export default class Configuration {
   async validate(options) {
@@ -32,7 +32,7 @@ export default class Configuration {
     if(configValidationErrors.length > 0)
       throw new AggregateError(
         configValidationErrors,
-        `ConfigurationParameters validation errors: ${configValidationErrors.join(", ")}`
+        `ConfigurationParameters validation errors: ${configValidationErrors.join(", ")}`,
       )
 
     const allOptions = this.#findAllOptions(options)
@@ -44,7 +44,7 @@ export default class Configuration {
     // Find them and add them to an array; the rest will be in pushed to the
     // end of the priority array.
     const orderedSections = []
-    ConfigurationPriorityKeys.forEach(key => {
+    ConfigurationPriorityKeys.forEach((key) => {
       if(!ConfigurationParameters[key])
         throw new Error(`Invalid priority key: ${key}`)
 
@@ -52,25 +52,32 @@ export default class Configuration {
         orderedSections.push({key, value: finalOptions[key]})
     })
 
-    const remainingSections = Object.keys(ConfigurationParameters)
-      .filter(key => !ConfigurationPriorityKeys.includes(key))
-    orderedSections.push(...remainingSections.map(key => {
-      return {key, value: finalOptions[key]}
-    }))
+    const remainingSections = Object.keys(ConfigurationParameters).filter(
+      (key) => !ConfigurationPriorityKeys.includes(key),
+    )
+    orderedSections.push(
+      ...remainingSections.map((key) => {
+        return {key, value: finalOptions[key]}
+      }),
+    )
 
     // Check exclusive options
     for(const [key, param] of Object.entries(ConfigurationParameters)) {
-      if(param.exclusiveOf && finalOptions[key] &&
-         finalOptions[param.exclusiveOf])
-        throw new SyntaxError(`Options \`${key}\` and \`${param.exclusiveOf}\` are mutually exclusive`)
+      if(
+        param.exclusiveOf &&
+        finalOptions[key] &&
+        finalOptions[param.exclusiveOf]
+      )
+        throw new SyntaxError(
+          `Options \`${key}\` and \`${param.exclusiveOf}\` are mutually exclusive`,
+        )
     }
 
     for(const section of orderedSections) {
       const {key} = section
 
       // Skipping config, we've already handled it
-      if(key === "config")
-        continue
+      if(key === "config")continue
 
       let {value} = section
       const nothing = isNothing(value)
@@ -80,8 +87,7 @@ export default class Configuration {
       if(nothing) {
         if(required === true)
           throw new SyntaxError(`Option \`${key}\` is required`)
-        else
-          continue
+        else continue
       }
 
       // Additional path validation if needed
@@ -92,21 +98,23 @@ export default class Configuration {
         // separated list of glob patterns.
         if(key === "input" || key === "exclude") {
           if(isType(value, "array"))
-            value = await Promise.all(value.map(pattern =>
-              getFiles(pattern))
+            value = await Promise.all(
+              value.map((pattern) => getFiles(pattern)),
             )
-          else if(isType(value, "string"))
-            value = await getFiles(value)
+          else if(isType(value, "string")) value = await getFiles(value)
           else
-            throw new TypeError(`Option \`${key}\` must be a string or an array of strings`)
+            throw new TypeError(
+              `Option \`${key}\` must be a string or an array of strings`,
+            )
 
           finalOptions[key] = value.flat()
           continue
         } else {
           if(mustExist === true) {
-            finalOptions[key] = pathType === fdType.FILE ?
-              resolveFilename(value) :
-              resolveDirectory(value)
+            finalOptions[key] =
+              pathType === fdType.FILE
+                ? resolveFilename(value)
+                : resolveDirectory(value)
           }
         }
       }
@@ -115,7 +123,7 @@ export default class Configuration {
     return {
       status: "success",
       validated: true,
-      ...finalOptions
+      ...finalOptions,
     }
   }
 
@@ -138,10 +146,9 @@ export default class Configuration {
       if(param.subtype?.path) {
         const pathType = param.subtype.path?.type
         // Check if pathType is defined
-        if(!pathType)
-          errors.push(`Option \`${key}\` has no path type`)
+        if(!pathType) errors.push(`Option \`${key}\` has no path type`)
         // Check if pathType is a valid key in FdTypes
-        if(!(fdTypes.includes(pathType)))
+        if(!fdTypes.includes(pathType))
           errors.push(`Option \`${key}\` has invalid path type: ${pathType}`)
       }
     }
@@ -166,16 +173,15 @@ export default class Configuration {
       allOptions.push({source: "packageJson", options: packageJson.bedoc})
 
     // Then the config file, if the options specified a config file
-    const useConfig = cliOptions.config
-      || packageJson?.bedoc?.config
-      || environmentVariables?.config
+    const useConfig =
+      cliOptions.config ||
+      packageJson?.bedoc?.config ||
+      environmentVariables?.config
 
     if(useConfig) {
-      const configFilename = packageJson?.bedoc?.config
-        || cliOptions.config
+      const configFilename = packageJson?.bedoc?.config || cliOptions.config
 
-      if(!configFilename)
-        throw new Error("No config file specified")
+      if(!configFilename) throw new Error("No config file specified")
 
       const configFile = resolveFilename(configFilename)
       const config = loadJson(configFile)
@@ -193,10 +199,10 @@ export default class Configuration {
    */
   #getEnvironmentVariables() {
     const environmentVariables = {}
-    const params = Object.keys(ConfigurationParameters).map(param => {
+    const params = Object.keys(ConfigurationParameters).map((param) => {
       return {
         param,
-        env: `bedoc_${param}`.toUpperCase()
+        env: `bedoc_${param}`.toUpperCase(),
       }
     })
 
@@ -213,45 +219,41 @@ export default class Configuration {
    * @returns {Promise<object>} The merged options.
    */
   async #mergeOptions(allOptions) {
-    const cliIndex = allOptions.findIndex(option => option.source && option.source === "cli")
+    const cliIndex = allOptions.findIndex(
+      (option) => option.source && option.source === "cli",
+    )
     const cliOptions = allOptions[cliIndex].options
-    const nonCliOptions = allOptions.filter(option => option.source && option.source !== "cli")
-    const optionsOnly = nonCliOptions.map(option => option.options)
+    const nonCliOptions = allOptions.filter(
+      (option) => option.source && option.source !== "cli",
+    )
+    const optionsOnly = nonCliOptions.map((option) => option.options)
     const mergedOptions = optionsOnly.reduce((acc, options) => {
-      for(const [key, value] of Object.entries(options))
-        acc[key] = value
+      for(const [key, value] of Object.entries(options)) acc[key] = value
 
       return acc
     }, {})
 
-    const mappedOptions = await mapObject(mergedOptions,
-      (option, value) => {
-        const {
-          value: cliValue,
-          source: cliSource
-        } = cliOptions[option]
-        ?? {
-          value: undefined,
-          source: undefined
-        }
+    const mappedOptions = await mapObject(mergedOptions, (option, value) => {
+      const {value: cliValue, source: cliSource} = cliOptions[option] ?? {
+        value: undefined,
+        source: undefined,
+      }
 
-        const cliDefaulted = cliSource === "default"
+      const cliDefaulted = cliSource === "default"
 
-        if(cliValue && value !== cliValue)
-          return cliDefaulted ? value : cliValue
+      if(cliValue && value !== cliValue)
+        return cliDefaulted ? value : cliValue
 
-        return value
-      })
+      return value
+    })
 
     // Last, but not least, add any defaulted options that are not in the
     // mapped options
     for(const [key, value] of Object.entries(cliOptions)) {
       if(!mappedOptions[key]) {
-        if(value.source)
-          mappedOptions[key] = value.value
+        if(value.source) mappedOptions[key] = value.value
       } else {
-        if(value.source !== "default")
-          mappedOptions[key] = value.value
+        if(value.source !== "default") mappedOptions[key] = value.value
       }
     }
 

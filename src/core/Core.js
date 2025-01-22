@@ -14,7 +14,7 @@ const {schemaCompare} = DataUtil
 const Environment = {
   EXTENSION: "extension",
   ACTION: "action",
-  CLI: "cli"
+  CLI: "cli",
 }
 
 class Core {
@@ -40,10 +40,10 @@ class Core {
       parse: [],
       print: [],
     }
-    for(const search of [{parse: "language",print: "format"}]) {
+    for(const search of [{parse: "language", print: "format"}]) {
       for(const [actionType, criterion] of Object.entries(search)) {
         filteredActions[actionType] = actionDefinitions[actionType].filter(
-          a => a.action.meta[criterion] === options[criterion]
+          (a) => a.action.meta[criterion] === options[criterion],
         )
       }
     }
@@ -61,54 +61,63 @@ class Core {
 
     // We only want one!
     if(matches.length > 1) {
-      const message = `Multiple matching actions found: `+
-        `${matches.map(m => m.print.name).join(", ")}`
+      const message =
+        `Multiple matching actions found: ` +
+        `${matches.map((m) => m.print.name).join(", ")}`
       throw new Error(message)
     }
 
     const chosenActions = matches[0]
 
-    if(Object.values(chosenActions).some(a => !a))
+    if(Object.values(chosenActions).some((a) => !a))
       throw new Error("No found matching parser and printer")
 
     const satisfied = schemaCompare(
       chosenActions.parse.contract,
-      chosenActions.print.contract
+      chosenActions.print.contract,
     )
 
     if(satisfied.status === "error") {
-      instance.logger.error(`[Core.new] action contract failed: ${satisfied.errors}`)
+      instance.logger.error(
+        `[Core.new] action contract failed: ${satisfied.errors}`,
+      )
       throw new AggregateError(satisfied.errors, "Action contract failed")
     } else if(satisfied.status !== "success") {
-      throw new Error(`[Core.new] Action contract failed: ${satisfied.message}`)
+      throw new Error(
+        `[Core.new] Action contract failed: ${satisfied.message}`,
+      )
     }
 
     debug("Contracts satisfied between parser and printer", 2)
 
     // Adding to instance
     instance.parser = new ParseManager(chosenActions.parse, instance.logger)
-    debug(`Attaching parse action to instance: \`${chosenActions.parse.module}\``, 2)
+    debug(
+      `Attaching parse action to instance: \`${chosenActions.parse.module}\``,
+      2,
+    )
     instance.printer = new PrintManager(chosenActions.print, instance.logger)
-    debug(`Attaching print action to instance: \`${chosenActions.print.module}\``, 2)
+    debug(
+      `Attaching print action to instance: \`${chosenActions.print.module}\``,
+      2,
+    )
 
     // Setup and attach hooks
     for(const target of [
       {manager: instance.parser, action: "parse"},
-      {manager: instance.printer, action: "print"}
+      {manager: instance.printer, action: "print"},
     ]) {
       if(options.hooks) {
-        const {manager,action} = target
+        const {manager, action} = target
         const hooks = await HooksManager.new({
           action: action,
           hooksFile: options.hooks,
           logger: new Logger(instance.debugOptions),
-          timeout: options.hooksTimeout
+          timeout: options.hooksTimeout,
         })
 
-        if(hooks)
-          manager.hooks = hooks
-        else
-          instance.logger.warn(`No hooks found for action: \`${action}\``)
+        if(hooks) manager.hooks = hooks
+        else instance.logger.warn(`No hooks found for action: \`${action}\``)
       }
     }
 
@@ -116,24 +125,26 @@ class Core {
   }
 
   async processFiles() {
-    const debug = this.logger.newDebug();
-    debug("Starting file processing with conveyor", 1);
+    const debug = this.logger.newDebug()
+    debug("Starting file processing with conveyor", 1)
 
-    const { input, output } = this.options;
+    const {input, output} = this.options
 
-    if (!input) throw new Error("No input files specified");
+    if(!input) throw new Error("No input files specified")
 
     // Instantiate the conveyor
-    const conveyor = new Conveyor(this.parser, this.printer, this.logger, output);
+    const conveyor = new Conveyor(
+      this.parser,
+      this.printer,
+      this.logger,
+      output,
+    )
 
     // Initiate the conveyor
-    await conveyor.convey(input, 10); // Process with a max concurrency of 10
+    await conveyor.convey(input, this.options.maxConcurrent)
 
-    debug("File processing completed successfully", 1);
+    debug("File processing completed successfully", 1)
   }
 }
 
-export {
-  Core,
-  Environment,
-}
+export {Core, Environment}

@@ -34,6 +34,7 @@ and powerful solution.
 ## Getting Started
 
 1. **Installation**:
+
    ```bash
    # Install globally
    npm install -g bedoc
@@ -43,6 +44,7 @@ and powerful solution.
    ```
 
 2. **Basic Usage**:
+
    ```bash
    # Generate documentation from JavaScript files
    bedoc -l javascript -f markdown -i src/*.js -o docs
@@ -50,6 +52,7 @@ and powerful solution.
 
 3. **Configuration**:
    Create a `bedoc.config.json` for reusable settings:
+
    ```json
    {
      "language": "javascript",
@@ -60,6 +63,7 @@ and powerful solution.
    ```
 
    Or add a `bedoc` section to your `package.json`:
+
    ```json
    {
      "name": "my-project",
@@ -76,6 +80,7 @@ and powerful solution.
 ## Architecture
 
 BeDoc's architecture is built around three core concepts:
+
 - **Parsers**: Convert source code into structured documentation data
 - **Printers**: Transform structured data into the desired output format
 - **Hooks**: Modify the documentation process at any point
