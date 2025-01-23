@@ -3,9 +3,8 @@ export const Hooks = {
 
   print: {
     async enter({name, section}) {
-      if(name === "return") {
+      if(name === "return")
         this.log.debug("section: %j", 1, section)
-      }
     },
   },
 }

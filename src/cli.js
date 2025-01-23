@@ -31,8 +31,11 @@ const {resolveDirectory} = FDUtil
       let arg = parameter.short
         ? `-${parameter.short}, --${name}`
         : `--${name}`
+
       const param = parameter.param ? parameter.param : name
-      if(param) arg += parameter.required ? ` <${param}>` : ` [${param}]`
+
+      if(param)
+        arg += parameter.required ? ` <${param}>` : ` [${param}]`
 
       const description = `${parameter.description} (${parameter.type})`
       const defaultValue = parameter.default
@@ -96,6 +99,7 @@ const {resolveDirectory} = FDUtil
     } else {
       console.error(`Error: ${e}`)
     }
+
     process.exit(1)
   }
 })()

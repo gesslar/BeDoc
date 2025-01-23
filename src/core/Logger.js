@@ -115,6 +115,7 @@ export default class Logger {
 
     if(level === "debug")
       return `[${this.#name}] ${loggerColours[level][debugLevel]}${tag}${loggerColours.reset}: ${message}`
+
     return `[${this.#name}] ${loggerColours[level]}${tag}${loggerColours.reset}: ${message}`
   }
 
@@ -152,9 +153,11 @@ export default class Logger {
 
     let result = functionName
 
-    if(level >= 2) result = `${result}:${line}:${col}`
+    if(level >= 2)
+      result = `${result}:${line}:${col}`
 
-    if(level >= 3) result = `${absoluteUri} ${result}`
+    if(level >= 3)
+      result = `${absoluteUri} ${result}`
 
     return result
   }
