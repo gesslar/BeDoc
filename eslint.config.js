@@ -30,7 +30,16 @@ export default [
     },
     rules: {
       "@stylistic/js/arrow-spacing": ["error", { before: true, after: true }],
-      "@stylistic/js/brace-style": ["error", "1tbs"],
+        // Ensure control statements and their bodies are not on the same line
+      "@stylistic/js/brace-style": ["error", "1tbs", {allowSingleLine: false}],
+      "@stylistic/js/padding-line-between-statements": [
+        "error",
+        {blankLine: "always", prev: "if", next: "*"},
+        {blankLine: "always", prev: "for", next: "*"},
+        {blankLine: "always", prev: "while", next: "*"},
+        {blankLine: "always", prev: "do", next: "*"},
+        {blankLine: "always", prev: "switch", next: "*"}
+      ],
       "@stylistic/js/eol-last": ["error", "always"],
       "@stylistic/js/indent": ["error", 2, {
         SwitchCase: 1 // Indents `case` statements one level deeper than `switch`

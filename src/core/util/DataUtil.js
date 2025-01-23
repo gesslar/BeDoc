@@ -133,9 +133,13 @@ function arrayPad(arr, length, value, position = 0) {
  */
 function cloneObject(obj, freeze = false) {
   const result = {}
-  for(const [key, value] of Object.entries(obj))
-    if(isType(value, "object")) result[key] = cloneObject(value)
-    else result[key] = value
+
+  for(const [key, value] of Object.entries(obj)) {
+    if(isType(value, "object"))
+      result[key] = cloneObject(value)
+    else
+      result[key] = value
+  }
 
   return freeze ? Object.freeze(result) : result
 }
@@ -155,6 +159,7 @@ async function allocateObject(source, spec) {
 
   if(!isType(source, "array", {allowEmpty: false}))
     throw new Error("Source must be an array.")
+
   workSource.push(...source)
 
   if(
@@ -165,12 +170,14 @@ async function allocateObject(source, spec) {
 
   if(isType(spec, "function")) {
     const specResult = await spec(workSource)
+
     if(!isType(specResult, "array"))
       throw new Error("Spec resulting from function must be an array.")
 
     workSpec.push(...specResult)
-  } else if(isType(spec, "array", {allowEmpty: false}))
+  } else if(isType(spec, "array", {allowEmpty: false})) {
     workSpec.push(...spec)
+  }
 
   if(workSource.length !== workSpec.length)
     throw new Error("Source and spec must have the same number of elements.")
@@ -267,7 +274,8 @@ function isValidType(type) {
  * @returns {boolean} Whether the value is of the specified type
  */
 function isBaseType(value, type) {
-  if(!isValidType(type)) return false
+  if(!isValidType(type))
+    return false
 
   const valueType = typeOf(value)
 
@@ -304,8 +312,7 @@ function isBaseType(value, type) {
  * @returns {string} The type of the value
  */
 function typeOf(value) {
-  if(Array.isArray(value)) return "array"
-  else return typeof value
+  return Array.isArray(value) ? "array" : typeof value
 }
 
 /**
@@ -330,9 +337,11 @@ function isNothing(value) {
 function isEmpty(value, checkForNothing = true) {
   const type = typeOf(value)
 
-  if(checkForNothing && isNothing(value)) return true
+  if(checkForNothing && isNothing(value))
+    return true
 
-  if(!emptyableTypes.includes(type)) return false
+  if(!emptyableTypes.includes(type))
+    return false
 
   switch(type) {
     case "array":
@@ -353,13 +362,18 @@ function isEmpty(value, checkForNothing = true) {
  * @returns {object} The frozen object.
  */
 function deepFreezeObject(obj) {
-  if(obj === null || typeof obj !== "object") return obj // Skip null and non-objects
+  if(obj === null || typeof obj !== "object")
+    return obj // Skip null and non-objects
 
   // Retrieve and freeze properties
   const propNames = Object.getOwnPropertyNames(obj)
+
   for(const name of propNames) {
     const value = obj[name]
-    if(value && typeof value === "object") deepFreezeObject(value) // Recursively freeze nested objects
+
+    // Recursively freeze nested objects
+    if(value && typeof value === "object")
+      deepFreezeObject(value)
   }
 
   // Freeze the object itself
@@ -398,9 +412,11 @@ function schemaCompare(schema, definition, stack = [], logger = new Logger()) {
 
     if(value.required && key in schema === false) {
       error(`❌  Required key not found in schema: ${key}`, key)
+
       errors.push(
         new SyntaxError(`Missing required key: ${key} ${breadcrumb(key)}`),
       )
+
       continue
     } else {
       debug(`✔️  Required key found in schema: ${key}`)
@@ -427,7 +443,8 @@ function schemaCompare(schema, definition, stack = [], logger = new Logger()) {
           logger,
         )
 
-        if(nestedResult.errors.length) errors.push(...nestedResult.errors)
+        if(nestedResult.errors.length)
+          errors.push(...nestedResult.errors)
       }
     }
   }

@@ -43,7 +43,8 @@ function assert(condition, message, arg = null) {
     `Arg must be a number, got ${arg}`,
   )
 
-  if(!condition) throw new Error(`${message}${arg ? `: ${arg}` : ""}`)
+  if(!condition)
+    throw new Error(`${message}${arg ? `: ${arg}` : ""}`)
 }
 
 export {assert, validType}

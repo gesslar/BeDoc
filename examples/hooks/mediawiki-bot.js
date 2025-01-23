@@ -16,17 +16,17 @@ class MediaWikiBot {
     // Store cookies from responses
     this.client.interceptors.response.use(response => {
       const setCookie = response.headers["set-cookie"]
-      if(setCookie) {
+      if(setCookie)
         this.cookies = setCookie
-      }
+
       return response
     })
 
     // Add cookies to requests
     this.client.interceptors.request.use(config => {
-      if(this.cookies.length > 0) {
+      if(this.cookies.length > 0)
         config.headers.Cookie = this.cookies.join("; ")
-      }
+
       return config
     })
   }
@@ -57,9 +57,8 @@ class MediaWikiBot {
         headers: formData.getHeaders()
       })
 
-      if(loginResponse.data.login.result !== "Success") {
+      if(loginResponse.data.login.result !== "Success")
         throw new Error(`Login failed: ${loginResponse.data.login.reason || "Unknown error"}`)
-      }
 
       // Get edit token
       const editTokenResponse = await this.client.get(`${this.baseUrl}/api.php`, {
@@ -74,17 +73,17 @@ class MediaWikiBot {
       return true
     } catch(error) {
       console.error("Login error:", error.message)
-      if(error.response) {
+
+      if(error.response)
         console.error("Response data:", error.response.data)
-      }
+
       throw error
     }
   }
 
   async createOrEditPage(title, content, summary = "Bot edit") {
-    if(!this.token) {
+    if(!this.token)
       throw new Error("Not logged in. Call login() first.")
-    }
 
     try {
       const formData = new FormData()
@@ -111,9 +110,10 @@ class MediaWikiBot {
       }
     } catch(error) {
       console.error("Edit error:", error.message)
-      if(error.response) {
+
+      if(error.response)
         console.error("Response data:", error.response.data)
-      }
+
       throw error
     }
   }

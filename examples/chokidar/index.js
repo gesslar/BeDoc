@@ -36,8 +36,11 @@ const processFile = (path, event) => {
       console.error(`Error processing file ${path}:`, error.message)
       return
     }
+
     console.log(`Processed ${path} successfully:\n${stdout}`)
-    if(stderr) console.warn(`Warnings:\n${stderr}`)
+
+    if(stderr)
+      console.warn(`Warnings:\n${stderr}`)
   })
 }
 

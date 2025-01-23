@@ -55,9 +55,9 @@ class Core {
     for(const printer of filteredActions.print) {
       for(const parser of filteredActions.parse) {
         const satisfied = schemaCompare(parser.contract, printer.contract)
-        if(satisfied.status === "success") {
+
+        if(satisfied.status === "success")
           matches.push({parse: parser, print: printer})
-        }
       }
     }
 
@@ -127,7 +127,8 @@ class Core {
 
     const {input, output} = this.options
 
-    if(!input) throw new Error("No input files specified")
+    if(!input)
+      throw new Error("No input files specified")
 
     // Instantiate the conveyor
     const conveyor = new Conveyor(
@@ -166,6 +167,7 @@ class Core {
     if(errored. length > 0) {
       const errorMessage = `Errors processing ${errored.length} files [${failureRate}%]` +
         errored.map(r => `\n- ${r.file.module}: ${r.result.message}`).join("")
+
       this.logger.error(errorMessage)
     }
 
