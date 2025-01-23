@@ -10,4 +10,6 @@
 
 Check out the [WIP documentation site](https://bedoc.gesslar.dev/).
 
+![Demo CountPages alpha](assets/BeDoc.mp4)
+
 _Do not taunt Happy Fun Ball._
