@@ -27,13 +27,14 @@ jobs:
           git fetch origin dev:dev  # Fetches the dev branch
           git reset --hard dev      # Resets main to match dev branch content
 
-      # Step 3: Create the Pull Request
       - name: Create Pull Request
         id: cpr # Gives this step an ID so we can reference its outputs later
         uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # Uses peter-evans PR creation action
         with:
           branch: dev-to-main # Name of the temporary branch for the PR
           token: ${{ secrets.GITHUB_TOKEN }} # Uses default GitHub token for authentication
+          assignees: gesslar # Adds @gesslar as an assignee
+          reviewers: gesslar # Adds @gesslar as a reviewer
 
       # Step 4: Output PR details for logging/debugging
       - name: Check outputs
