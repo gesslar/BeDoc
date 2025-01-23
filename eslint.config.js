@@ -95,7 +95,8 @@ export default [
       "no-useless-assignment": "error",
 
       // JSDoc
-      "jsdoc/require-description": "warn"
+      "jsdoc/require-description": "warn",
+      "jsdoc/tag-lines": ["error", "any",{"startLines":1}]
     }
   }
 ]

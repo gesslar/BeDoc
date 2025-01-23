@@ -88,6 +88,7 @@ class HooksManager {
 
   /**
    * Trigger a hook
+   *
    * @param {string} event - The type of hook to trigger
    * @param {...any} args - The hook arguments
    * @returns {Promise<any>} The result of the hook

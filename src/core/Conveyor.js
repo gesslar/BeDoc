@@ -15,6 +15,7 @@ export default class Conveyor {
 
   /**
    * Processes files with a concurrency limit.
+   *
    * @param {Array} files - List of files to process.
    * @param {number} maxConcurrent - Maximum number of concurrent tasks.
    * @returns {Promise<object>} - Resolves when all files are processed.
@@ -44,6 +45,7 @@ export default class Conveyor {
 
   /**
    * Processes a single file.
+   *
    * @param {object} file - FileMap object representing a file.
    * @returns {Promise<object>} - Resolves when the file is processed
    */
@@ -90,6 +92,7 @@ export default class Conveyor {
 
   /**
    * Writes the output to the destination.
+   *
    * @param {string} destFile - Destination file path.
    * @param {string} content - File content.
    * @returns {Promise<object>} - Resolves when the file is written.
