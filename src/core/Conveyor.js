@@ -54,24 +54,24 @@ export default class Conveyor {
 
       // Step 1: Read file
       const fileContent = await readFile(file)
-      debug(`Read file content (%d bytes)`, 2, fileContent.length)
+      debug("Read file content `%s` (%d bytes)", 2, file.path, fileContent.length)
 
       // Step 2: Parse file
-      const parseResult = await this.parser.parse(file.path, fileContent)
+      const parseResult = await this.parser.parse(file, fileContent)
       if(parseResult.status === "error")
         return parseResult
 
-      debug("Parsed file successfully: %s", 2, file.path)
+      debug("Parsed file successfully: `%s`", 2, file.path)
 
       // Step 3: Print file
       const printResult = await this.printer.print(
-        file.module,
+        file,
         parseResult.result,
       )
       if(printResult.status === "error")
         return printResult
 
-      debug(`Printed file successfully: %s`, 2, file.path)
+      debug("Printed file successfully: `%s`", 2, file.path)
 
       // Step 4: Write output
       const {destFile, content} = printResult
@@ -79,7 +79,7 @@ export default class Conveyor {
         return {status: "error", message: "Invalid print result"}
 
       const writeResult = await this.#writeOutput(destFile, content)
-      debug(`Wrote output for: %s`, 2, file.path)
+      debug("Wrote output for: `%s` (%d bytes)", 2, writeResult.file.path, content.length)
       return {status: "success", file: writeResult.file}
     } catch(error) {
       const mess = `Error processing file ${file.path}: ${error.message}\n${error.stack}`
