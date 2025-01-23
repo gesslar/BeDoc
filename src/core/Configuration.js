@@ -32,7 +32,8 @@ export default class Configuration {
     if(configValidationErrors.length > 0)
       throw new AggregateError(
         configValidationErrors,
-        `ConfigurationParameters validation errors: ${configValidationErrors.join(", ")}`,
+        `ConfigurationParameters validation errors: `+
+          `${configValidationErrors.join(", ")}`,
       )
 
     const allOptions = this.#findAllOptions(options)
