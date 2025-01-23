@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "Pluggable documentation engine for any language and format",
   "publisher": "gesslar",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gesslar/BeDoc"
+  },
   "bin": {
     "bedoc": "./src/cli.js"
   },
