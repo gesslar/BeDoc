@@ -12,8 +12,11 @@ const {isType} = DataUtil
  * @param {object} [options] - Additional options for validation.
  */
 function validType(value, type, options) {
-  assert(isType(value, type, options),
-    `Invalid type. Expected ${type}, got ${JSON.stringify(value)}`, 1)
+  assert(
+    isType(value, type, options),
+    `Invalid type. Expected ${type}, got ${JSON.stringify(value)}`,
+    1,
+  )
 }
 
 /**
@@ -24,16 +27,21 @@ function validType(value, type, options) {
  * @param {number} [arg] - The argument to display if the condition is not
  *                         met (optional)
  */
-function assert(condition,message,arg = null) {
-  _assert(isType(condition, "boolean"), `Condition must be a boolean, got ${condition}`)
-  _assert(isType(message, "string"), `Message must be a string, got ${message}`)
-  _assert(arg !== null && isType(arg, "number"), `Arg must be a number, got ${arg}`)
+function assert(condition, message, arg = null) {
+  _assert(
+    isType(condition, "boolean"),
+    `Condition must be a boolean, got ${condition}`,
+  )
+  _assert(
+    isType(message, "string"),
+    `Message must be a string, got ${message}`,
+  )
+  _assert(
+    arg !== null && isType(arg, "number"),
+    `Arg must be a number, got ${arg}`,
+  )
 
-  if(!condition)
-    throw new Error(`${message}${arg ? `: ${arg}` : ""}`)
+  if(!condition) throw new Error(`${message}${arg ? `: ${arg}` : ""}`)
 }
 
-export {
-  assert,
-  validType,
-}
+export {assert, validType}

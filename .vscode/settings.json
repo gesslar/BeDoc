@@ -4,6 +4,7 @@
   "[javascript]": {
     "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   },
+  "eslint.format.enable": true,
   "[xml]": {
     "editor.defaultFormatter": "redhat.vscode-xml"
   },

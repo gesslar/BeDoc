@@ -16,9 +16,11 @@ export default class TypeSpec {
   }
 
   toString() {
-    return this.#specs.map(spec => {
-      return `${spec.typeName}${spec.array ? "[]" : ""}`
-    }).join("|")
+    return this.#specs
+      .map((spec) => {
+        return `${spec.typeName}${spec.array ? "[]" : ""}`
+      })
+      .join("|")
   }
 
   toJSON() {
@@ -59,7 +61,7 @@ export default class TypeSpec {
     // If we have a list of types, because the string was validly parsed,
     // we need to ensure that all of the types that were parsed are valid types
     // in JavaScript.
-    if(this.length && !this.every(t => isValidType(t.typeName)))
+    if(this.length && !this.every((t) => isValidType(t.typeName)))
       return false
 
     // Now, let's do some checking with the types, respecting the array flag
@@ -69,19 +71,15 @@ export default class TypeSpec {
 
     // We need to ensure that we match the type and the consistency of the types
     // in an array, if it is an array and an array is allowed.
-    const matchingTypeSpec = this.filter(spec => {
+    const matchingTypeSpec = this.filter((spec) => {
       const {typeName: allowedType, array: allowedArray} = spec
       if(valueType === allowedType && !isArray && !allowedArray)
         return !allowEmpty ? !empty : true
 
       if(isArray) {
-        if(allowedType === "array")
-          if(!allowedArray)
-            return true
+        if(allowedType === "array")if(!allowedArray) return true
 
-        if(empty)
-          if(allowEmpty)
-            return true
+        if(empty)if(allowEmpty) return true
 
         return isArrayUniform(value, allowedType)
       }
@@ -94,7 +92,7 @@ export default class TypeSpec {
     const delimiter = options?.delimiter ?? "|"
     const parts = string.split(delimiter)
 
-    this.#specs = parts.map(part => {
+    this.#specs = parts.map((part) => {
       const typeMatches = /(\w+)(\[\])?/.exec(part)
       if(!typeMatches || typeMatches.length !== 3)
         throw new TypeError(`Invalid type: ${part}`)
@@ -103,7 +101,7 @@ export default class TypeSpec {
 
       return {
         typeName: typeMatches[1],
-        array: typeMatches[2] === "[]"
+        array: typeMatches[2] === "[]",
       }
     })
   }

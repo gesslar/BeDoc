@@ -11,8 +11,7 @@ export default class PrintManager extends ActionManager {
 
     debug("Printing data", 2)
 
-    if(this.action.init)
-      this.action.init({parent: this, log})
+    if(this.action.init)this.action.init({parent: this, log})
 
     if(!this.action.print)
       throw new Error(`No print function found for action: ${this.module}`)

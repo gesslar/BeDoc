@@ -15,7 +15,12 @@
     "lint:fix": "npx eslint . --fix"
   },
   "dependencies": {
+<<<<<<< HEAD
+    "commander": "^13.0.0",
+    "dotenv": "^16.4.7",
+=======
     "commander": "^13.1.0",
+>>>>>>> 4d71f3613c427cb6c1796b56c162c491b4feb9ea
     "error-stack-parser": "^2.1.4",
     "eslint-plugin-jsdoc": "^50.6.2",
     "globby": "^14.0.2",
@@ -26,7 +31,10 @@
   },
   "devDependencies": {
     "@stylistic/eslint-plugin-js": "^2.13.0",
-    "eslint": "^9.18.0"
+    "axios": "^1.7.9",
+    "chokidar": "^4.0.3",
+    "eslint": "^9.18.0",
+    "form-data": "^4.0.1"
   },
   "engines": {
     "vscode": "^1.80.0"

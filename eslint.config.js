@@ -23,10 +23,14 @@ export default [
   },
   {
     name: "gesslar/bedoc/lints",
+<<<<<<< HEAD
+    files: ["src/**/*.{mjs,cjs,js}", "examples/**/*.js"],
+=======
     files: ["src/**/*.c?js", "examples/**/*.js"],
+>>>>>>> 4d71f3613c427cb6c1796b56c162c491b4feb9ea
     plugins: {
       "@stylistic/js": stylisticJs,
-      "jsdoc": jsdoc
+      jsdoc: jsdoc
     },
     rules: {
       "@stylistic/js/arrow-spacing": ["error", { before: true, after: true }],

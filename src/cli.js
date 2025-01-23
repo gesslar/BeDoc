@@ -4,7 +4,11 @@ import {program} from "commander"
 import console from "node:console"
 import process from "node:process"
 
+<<<<<<< HEAD
+import {Core, Environment} from "./core/Core.js"
+=======
 import {Core,Environment} from "./core/Core.js"
+>>>>>>> 4d71f3613c427cb6c1796b56c162c491b4feb9ea
 import Configuration from "./core/Configuration.js"
 import {ConfigurationParameters} from "./core/ConfigurationParameters.js"
 
@@ -12,26 +16,31 @@ import * as ActionUtil from "./core/util/ActionUtil.js"
 import * as FDUtil from "./core/util/FDUtil.js"
 
 const {loadPackageJson} = ActionUtil
+<<<<<<< HEAD
+const {resolveDirectory} = FDUtil;
+=======
 const {resolveDirectory} = FDUtil
+>>>>>>> 4d71f3613c427cb6c1796b56c162c491b4feb9ea
 
 // Main entry point
 ;(async() => {
   try {
+    const startTime = process.hrtime()
+
     // Get package info
     const basePath = resolveDirectory(process.cwd())
     const packageJson = loadPackageJson(basePath)
 
     // Setup program
-    program
-      .name(packageJson.name)
-      .description(packageJson.description)
+    program.name(packageJson.name).description(packageJson.description)
 
     // Build CLI
     for(const [name, parameter] of Object.entries(ConfigurationParameters)) {
-      let arg = parameter.short ? `-${parameter.short}, --${name}` : `--${name}`
+      let arg = parameter.short
+        ? `-${parameter.short}, --${name}`
+        : `--${name}`
       const param = parameter.param ? parameter.param : name
-      if(param)
-        arg += parameter.required ? ` <${param}>` : ` [${param}]`
+      if(param) arg += parameter.required ? ` <${param}>` : ` [${param}]`
 
       const description = `${parameter.description} (${parameter.type})`
       const defaultValue = parameter.default
@@ -40,7 +49,11 @@ const {resolveDirectory} = FDUtil
     }
 
     // Add version option last
-    program.version(packageJson.version, "-v, --version", "Output the version number")
+    program.version(
+      packageJson.version,
+      "-v, --version",
+      "Output the version number",
+    )
     program.helpOption("-h, --help", "Output usage information")
     program.parse()
 
@@ -52,7 +65,7 @@ const {resolveDirectory} = FDUtil
     for(const [key, value] of Object.entries(options)) {
       const element = {
         value,
-        source: sources[key]
+        source: sources[key],
       }
       optionsWithSources[key] = element
     }
@@ -65,7 +78,9 @@ const {resolveDirectory} = FDUtil
     const configuration = new Configuration()
     const validatedConfig = await configuration.validate(optionsWithSources)
     if(validatedConfig.status === "error") {
-      console.error(`The following errors were found in the configuration:\n\n${validatedConfig.error}`)
+      console.error(
+        `The following errors were found in the configuration:\n\n${validatedConfig.error}`,
+      )
       process.exit(0)
     }
 
@@ -73,7 +88,8 @@ const {resolveDirectory} = FDUtil
     validatedConfig.env = Environment.CLI
 
     // Create core instance with validated config
-    Core.new(validatedConfig).then(core => core.processFiles())
+    Core.new(validatedConfig).then((core) => core.processFiles(startTime))
+    // Done.
   } catch(e) {
     if(e instanceof Error) {
       if(e instanceof AggregateError) {

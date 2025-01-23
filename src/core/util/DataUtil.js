@@ -5,28 +5,42 @@ import * as ValidUtil from "./ValidUtil.js"
 
 const {validType} = ValidUtil
 
-
 const primitives = [
   // Primitives
-  "undefined", "boolean", "number", "bigint", "string", "symbol",
+  "undefined",
+  "boolean",
+  "number",
+  "bigint",
+  "string",
+  "symbol",
 
   // Object Categories from typeof
-  "object", "function",
+  "object",
+  "function",
 ]
 
 const constructors = [
   // Object Constructors
-  "Object", "Array", "Function", "Date", "RegExp", "Error",
-  "Map", "Set", "WeakMap", "WeakSet", "Promise",
-  "Int8Array", "Uint8Array", "Float32Array", "Float64Array",
+  "Object",
+  "Array",
+  "Function",
+  "Date",
+  "RegExp",
+  "Error",
+  "Map",
+  "Set",
+  "WeakMap",
+  "WeakSet",
+  "Promise",
+  "Int8Array",
+  "Uint8Array",
+  "Float32Array",
+  "Float64Array",
 ]
 
-const dataTypes = [
-  ...primitives,
-  ...constructors.map(c => c.toLowerCase())
-]
+const dataTypes = [...primitives, ...constructors.map((c) => c.toLowerCase())]
 
-const emptyableTypes = ["string","array","object"]
+const emptyableTypes = ["string", "array", "object"]
 
 /**
  * Appends a string to another string if it does not already end with it.
@@ -48,7 +62,6 @@ function prependString(string, prepend) {
   return string.startsWith(prepend) ? string : `${prepend}${string}`
 }
 
-
 /**
  * Checks if all elements in an array are of a specified type
  * @param {Array} arr - The array to check
@@ -57,8 +70,9 @@ function prependString(string, prepend) {
  * @returns {boolean} Whether all elements are of the specified type
  */
 function isArrayUniform(arr, type) {
-  return arr.every((item, _index, arr) =>
-    typeof item === (type || typeof arr[0]))
+  return arr.every(
+    (item, _index, arr) => typeof item === (type || typeof arr[0]),
+  )
 }
 
 /**
@@ -67,8 +81,7 @@ function isArrayUniform(arr, type) {
  * @returns {Array} The unique elements of the array
  */
 function isArrayUnique(arr) {
-  return arr.filter((item, index, self) =>
-    self.indexOf(item) === index)
+  return arr.filter((item, index, self) => self.indexOf(item) === index)
 }
 
 /**
@@ -78,7 +91,7 @@ function isArrayUnique(arr) {
  * @returns {Array} The intersection of the two arrays.
  */
 function arrayIntersection(arr1, arr2) {
-  return arr1.filter(value => arr2.includes(value))
+  return arr1.filter((value) => arr2.includes(value))
 }
 
 /**
@@ -92,17 +105,17 @@ function arrayIntersection(arr1, arr2) {
  */
 function arrayPad(arr, length, value, position = 0) {
   const diff = length - arr.length
-  if(diff <= 0)
-    return arr
+  if(diff <= 0) return arr
 
   const padding = Array(diff).fill(value)
 
-  if(position === 0) // prepend - default
+  if(position === 0)
+    // prepend - default
     return padding.concat(arr)
-  else if(position === -1) // append
-    return arr.concat(padding)
-  else // somewhere in the middle - THAT IS ILLEGAL
-    throw new SyntaxError("Invalid position")
+  else if(position === -1)
+    // append
+    return arr.concat(padding) // somewhere in the middle - THAT IS ILLEGAL
+  else throw new SyntaxError("Invalid position")
 }
 
 /**
@@ -114,10 +127,8 @@ function arrayPad(arr, length, value, position = 0) {
 function cloneObject(obj, freeze = false) {
   const result = {}
   for(const [key, value] of Object.entries(obj))
-    if(isType(value, "object"))
-      result[key] = cloneObject(value)
-    else
-      result[key] = value
+    if(isType(value, "object")) result[key] = cloneObject(value)
+    else result[key] = value
 
   return freeze ? Object.freeze(result) : result
 }
@@ -130,13 +141,18 @@ function cloneObject(obj, freeze = false) {
  */
 async function allocateObject(source, spec) {
   // Data
-  const workSource = [], workSpec = [], result = {}
+  const workSource = [],
+    workSpec = [],
+    result = {}
 
   if(!isType(source, "array", {allowEmpty: false}))
     throw new Error("Source must be an array.")
   workSource.push(...source)
 
-  if(!isType(spec, "array", {allowEmpty: false}) && !isType(spec, "function"))
+  if(
+    !isType(spec, "array", {allowEmpty: false}) &&
+    !isType(spec, "function")
+  )
     throw new Error("Spec must be an array or a function.")
 
   if(isType(spec, "function")) {
@@ -152,13 +168,13 @@ async function allocateObject(source, spec) {
     throw new Error("Source and spec must have the same number of elements.")
 
   // Objects must always be indexed by strings.
-  workSource.map((element, index, arr) => arr[index] = String(element))
+  workSource.map((element, index, arr) => (arr[index] = String(element)))
 
   // Check that all keys are strings
   if(!isArrayUniform(workSource, "string"))
     throw new Error("Indices of an Object must be of type string.")
 
-  workSource.forEach((element, index) => result[element] = workSpec[index])
+  workSource.forEach((element, index) => (result[element] = workSpec[index]))
 
   return result
 }
@@ -180,7 +196,7 @@ async function mapObject(original, transformer, mutate = false) {
   for(const [key, value] of Object.entries(original))
     result[key] = isType(value, "object")
       ? await mapObject(value, transformer, mutate)
-      : result[key] = await transformer(key, value)
+      : (result[key] = await transformer(key, value))
 
   return result
 }
@@ -213,9 +229,7 @@ function newTypeSpec(string, options) {
  * @returns {boolean} Whether the value is of the specified type
  */
 function isType(value, type, options) {
-  const typeSpec = type instanceof TypeSpec
-    ? type
-    : newTypeSpec(type, options)
+  const typeSpec = type instanceof TypeSpec ? type : newTypeSpec(type, options)
   // we're comparing a typeSpec object to a File object. this will always
   // return false. do fix.
   return typeSpec.match(value, options)
@@ -239,8 +253,7 @@ function isValidType(type) {
  * @returns {boolean} Whether the value is of the specified type
  */
 function isBaseType(value, type) {
-  if(!isValidType(type))
-    return false
+  if(!isValidType(type)) return false
 
   const valueType = typeOf(value)
 
@@ -276,10 +289,8 @@ function isBaseType(value, type) {
  * @returns {string} The type of the value
  */
 function typeOf(value) {
-  if(Array.isArray(value))
-    return "array"
-  else
-    return typeof value
+  if(Array.isArray(value)) return "array"
+  else return typeof value
 }
 
 /**
@@ -302,11 +313,9 @@ function isNothing(value) {
 function isEmpty(value, checkForNothing = true) {
   const type = typeOf(value)
 
-  if(checkForNothing && isNothing(value))
-    return true
+  if(checkForNothing && isNothing(value)) return true
 
-  if(!emptyableTypes.includes(type))
-    return false
+  if(!emptyableTypes.includes(type)) return false
 
   switch(type) {
     case "array":
@@ -326,15 +335,13 @@ function isEmpty(value, checkForNothing = true) {
  * @returns {object} The frozen object.
  */
 function deepFreezeObject(obj) {
-  if(obj === null || typeof obj !== "object")
-    return obj // Skip null and non-objects
+  if(obj === null || typeof obj !== "object") return obj // Skip null and non-objects
 
   // Retrieve and freeze properties
   const propNames = Object.getOwnPropertyNames(obj)
   for(const name of propNames) {
     const value = obj[name]
-    if(value && typeof value === "object")
-      deepFreezeObject(value) // Recursively freeze nested objects
+    if(value && typeof value === "object") deepFreezeObject(value) // Recursively freeze nested objects
   }
 
   // Freeze the object itself
@@ -350,11 +357,17 @@ function deepFreezeObject(obj) {
  * @returns {boolean} - True if valid, throws an error otherwise.
  */
 function schemaCompare(schema, definition, stack = [], logger = new Logger()) {
-  const breadcrumb = key => stack.length ? `@${stack.join(".")}` : key
+  const breadcrumb = (key) => (stack.length ? `@${stack.join(".")}` : key)
   const tag = "[DataUtil.schemaCompare]"
-  const pad = `${" ".repeat((stack.length*2))}${stack.length ? "└─ " : ""}`
-  const debug = (message, key) => logger.debug(`${tag}${pad}${message}${key ? " "+breadcrumb(key) : ""}`, 2, true)
-  const error = (message, key) => logger.error(`${tag}${pad}${message}${key ? " "+breadcrumb(key) : ""}`)
+  const pad = `${" ".repeat(stack.length * 2)}${stack.length ? "└─ " : ""}`
+  const debug = (message, key) =>
+    logger.debug(
+      `${tag}${pad}${message}${key ? " " + breadcrumb(key) : ""}`,
+      2,
+      true,
+    )
+  const error = (message, key) =>
+    logger.error(`${tag}${pad}${message}${key ? " " + breadcrumb(key) : ""}`)
 
   const errors = []
 
@@ -366,7 +379,9 @@ function schemaCompare(schema, definition, stack = [], logger = new Logger()) {
 
     if(value.required && key in schema === false) {
       error(`❌  Required key not found in schema: ${key}`, key)
-      errors.push(new SyntaxError(`Missing required key: ${key} ${breadcrumb(key)}`))
+      errors.push(
+        new SyntaxError(`Missing required key: ${key} ${breadcrumb(key)}`),
+      )
       continue
     } else {
       debug(`✔️  Required key found in schema: ${key}`)
@@ -377,17 +392,23 @@ function schemaCompare(schema, definition, stack = [], logger = new Logger()) {
       const actualType = schema[key]
 
       if(!expectedType.match(actualType))
-        errors.push(new TypeError(`Type mismatch for key: ${key}. Expected: ${expectedType}, got: ${actualType} ${breadcrumb(key)}`))
+        errors.push(
+          new TypeError(
+            `Type mismatch for key: ${key}. Expected: ${expectedType}, got: ${actualType} ${breadcrumb(key)}`,
+          ),
+        )
 
       // Recursive validation for nested objects
       if(value.contains) {
         debug(`Recursing into nested object: ${key}`)
         const nestedResult = schemaCompare(
-          schema[key]?.contains, value.contains, [...stack, key], logger
+          schema[key]?.contains,
+          value.contains,
+          [...stack, key],
+          logger,
         )
 
-        if(nestedResult.errors.length)
-          errors.push(...nestedResult.errors)
+        if(nestedResult.errors.length) errors.push(...nestedResult.errors)
       }
     }
   }

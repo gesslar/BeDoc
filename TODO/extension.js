@@ -1,7 +1,7 @@
 // TODO: Implement the extension
-const {require} = import.meta
+const { require } = import.meta;
 
-const vscode = require("vscode")
+const vscode = require("vscode");
 
 /**
  *
@@ -9,11 +9,11 @@ const vscode = require("vscode")
  */
 function activate(context) {
   context.subscriptions.push(
-    vscode.commands.registerCommand("bedoc.generate", async() => {
-      const editor = vscode.window.activeTextEditor
-      if(!editor) {
-        vscode.window.showErrorMessage("No file open")
-        return
+    vscode.commands.registerCommand("bedoc.generate", async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        vscode.window.showErrorMessage("No file open");
+        return;
       }
 
       // const content = editor.document.getText()
@@ -23,12 +23,12 @@ function activate(context) {
       try {
         // TODO: Do something with the output
         // const output = await generateDocs(language, format, content)
-        vscode.window.showInformationMessage("Documentation generated!")
-      } catch(err) {
-        vscode.window.showErrorMessage(`Error: ${err.message}`)
+        vscode.window.showInformationMessage("Documentation generated!");
+      } catch (err) {
+        vscode.window.showErrorMessage(`Error: ${err.message}`);
       }
-    })
-  )
+    }),
+  );
 }
 
-export default { activate }
+export default { activate };

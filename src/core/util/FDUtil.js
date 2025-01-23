@@ -10,10 +10,10 @@ import * as ValidUtil from "./ValidUtil.js"
 const {isArrayUniform, isType, allocateObject} = DataUtil
 const {validType} = ValidUtil
 
-const freeze = ob => Object.freeze(ob)
+const freeze = (ob) => Object.freeze(ob)
 
 const fdTypes = freeze(["file", "directory"])
-const upperFdTypes = freeze(fdTypes.map(type => type.toUpperCase()))
+const upperFdTypes = freeze(fdTypes.map((type) => type.toUpperCase()))
 const fdType = freeze(await allocateObject(upperFdTypes, fdTypes))
 
 /**
@@ -70,20 +70,21 @@ function resolveFilename(fileName, directoryObject = null) {
   const fixedFileName = fixSlashes(fileName)
   const directoryNamePart = fixedFileName.split("/").slice(0, -1).join("/")
   const fileNamePart = fixedFileName.split("/").pop()
-  if(!directoryObject)
-    directoryObject = resolveDirectory(directoryNamePart)
+  if(!directoryObject) directoryObject = resolveDirectory(directoryNamePart)
 
   const fileObject = composeFilename(directoryObject, fileNamePart)
   try {
     fs.opendirSync(directoryObject.absolutePath).closeSync()
   } catch(e) {
     void e
-    throw new Error(`Failed to resolve directory: ${directoryObject.absolutePath}, looking for file: ${fileNamePart}`)
+    throw new Error(
+      `Failed to resolve directory: ${directoryObject.absolutePath}, looking for file: ${fileNamePart}`,
+    )
   }
 
   return {
     ...fileObject,
-    directory: directoryObject
+    directory: directoryObject,
   }
 }
 
@@ -173,17 +174,22 @@ async function getFiles(globPattern) {
       ? globPattern
       : globPattern
         .split("|")
-        .map(g => g.trim())
+        .map((g) => g.trim())
         .filter(Boolean)
-  )
-    .map(g => fixSlashes(g))
+  ).map((g) => fixSlashes(g))
 
-  if(Array.isArray(globbyArray) && isArrayUniform(globbyArray, "string", true) && !globbyArray.length)
-    throw new Error("[getFiles] Invalid glob pattern: Array must contain only strings.")
+  if(
+    Array.isArray(globbyArray) &&
+    isArrayUniform(globbyArray, "string", true) &&
+    !globbyArray.length
+  )
+    throw new Error(
+      "[getFiles] Invalid glob pattern: Array must contain only strings.",
+    )
 
   // Use Globby to fetch matching files
   const filesArray = await globby(globbyArray)
-  const files = filesArray.map(file => mapFilename(file))
+  const files = filesArray.map((file) => mapFilename(file))
 
   // Flatten the result and remove duplicates
   return files
@@ -203,7 +209,9 @@ function resolveDirectory(directoryName) {
   try {
     fs.opendirSync(directoryObject.absolutePath).closeSync()
   } catch(e) {
-    throw new Error(`Failed to resolve directory: ${directoryObject.absolutePath}, looking for file: ${directoryName}\n${e.message}`)
+    throw new Error(
+      `Failed to resolve directory: ${directoryObject.absolutePath}, looking for file: ${directoryName}\n${e.message}`,
+    )
   }
 
   fs.opendirSync(directoryObject.absolutePath).closeSync()
@@ -228,11 +236,13 @@ function composeDirectory(directory) {
  */
 async function ls(directory) {
   const found = await fs.promises.readdir(directory, {withFileTypes: true})
-  const results = await Promise.all(found.map(async dirent => {
-    const fullPath = path.join(directory, dirent.name)
-    const stat = await fs.promises.stat(fullPath)
-    return {dirent, stat, fullPath}
-  }))
+  const results = await Promise.all(
+    found.map(async(dirent) => {
+      const fullPath = path.join(directory, dirent.name)
+      const stat = await fs.promises.stat(fullPath)
+      return {dirent, stat, fullPath}
+    }),
+  )
 
   const files = results
     .filter(({stat}) => stat.isFile())
@@ -252,8 +262,7 @@ async function ls(directory) {
  */
 function readFile(fileObject) {
   const {absolutePath} = fileObject
-  if(!absolutePath)
-    throw new Error("No absolute path in file map")
+  if(!absolutePath) throw new Error("No absolute path in file map")
 
   const content = fs.readFileSync(absolutePath, "utf8")
   return content
