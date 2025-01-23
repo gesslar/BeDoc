@@ -113,8 +113,8 @@ class Core {
           timeout: options.hooksTimeout,
         })
 
-        if(hooks) manager.hooks = hooks
-        else instance.logger.warn(`No hooks found for action: \`${action}\``)
+        if(hooks)
+          manager.hooks = hooks
       }
     }
 
@@ -168,6 +168,8 @@ class Core {
         errored.map(r => `\n- ${r.file.module}: ${r.result.message}`).join("")
       this.logger.error(errorMessage)
     }
+
+    debug("File processing complete", 1)
   }
 }
 

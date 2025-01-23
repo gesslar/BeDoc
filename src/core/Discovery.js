@@ -155,14 +155,14 @@ export default class Discovery {
 
     for(const actionType of actionTypes) {
       const total = resultActions[actionType].length
-      debug("Found %d `%s` actions", 1, total, actionType)
+      debug("Found %d `%s` actions", 2, total, actionType)
     }
 
     const total = Object.keys(resultActions).reduce((acc, curr) => {
       return acc + resultActions[curr].length
     }, 0)
 
-    debug("Loaded %d action definitions from %d modules", 1, total, moduleFiles.length)
+    debug("Loaded %d action definitions from %d modules", 2, total, moduleFiles.length)
 
     return resultActions
   }

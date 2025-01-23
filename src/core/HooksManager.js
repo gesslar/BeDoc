@@ -70,10 +70,8 @@ class HooksManager {
       throw new Error(`\`${hooksFile.absoluteUri}\` contains no hooks.`)
 
     const hooksObj = hooks[instance.action]
-    if(isEmpty(hooksObj)) {
-      instance.log.warn(`No hooks found for action: \`${instance.action}\``)
+    if(isEmpty(hooksObj))
       return null
-    }
 
     debug("Hooks found for action: `%s`", 2, instance.action)
 

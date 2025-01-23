@@ -96,6 +96,31 @@
         "examples/hooks/lua-markdown-hooks.js"
       ],
       "console": "integratedTerminal"
-    }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug BeDoc CLI - LPC to Wikitext (with upload) - Chokidar",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/examples/chokidar/index.js",
+      "args": [
+        "--debug",
+        "--debugLevel",
+        "4",
+        "--input",
+        "examples/source/lpc/**/*.c",
+        "--output",
+        "examples/output/wikitext/",
+        "--language",
+        "lpc",
+        "--format",
+        "wikitext",
+        "--hooks",
+        "examples/hooks/lpc-wikitext-hooks-with-upload.js",
+        "--maxConcurrent",
+        "50"
+      ],
+      "console": "integratedTerminal"
+    },
   ]
 }
