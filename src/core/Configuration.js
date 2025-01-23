@@ -131,6 +131,7 @@ export default class Configuration {
   /**
    * Validate the ConfigurationParameters object. This is a sanity check to
    * ensure that the ConfigurationParameters object is valid.
+   *
    * @returns {string[]} Errors
    */
   #validateConfigurationParameters() {
@@ -159,6 +160,7 @@ export default class Configuration {
 
   /**
    * Find all options from all sources
+   *
    * @param {object} cliOptions - The command line options.
    * @returns {Promise<object[]>} All options from all sources.
    */
@@ -196,6 +198,7 @@ export default class Configuration {
 
   /**
    * Get environment variables
+   *
    * @returns {object} Environment variables
    */
   #getEnvironmentVariables() {
@@ -216,6 +219,7 @@ export default class Configuration {
 
   /**
    * Merge all options into one object
+   *
    * @param {object[]} allOptions - All options from all sources.
    * @returns {Promise<object>} The merged options.
    */
@@ -263,6 +267,7 @@ export default class Configuration {
 
   /**
    * Fix option values. This operation is performed in place.
+   *
    * @param {object} options - The options to fix.
    */
   #fixOptionValues(options) {
