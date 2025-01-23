@@ -125,7 +125,7 @@ class Core {
     const debug = this.logger.newDebug()
     debug("Starting file processing with conveyor", 1)
 
-    const { input, output } = this.options;
+    const {input, output} = this.options
 
     if(!input) throw new Error("No input files specified")
 

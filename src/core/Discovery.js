@@ -25,6 +25,7 @@ export default class Discovery {
 
   /**
    * Discover actions from local or global node_modules
+   *
    * @returns {Promise<object>} A map of discovered modules
    */
   async discoverActions() {
@@ -72,6 +73,7 @@ export default class Discovery {
 
   /**
    * Get the exports from a module's package.json file, resolved to file paths
+   *
    * @param {object} dirMap The directory map object
    * @returns {object[]} The discovered module exports
    */
@@ -89,6 +91,7 @@ export default class Discovery {
   /**
    * Process the discovered file objects and return the action and their
    * respective contracts.
+   *
    * @param {object[]} moduleFiles The module file objects to process
    * @returns {Promise<object>} The discovered action
    */

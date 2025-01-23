@@ -13,6 +13,7 @@ const actionMetaRequirements = freeze({
 
 /**
  * Loads a JSON file asynchronously
+ *
  * @param {object} jsonFileObject - The JSON file to load
  * @returns {object} The parsed JSON content
  */
@@ -25,6 +26,7 @@ function loadJson(jsonFileObject) {
 
 /**
  * Loads the package.json file asynchronously
+ *
  * @param {string|object} basePath - The base path to use
  * @returns {object} The parsed package.json content
  */
