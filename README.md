@@ -1,16 +1,15 @@
 # BeDoc
 
 [![CodeQL Advanced](https://github.com/gesslar/BeDoc/actions/workflows/codeql.yml/badge.svg)](https://github.com/gesslar/BeDoc/actions/workflows/codeql.yml)
+[![Dependabot Updates](https://github.com/gesslar/BeDoc/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/gesslar/BeDoc/actions/workflows/dependabot/dependabot-updates)
+[![Auto PR and Merge - dev 🤗](https://github.com/gesslar/BeDoc/actions/workflows/autopr-dev.yml/badge.svg?branch=dev)](https://github.com/gesslar/BeDoc/actions/workflows/autopr-dev.yml)
+
+
+![licence](https://badgen.net/github/license/gesslar/BeDoc?icon=github&scale=1.1)
+![dependabot](https://badgen.net/github/dependabot/gesslar/BeDoc?icon&scale=1.1)
 
 Check out the [WIP documentation site](https://bedoc.gesslar.dev/).
 
-## Future Ideas
+https://github.com/user-attachments/assets/4db60129-8605-412b-9213-c5c4cdaafcc5
 
-- [x] Configuration cascade (package.json -> config file -> CLI)
-- [ ] Environment variables support (BEDOC_LANGUAGE, BEDOC_FORMAT, etc.)
-- [ ] Dry run mode (validate and process but don't write files)
-
-* All Decisions Subject to Change
-* Future Ideas May or May Not Happen
-* IDK
-* Do not taunt Happy Fun Ball
+_Do not taunt Happy Fun Ball._

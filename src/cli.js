@@ -4,11 +4,7 @@ import {program} from "commander"
 import console from "node:console"
 import process from "node:process"
 
-<<<<<<< HEAD
 import {Core, Environment} from "./core/Core.js"
-=======
-import {Core,Environment} from "./core/Core.js"
->>>>>>> 4d71f3613c427cb6c1796b56c162c491b4feb9ea
 import Configuration from "./core/Configuration.js"
 import {ConfigurationParameters} from "./core/ConfigurationParameters.js"
 
@@ -16,11 +12,7 @@ import * as ActionUtil from "./core/util/ActionUtil.js"
 import * as FDUtil from "./core/util/FDUtil.js"
 
 const {loadPackageJson} = ActionUtil
-<<<<<<< HEAD
-const {resolveDirectory} = FDUtil;
-=======
 const {resolveDirectory} = FDUtil
->>>>>>> 4d71f3613c427cb6c1796b56c162c491b4feb9ea
 
 // Main entry point
 ;(async() => {
