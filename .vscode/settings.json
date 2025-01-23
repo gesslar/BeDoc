@@ -15,5 +15,5 @@
   "files.trimTrailingWhitespace": true,
   "files.trimFinalNewlines": true,
   "files.eol": "\n",
-  "vscode-lua-format.configPath": "examples\\source\\lua\\lua.editorconfig"
+  "vscode-lua-format.configPath": "examples\\source\\lua\\lua.editorconfig",
 }

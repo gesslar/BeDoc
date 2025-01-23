@@ -22,6 +22,7 @@ export const Hooks = {
 
 /**
  * Fetches a dad joke from the icanhazdadjoke API.
+ *
  * @returns {Promise<object>} The result of the fetch operation.
  */
 async function _getDadJoke() {
