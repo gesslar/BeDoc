@@ -1,3 +1,5 @@
+import process from "node:process"
+
 import Discovery from "./Discovery.js"
 import {HooksManager} from "./HooksManager.js"
 import Logger from "./Logger.js"
@@ -31,7 +33,7 @@ class Core {
     const debug = instance.logger.newDebug()
 
     debug("Initializing Core instance", 1)
-    debug("Core passed options", 3, options)
+    debug("Core passed options: %o", 3, options)
 
     const discovery = new Discovery(instance)
     const actionDefinitions = await discovery.discoverActions()
@@ -91,16 +93,11 @@ class Core {
     debug("Contracts satisfied between parser and printer", 2)
 
     // Adding to instance
+    debug("Attaching parse action to instance: `%o`", 2, chosenActions.parse.module)
     instance.parser = new ParseManager(chosenActions.parse, instance.logger)
-    debug(
-      `Attaching parse action to instance: \`${chosenActions.parse.module}\``,
-      2,
-    )
+
+    debug("Attaching print action to instance: `%o`", 2, chosenActions.print.module)
     instance.printer = new PrintManager(chosenActions.print, instance.logger)
-    debug(
-      `Attaching print action to instance: \`${chosenActions.print.module}\``,
-      2,
-    )
 
     // Setup and attach hooks
     for(const target of [
@@ -124,7 +121,7 @@ class Core {
     return instance
   }
 
-  async processFiles() {
+  async processFiles(startTime) {
     const debug = this.logger.newDebug()
     debug("Starting file processing with conveyor", 1)
 
@@ -140,10 +137,37 @@ class Core {
       output,
     )
 
-    // Initiate the conveyor
-    await conveyor.convey(input, this.options.maxConcurrent)
+    const processStart = process.hrtime()
 
-    debug("File processing completed successfully", 1)
+    // Initiate the conveyor
+    const result = await conveyor.convey(input, this.options.maxConcurrent)
+    const endTime = (process.hrtime(startTime)[1] / 1_000_000).toFixed(2)
+    const processEnd = (process.hrtime(processStart)[1] / 1_000_000).toFixed(2)
+
+    // Grab the results
+    const totalFiles = input.length
+    const errored = result.errored
+    const succeeded = result.succeeded
+
+    const failureRate = ((errored.length / totalFiles) * 100).toFixed(2)
+    const successRate = (100 - failureRate).toFixed(2)
+
+    const message = `Processed ${totalFiles} files: ${succeeded.length} succeeded, ${errored.length} errored ` +
+      `in ${processEnd}ms [total: ${endTime}ms]`
+
+    this.logger.info(message)
+
+    const successFiles =
+      succeeded.map((r) => `- ${r.file.path} => ${r.result.file.path}`).join("\n")
+    const successMessage = `Processed ${succeeded.length} files successfully [${successRate}%]\n` +
+    successFiles
+    this.logger.info(successMessage)
+
+    if(errored. length > 0) {
+      const errorMessage = `Errors processing ${errored.length} files [${failureRate}%]` +
+        errored.map(r => `\n- ${r.file.module}: ${r.result.message}`).join("")
+      this.logger.error(errorMessage)
+    }
   }
 }
 

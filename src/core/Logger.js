@@ -1,3 +1,28 @@
+/*
+  For formatting console info, see:
+  https://nodejs.org/docs/latest-v22.x/api/util.html#utilformatformat-args
+
+  * %s: String will be used to convert all values except BigInt, Object and -0.
+        BigInt values will be represented with an n and Objects that have no
+        user defined toString function are inspected using util.inspect() with
+        options { depth: 0, colors: false, compact: 3 }.
+  * %d: Number will be used to convert all values except BigInt and Symbol.
+  * %i: parseInt(value, 10) is used for all values except BigInt and Symbol.
+  * %f: parseFloat(value) is used for all values expect Symbol.
+  * %j: JSON. Replaced with the string '[Circular]' if the argument contains
+        circular references.
+  * %o: Object. A string representation of an object with generic JavaScript
+        object formatting. Similar to util.inspect() with options { showHidden:
+        true, showProxy: true }. This will show the full object including non-
+        enumerable properties and proxies.
+  * %O: Object. A string representation of an object with generic JavaScript
+        object formatting. Similar to util.inspect() without options. This will
+        show the full object not including non-enumerable properties and
+        proxies.
+  * %%: single percent sign ('%'). This does not consume an argument.
+
+*/
+
 import console from "node:console"
 import ErrorStackParser from "error-stack-parser"
 
@@ -15,11 +40,11 @@ const loggerColours = {
     "\x1b[38;5;27m", // Debug level 1: Medium blue
     "\x1b[38;5;33m", // Debug level 2: Light blue
     "\x1b[38;5;39m", // Debug level 3: Teal
-    "\x1b[38;5;51m", // Debug level 4: Bright cyan
+    "\x1b[38;5;44m", // Debug level 4: Blue-tinted cyan
   ],
-  info: "\x1b[32m", // Green
-  warn: "\x1b[33m", // Yellow
-  error: "\x1b[31m", // Red
+  info: "\x1b[38;5;36m",    // Medium Spring Green
+  warn: "\x1b[38;5;214m",   // Orange1
+  error: "\x1b[38;5;196m",  // Red1
   reset: "\x1b[0m", // Reset
 }
 
@@ -157,14 +182,6 @@ export default class Logger {
   }
 
   error(message, ...arg) {
-    // try {
-    //   throw new Error()
-    // } catch(e) {
-    //   if(e instanceof Error) {
-    //     console.error(this.#compose("error", e.stack))
-    //   }
-    // }
-
     console.error(this.#compose("error", message), ...arg)
     this.vscodeError?.(JSON.stringify(message))
   }

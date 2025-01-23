@@ -3,6 +3,9 @@ import * as FDUtil from "./util/FDUtil.js"
 const {readFile, writeFile, composeFilename} = FDUtil
 
 export default class Conveyor {
+  #succeeded = []
+  #errored = []
+
   constructor(parser, printer, logger, output) {
     this.parser = parser
     this.printer = printer
@@ -14,60 +17,74 @@ export default class Conveyor {
    * Processes files with a concurrency limit.
    * @param {Array} files - List of files to process.
    * @param {number} maxConcurrent - Maximum number of concurrent tasks.
+   * @returns {Promise<object>} - Resolves when all files are processed.
    */
   async convey(files, maxConcurrent = 10) {
     const semaphore = Array(maxConcurrent).fill(Promise.resolve())
 
     for(const file of files) {
       const slot = Promise.race(semaphore) // Wait for an available slot
-      semaphore.push(slot.then(() => this.#processFile(file)))
+      semaphore.push(slot.then(async() => {
+        const result = await this.#processFile(file)
+        if(result.status === "success")
+          this.#succeeded.push({result, file})
+        else
+          this.#errored.push({result, file})
+      }))
       semaphore.shift() // Remove the oldest promise
     }
 
-    await Promise.all(semaphore) // Wait for all tasks to complete
+    // Wait for all tasks to complete
+    await Promise.all(semaphore)
+
+    const result = {succeeded: this.#succeeded, errored: this.#errored}
+
+    return result
   }
 
   /**
    * Processes a single file.
    * @param {object} file - FileMap object representing a file.
+   * @returns {Promise<object>} - Resolves when the file is processed
    */
   async #processFile(file) {
     const debug = this.logger.newDebug()
     try {
-      debug(`Processing file: ${file.path}`, 2)
+      debug("Processing file: `%s`", 2, file.path)
 
       // Step 1: Read file
       const fileContent = await readFile(file)
-      debug(`Read file content (${fileContent.length} bytes)`, 2)
+      debug(`Read file content (%d bytes)`, 2, fileContent.length)
 
       // Step 2: Parse file
       const parseResult = await this.parser.parse(file.path, fileContent)
-      if(parseResult.status === "error") {
-        throw new Error(`Failed to parse ${file.path}: ${parseResult.message}`)
-      }
-      debug(`Parsed file successfully: ${file.path}`, 2)
+      if(parseResult.status === "error")
+        return parseResult
+
+      debug("Parsed file successfully: %s", 2, file.path)
 
       // Step 3: Print file
       const printResult = await this.printer.print(
         file.module,
         parseResult.result,
       )
-      if(printResult.status === "error") {
-        throw new Error(`Failed to print ${file.path}: ${printResult.message}`)
-      }
-      debug(`Printed file successfully: ${file.path}`, 2)
+      if(printResult.status === "error")
+        return printResult
+
+      debug(`Printed file successfully: %s`, 2, file.path)
 
       // Step 4: Write output
       const {destFile, content} = printResult
-      if(!destFile || !content) {
-        throw new Error(`Invalid print result for ${file.path}`)
-      }
-      await this.#writeOutput(destFile, content)
-      debug(`Wrote output for: ${file.path}`, 2)
+      if(!destFile || !content)
+        return {status: "error", message: "Invalid print result"}
+
+      const writeResult = await this.#writeOutput(destFile, content)
+      debug(`Wrote output for: %s`, 2, file.path)
+      return {status: "success", file: writeResult.file}
     } catch(error) {
-      this.logger.error(
-        `Error processing file ${file.path}: ${error.message}\n${error.stack}`,
-      )
+      const mess = `Error processing file ${file.path}: ${error.message}\n${error.stack}`
+      this.logger.error(mess)
+      return {status: "error", message: mess}
     }
   }
 
@@ -75,9 +92,11 @@ export default class Conveyor {
    * Writes the output to the destination.
    * @param {string} destFile - Destination file path.
    * @param {string} content - File content.
+   * @returns {Promise<object>} - Resolves when the file is written.
    */
   async #writeOutput(destFile, content) {
     const destFileMap = composeFilename(this.output.path, destFile)
-    await writeFile(destFileMap, content)
+    const result = await writeFile(destFileMap, content)
+    return {file: destFileMap, result}
   }
 }

@@ -45,7 +45,32 @@
         "--hooks",
         "examples/hooks/lpc-wikitext-hooks.js",
         "--maxConcurrent",
-        "3"
+        "50"
+      ],
+      "console": "integratedTerminal"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug BeDoc CLI - LPC to Wikitext (with upload)",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/src/cli.js",
+      "args": [
+        "--debug",
+        "--debugLevel",
+        "4",
+        "--input",
+        "examples/source/lpc/**/*.c",
+        "--output",
+        "examples/output/wikitext/",
+        "--language",
+        "lpc",
+        "--format",
+        "wikitext",
+        "--hooks",
+        "examples/hooks/lpc-wikitext-hooks-with-upload.js",
+        "--maxConcurrent",
+        "50"
       ],
       "console": "integratedTerminal"
     },

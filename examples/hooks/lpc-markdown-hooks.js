@@ -8,7 +8,7 @@ export const Hooks = {
       console.debug(arg)
     },
 
-    async enter({name, section}) {
+    async enter({name, _section}) {
       if(name === "description") {
         // const translated = await getDadJoke()
         // if(translated.status == "success")
@@ -24,7 +24,7 @@ export const Hooks = {
  * Fetches a dad joke from the icanhazdadjoke API.
  * @returns {Promise<object>} The result of the fetch operation.
  */
-async function getDadJoke() {
+async function _getDadJoke() {
   const url = "https://icanhazdadjoke.com"
 
   try {

@@ -32,7 +32,7 @@ export default class Discovery {
     const options = this.core.options ?? {}
 
     if(options?.mockPath) {
-      debug(`Discovering mock actions in \`${options.mockPath}\``, 1)
+      debug("Discovering mock actions in `%s`", 1, options.mockPath)
 
       bucket.push(
         ...(await getFiles([
@@ -46,7 +46,7 @@ export default class Discovery {
       for(const actionType of actionTypes) {
         if(this.core.packageJson[actionType]) {
           const action = this.core.packageJson[actionType]
-          debug(`Found \`${actionType}\` action in package.json`, 3, action)
+          debug("Found action in package.json: %o", 3, action)
           bucket.push(action)
         }
       }
@@ -60,10 +60,7 @@ export default class Discovery {
       const moduleDirectories = directories.map(resolveDirectory)
       for(const moduleDirectory of moduleDirectories) {
         const {directories: dirs} = await ls(moduleDirectory.absolutePath)
-        debug(
-          `Found ${dirs.length} directories in \`${moduleDirectory.absolutePath}\``,
-          2,
-        )
+        debug("Found %d directories in `%s`", 2, dirs.length, moduleDirectory.absolutePath)
         const bedocDirs = dirs.filter((d) => d.name.startsWith("bedoc-"))
         const exports = bedocDirs.map((d) => this.#getModuleExports(d))
         bucket.push(...exports.flat())
@@ -104,11 +101,8 @@ export default class Discovery {
       const result = {total: 0, accepted: 0}
       const {actions, contracts} = await import(moduleFile.absoluteUri)
 
-      debug(`Loaded actions from \`${moduleFile.absoluteUri}\``, 2)
-      debug(
-        `Found ${actions.length} actions and ${contracts.length} contracts`,
-        3,
-      )
+      debug("Loaded actions from `%s`", 2, moduleFile.absoluteUri)
+      debug("Found %d actions and %d contracts", 3, actions.length, contracts.length)
 
       assert(
         actions.length === contracts.length,
@@ -137,57 +131,44 @@ export default class Discovery {
         const meta = curr.action.meta
         const metaAction = meta?.action
 
-        debug(`Checking action \`${metaAction}\``, 2)
+        debug("Checking action `%s`", 2, metaAction)
 
         for(const actionType of actionTypes) {
           const isValid = this.validMeta(actionType, curr)
-          debug(
-            `Action \`${metaAction}\` in ${moduleFile.module} is ${isValid ? "valid" : "invalid"}`,
-            3,
-          )
+          debug("Action `%o` in `%s` is %s", 3, metaAction, moduleFile.module, isValid ? "valid" : "invalid")
 
           if(isValid && metaAction === actionType) {
-            debug(`Action \`${metaAction}\` meets requirements`, 3)
+            debug("Action is a valid `%s` action", 3, actionType)
             result.accepted++
             resultActions[actionType].push(curr)
             continue
-          } else {
-            debug(`Action \`${metaAction}\` does not meet requirements`, 3)
-          }
+          } else
+            debug("Action is not a valid `%s` action", 3, actionType)
         }
 
-        debug(`Processed action \`${metaAction}\``, 2)
-        debug(
-          `Result: ${result.accepted}/${result.total} actions accepted for \`${moduleFile.module}\``,
-          3,
-        )
+        debug("Processed action `%s`", 2, metaAction)
+        debug("Result: %d/%d actions accepted", 3, result.accepted, result.total)
       }
 
-      debug(
-        `Processed ${result.total} actions from \`${moduleFile.module}\``,
-        2,
-      )
+      debug("Processed %d actions from `%s`", 2, result.total, moduleFile.module)
     }
 
     for(const actionType of actionTypes) {
       const total = resultActions[actionType].length
-      debug(`Found ${total} \`${actionType}\` actions`, 1)
+      debug("Found %d `%s` actions", 1, total, actionType)
     }
 
     const total = Object.keys(resultActions).reduce((acc, curr) => {
       return acc + resultActions[curr].length
     }, 0)
 
-    debug(
-      `Loaded ${total} action definitions from ${moduleFiles.length} modules`,
-      1,
-    )
+    debug("Loaded %d action definitions from %d modules", 1, total, moduleFiles.length)
 
     return resultActions
   }
 
   validMeta(actionType, toValidate) {
-    debug(`Checking meta requirements for \`${actionType}\``, 3)
+    debug("Checking meta requirements for `%s`", 3, actionType)
     const requirements = actionMetaRequirements[actionType]
     if(!requirements)
       throw new Error(
@@ -195,18 +176,20 @@ export default class Discovery {
       )
 
     for(const requirement of requirements) {
-      debug("Checking requirement", 4, requirement)
+      debug("Checking requirement %o", 4, requirement)
 
       if(isType(requirement, "object")) {
         for(const [key, value] of Object.entries(requirement)) {
-          debug(`Checking object requirement: ${key} = ${value}`, 4)
-          if(toValidate.action.meta[key] !== value) return false
-          debug(`Requirement met: ${key} = ${value}`, 4)
+          debug("Checking object requirement %o", 4, {key, value})
+          if(toValidate.action.meta[key] !== value)
+            return false
+          debug("Requirement met: %o", 4, {key, value})
         }
       } else if(isType(requirement, "string")) {
-        debug(`Checking string requirement: ${requirement}`, 4)
-        if(!toValidate.action.meta[requirement]) return false
-        debug(`Requirement met: ${requirement}`, 4)
+        debug("Checking string requirement: %s", 4, requirement)
+        if(!toValidate.action.meta[requirement])
+          return false
+        debug("Requirement met: %s", 4, requirement)
       }
     }
 

@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "commander": "^13.0.0",
+    "dotenv": "^16.4.7",
     "error-stack-parser": "^2.1.4",
     "eslint-plugin-jsdoc": "^50.6.2",
     "globby": "^14.0.2",
@@ -26,7 +27,9 @@
   },
   "devDependencies": {
     "@stylistic/eslint-plugin-js": "^2.13.0",
-    "eslint": "^9.18.0"
+    "axios": "^1.7.9",
+    "eslint": "^9.18.0",
+    "form-data": "^4.0.1"
   },
   "engines": {
     "vscode": "^1.80.0"

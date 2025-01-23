@@ -17,6 +17,8 @@ const {resolveDirectory} = FDUtil;
 // Main entry point
 (async() => {
   try {
+    const startTime = process.hrtime()
+
     // Get package info
     const basePath = resolveDirectory(process.cwd())
     const packageJson = loadPackageJson(basePath)
@@ -78,7 +80,7 @@ const {resolveDirectory} = FDUtil;
     validatedConfig.env = Environment.CLI
 
     // Create core instance with validated config
-    Core.new(validatedConfig).then((core) => core.processFiles())
+    Core.new(validatedConfig).then((core) => core.processFiles(startTime))
     // Done.
   } catch(e) {
     if(e instanceof Error) {
