@@ -74,7 +74,8 @@ function resolveFilename(fileName, directoryObject = null) {
   const fixedFileName = fixSlashes(fileName)
   const directoryNamePart = fixedFileName.split("/").slice(0, -1).join("/")
   const fileNamePart = fixedFileName.split("/").pop()
-  if(!directoryObject) directoryObject = resolveDirectory(directoryNamePart)
+  if(!directoryObject)
+    directoryObject = resolveDirectory(directoryNamePart)
 
   const fileObject = composeFilename(directoryObject, fileNamePart)
   try {
@@ -275,9 +276,12 @@ async function ls(directory) {
  */
 function readFile(fileObject) {
   const {absolutePath} = fileObject
-  if(!absolutePath) throw new Error("No absolute path in file map")
+
+  if(!absolutePath)
+    throw new Error("No absolute path in file map")
 
   const content = fs.readFileSync(absolutePath, "utf8")
+
   return content
 }
 
@@ -290,7 +294,10 @@ function readFile(fileObject) {
  */
 function writeFile(fileObject, content) {
   const absolutePath = fileObject.absolutePath
-  if(!absolutePath) throw new Error("No absolute path in file map")
+
+  if(!absolutePath)
+    throw new Error("No absolute path in file map")
+
   return fs.writeFileSync(absolutePath, content, "utf8")
 }
 

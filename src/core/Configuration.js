@@ -78,7 +78,8 @@ export default class Configuration {
       const {key} = section
 
       // Skipping config, we've already handled it
-      if(key === "config")continue
+      if(key === "config")
+        continue
 
       let {value} = section
       const nothing = isNothing(value)
@@ -88,7 +89,8 @@ export default class Configuration {
       if(nothing) {
         if(required === true)
           throw new SyntaxError(`Option \`${key}\` is required`)
-        else continue
+        else
+          continue
       }
 
       // Additional path validation if needed
@@ -102,13 +104,15 @@ export default class Configuration {
             value = await Promise.all(
               value.map((pattern) => getFiles(pattern)),
             )
-          else if(isType(value, "string")) value = await getFiles(value)
+          else if(isType(value, "string"))
+            value = await getFiles(value)
           else
             throw new TypeError(
               `Option \`${key}\` must be a string or an array of strings`,
             )
 
           finalOptions[key] = value.flat()
+
           continue
         } else {
           if(mustExist === true) {
@@ -147,8 +151,11 @@ export default class Configuration {
       // Paths
       if(param.subtype?.path) {
         const pathType = param.subtype.path?.type
+
         // Check if pathType is defined
-        if(!pathType) errors.push(`Option \`${key}\` has no path type`)
+        if(!pathType)
+          errors.push(`Option \`${key}\` has no path type`)
+
         // Check if pathType is a valid key in FdTypes
         if(!fdTypes.includes(pathType))
           errors.push(`Option \`${key}\` has invalid path type: ${pathType}`)
@@ -184,10 +191,12 @@ export default class Configuration {
     if(useConfig) {
       const configFilename = packageJson?.bedoc?.config || cliOptions.config
 
-      if(!configFilename) throw new Error("No config file specified")
+      if(!configFilename)
+        throw new Error("No config file specified")
 
       const configFile = resolveFilename(configFilename)
       const config = loadJson(configFile)
+
       allOptions.push({source: "config", options: config})
     }
 
@@ -214,6 +223,7 @@ export default class Configuration {
       if(process.env[param.env])
         environmentVariables[param.param] = process.env[param.env]
     }
+
     return environmentVariables
   }
 
@@ -256,9 +266,11 @@ export default class Configuration {
     // mapped options
     for(const [key, value] of Object.entries(cliOptions)) {
       if(!mappedOptions[key]) {
-        if(value.source) mappedOptions[key] = value.value
+        if(value.source)
+          mappedOptions[key] = value.value
       } else {
-        if(value.source !== "default") mappedOptions[key] = value.value
+        if(value.source !== "default")
+          mappedOptions[key] = value.value
       }
     }
 

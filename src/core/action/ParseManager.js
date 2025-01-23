@@ -11,7 +11,8 @@ export default class ParseManager extends ActionManager {
 
     debug("Parsing file `%j`", 3, fileMap)
 
-    if(this.action.init)this.action.init({parent: this, log})
+    if(this.action.init)
+      this.action.init({parent: this, log})
 
     if(!this.action.parse)
       throw new Error(`No parse function found for action: ${this.module}`)

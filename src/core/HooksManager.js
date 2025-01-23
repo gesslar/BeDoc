@@ -112,6 +112,7 @@ class HooksManager {
         `[HookManager.on] Hook "${event}" is not a function`,
         1,
       )
+
       const hookExecution = await hook.call(this, ...args)
       const hookTimeout = this.parent.timeout
       const expireAsync = () =>

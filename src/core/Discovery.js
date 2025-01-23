@@ -47,7 +47,9 @@ export default class Discovery {
       for(const actionType of actionTypes) {
         if(this.core.packageJson[actionType]) {
           const action = this.core.packageJson[actionType]
+
           debug("Found action in package.json: %o", 3, action)
+
           bucket.push(action)
         }
       }
@@ -117,13 +119,13 @@ export default class Discovery {
 
       for(let i = actions.length; i--; ) {
         const tempContract = contracts[i]
-        if(isType(tempContract, "string")) {
+
+        if(isType(tempContract, "string"))
           contracts[i] = yaml.parse(tempContract)
-        } else if(isType(tempContract, "object")) {
+        else if(isType(tempContract, "object"))
           contracts[i] = tempContract
-        } else {
+        else
           throw new Error(`Invalid contract type: ${typeof tempContract}`)
-        }
 
         const curr = {
           module: moduleFile.module,
@@ -145,8 +147,9 @@ export default class Discovery {
             result.accepted++
             resultActions[actionType].push(curr)
             continue
-          } else
+          } else {
             debug("Action is not a valid `%s` action", 3, actionType)
+          }
         }
 
         debug("Processed action `%s`", 2, metaAction)
@@ -184,14 +187,18 @@ export default class Discovery {
       if(isType(requirement, "object")) {
         for(const [key, value] of Object.entries(requirement)) {
           debug("Checking object requirement %o", 4, {key, value})
+
           if(toValidate.action.meta[key] !== value)
             return false
+
           debug("Requirement met: %o", 4, {key, value})
         }
       } else if(isType(requirement, "string")) {
         debug("Checking string requirement: %s", 4, requirement)
+
         if(!toValidate.action.meta[requirement])
           return false
+
         debug("Requirement met: %s", 4, requirement)
       }
     }
