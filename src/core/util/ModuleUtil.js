@@ -4,6 +4,7 @@ import FDUtil from "./FDUtil.js"
 export default class ModuleUtil {
   /**
    * Requires a module synchronously
+   *
    * @param {object} fileObject - The file to require
    * @returns {object} The required module
    */
@@ -13,6 +14,7 @@ export default class ModuleUtil {
 
   /**
    * Loads a JSON file asynchronously
+   *
    * @param {object} jsonFileObject - The JSON file to load
    * @returns {Promise<object>} The parsed JSON content
    */
@@ -25,6 +27,7 @@ export default class ModuleUtil {
 
   /**
    * Loads the package.json file asynchronously
+   *
    * @returns {Promise<object>} The parsed package.json content
    */
   static async loadPackageJson() {

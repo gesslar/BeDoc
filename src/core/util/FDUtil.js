@@ -18,6 +18,7 @@ const fdType = freeze(await allocateObject(upperFdTypes, fdTypes))
 
 /**
  * Fix slashes in a path
+ *
  * @param {string} pathName - The path to fix
  * @returns {string} The fixed path
  */
@@ -27,6 +28,7 @@ function fixSlashes(pathName) {
 
 /**
  * Convert a path to a URI
+ *
  * @param {string} pathName - The path to convert
  * @returns {string} The URI
  * @throws {Error} If the path is not a valid file path
@@ -42,6 +44,7 @@ function pathToUri(pathName) {
 
 /**
  * Convert a URI to a path
+ *
  * @param {string} pathName - The URI to convert
  * @returns {string} The path
  * @throws {Error} If the URI is not a valid file URL
@@ -57,6 +60,7 @@ function uriToPath(pathName) {
 
 /**
  * Resolves a file to an absolute path
+ *
  * @param {string} fileName - The file to resolve
  * @param {object} [directoryObject] - The directory object to resolve the
  *                                     file in
@@ -90,6 +94,7 @@ function resolveFilename(fileName, directoryObject = null) {
 
 /**
  * Compose a file path from a directory and a file
+ *
  * @param {string|object} directoryNameorObject - The directory
  * @param {string} fileName - The file
  * @returns {object} A file object
@@ -113,6 +118,7 @@ function composeFilename(directoryNameorObject, fileName) {
 
 /**
  * Map a file to a FileMap
+ *
  * @param {string} fileName - The file to map
  * @returns {object} A file object
  */
@@ -132,6 +138,7 @@ function mapFilename(fileName) {
 
 /**
  * Map a directory to a DirMap
+ *
  * @param {string} directoryName - The directory to map
  * @returns {object} A directory object
  */
@@ -150,6 +157,7 @@ function mapDirectory(directoryName) {
 
 /**
  * Deconstruct a filename into parts
+ *
  * @param {string} fileName - The filename to deconstruct
  * @returns {object} The filename parts
  */
@@ -161,6 +169,7 @@ function deconstructFilenameToParts(fileName) {
 
 /**
  * Retrieve all files matching a specific glob pattern.
+ *
  * @param {string|string[]} globPattern - The glob pattern(s) to search.
  * @returns {Promise<object[]>} An array of file objects
  * @throws {Error} Throws an error for invalid input or search failure.
@@ -197,6 +206,7 @@ async function getFiles(globPattern) {
 
 /**
  * Resolves a path to an absolute path
+ *
  * @param {string} directoryName - The path to resolve
  * @returns {object} The directory object
  * @throws {Error}
@@ -221,6 +231,7 @@ function resolveDirectory(directoryName) {
 
 /**
  * Compose a directory map from a path
+ *
  * @param {string} directory - The directory
  * @returns {object} A directory object
  */
@@ -230,6 +241,7 @@ function composeDirectory(directory) {
 
 /**
  * Lists the contents of a directory.
+ *
  * @param {string} directory - The directory to list.
  * @returns {Promise<{files: object[], directories: object[]}>} The files and
  * directories in the directory.
@@ -257,6 +269,7 @@ async function ls(directory) {
 
 /**
  * Reads the content of a file synchronously.
+ *
  * @param {object} fileObject - The file map containing the file path
  * @returns {Promise<string>} The file contents
  */
@@ -270,6 +283,7 @@ function readFile(fileObject) {
 
 /**
  * Writes content to a file synchronously.
+ *
  * @param {object} fileObject - The file map containing the file path
  * @param {string} content - The content to write
  * @returns {Promise<void>}

@@ -44,6 +44,7 @@ const emptyableTypes = ["string", "array", "object"]
 
 /**
  * Appends a string to another string if it does not already end with it.
+ *
  * @param {string} string The string to append to
  * @param {string} append The string to append
  * @returns {string} The appended string
@@ -54,6 +55,7 @@ function appendString(string, append) {
 
 /**
  * Prepends a string to another string if it does not already start with it.
+ *
  * @param {string} string The string to prepend to
  * @param {string} prepend The string to prepend
  * @returns {string} The prepended string
@@ -64,6 +66,7 @@ function prependString(string, prepend) {
 
 /**
  * Checks if all elements in an array are of a specified type
+ *
  * @param {Array} arr - The array to check
  * @param {string} type - The type to check for (optional, defaults to the
  *                        type of the first element)
@@ -77,6 +80,7 @@ function isArrayUniform(arr, type) {
 
 /**
  * Checks if an array is unique
+ *
  * @param {Array} arr - The array of which to remove duplicates
  * @returns {Array} The unique elements of the array
  */
@@ -86,6 +90,7 @@ function isArrayUnique(arr) {
 
 /**
  * Returns the intersection of two arrays.
+ *
  * @param {Array} arr1 - The first array.
  * @param {Array} arr2 - The second array.
  * @returns {Array} The intersection of the two arrays.
@@ -97,6 +102,7 @@ function arrayIntersection(arr1, arr2) {
 /**
  * Pads an array to a specified length with a value. This operation
  * occurs in-place.
+ *
  * @param {Array} arr - The array to pad.
  * @param {number} length - The length to pad the array to.
  * @param {any} value - The value to pad the array with.
@@ -120,6 +126,7 @@ function arrayPad(arr, length, value, position = 0) {
 
 /**
  * Clones an object
+ *
  * @param {object} obj - The object to clone
  * @param {boolean} freeze - Whether to freeze the cloned object
  * @returns {object} The cloned object
@@ -135,6 +142,7 @@ function cloneObject(obj, freeze = false) {
 
 /**
  * Allocates an object from a source array and a spec array or function.
+ *
  * @param {any} source The source array
  * @param {any|Function} spec The spec array or function
  * @returns {Promise<object>} The allocated object
@@ -181,6 +189,7 @@ async function allocateObject(source, spec) {
 
 /**
  * Maps an object using a transformer function
+ *
  * @param {object} original The original object
  * @param {Function} transformer The transformer function
  * @param {boolean} mutate Whether to mutate the original object
@@ -203,6 +212,7 @@ async function mapObject(original, transformer, mutate = false) {
 
 /**
  * Checks if an object is empty
+ *
  * @param {object} obj - The object to check
  * @returns {boolean} Whether the object is empty
  */
@@ -213,6 +223,7 @@ function isObjectEmpty(obj) {
 /**
  * Creates a type spec from a string. A type spec is an array of objects
  * defining the type of a value and whether an array is expected.
+ *
  * @param {string} string - The string to parse into a type spec.
  * @param {object} options - Additional options for parsing.
  * @returns {object[]} An array of type specs.
@@ -223,6 +234,7 @@ function newTypeSpec(string, options) {
 
 /**
  * Checks if a value is of a specified type
+ *
  * @param {any} value The value to check
  * @param {string|TypeSpec} type The type to check for
  * @param {object} options Additional options for checking
@@ -237,6 +249,7 @@ function isType(value, type, options) {
 
 /**
  * Checks if a type is valid
+ *
  * @param {string} type - The type to check
  * @returns {boolean} Whether the type is valid
  */
@@ -248,6 +261,7 @@ function isValidType(type) {
  * Checks if a value is of a specified type. Unlike the type function, this
  * function does not parse the type string, and only checks for primitive
  * or constructor types.
+ *
  * @param {any} value - The value to check
  * @param {string} type - The type to check for
  * @returns {boolean} Whether the value is of the specified type
@@ -285,6 +299,7 @@ function isBaseType(value, type) {
 
 /**
  * Returns the type of a value, whether it be a primitive, object, or function.
+ *
  * @param {any} value - The value to check
  * @returns {string} The type of the value
  */
@@ -295,6 +310,7 @@ function typeOf(value) {
 
 /**
  * Checks a value is undefined or null.
+ *
  * @param {any} value The value to check
  * @returns {boolean} Whether the value is undefined or null
  */
@@ -305,6 +321,7 @@ function isNothing(value) {
 /**
  * Checks if a value is empty. This function is used to check if an object,
  * array, or string is empty. Null and undefined values are considered empty.
+ *
  * @param {any} value The value to check
  * @param {boolean} checkForNothing Whether to check for null or undefined
  *                                  values
@@ -331,6 +348,7 @@ function isEmpty(value, checkForNothing = true) {
 
 /**
  * Freezes an object and all of its properties recursively.
+ *
  * @param {object} obj The object to freeze.
  * @returns {object} The frozen object.
  */
@@ -350,6 +368,7 @@ function deepFreezeObject(obj) {
 
 /**
  * Validates that a schema matches the expected structure.
+ *
  * @param {object} schema - The schema to validate.
  * @param {object} definition - The expected structure.
  * @param {Array} stack - The stack trace for nested validation.

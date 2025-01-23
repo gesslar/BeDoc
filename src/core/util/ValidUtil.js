@@ -6,6 +6,7 @@ const {isType} = DataUtil
 
 /**
  * Validates a value against a type
+ *
  * @param {*} value - The value to validate
  * @param {string} type - The expected type in the form of "object",
  *                        "object[]", "object|object[]"
@@ -21,6 +22,7 @@ function validType(value, type, options) {
 
 /**
  * Asserts a condition
+ *
  * @param {boolean} condition - The condition to assert
  * @param {string} message - The message to display if the condition is not
  *                           met
