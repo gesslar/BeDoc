@@ -35,13 +35,13 @@
 Install BeDoc globally using NPM:
 
 ```bash
-npm install -g bedoc
+npm i -g @gesslar/bedoc
 ```
 
 Or add it to your project as a dev dependency:
 
 ```bash
-npm install bedoc --save-dev
+npm i -D @gesslar/bedoc
 ```
 
 ---
