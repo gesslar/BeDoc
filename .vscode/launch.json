@@ -2,14 +2,6 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run Extension",
-      "type": "extensionHost",
-      "request": "launch",
-      "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}"
-      ]
-    },
-    {
       "type": "node",
       "request": "launch",
       "name": "Debug BeDoc CLI - LPC to Markdown",
@@ -30,7 +22,7 @@
         "--hooks",
         "examples/hooks/lpc-markdown-hooks.js"
       ],
-      "console": "integratedTerminal"
+      "console" : "internalConsole",
     },
     {
       "type": "node",
@@ -55,7 +47,7 @@
         "--maxConcurrent",
         "50"
       ],
-      "console": "integratedTerminal"
+      "console" : "internalConsole",
     },
     {
       "type": "node",
@@ -80,7 +72,7 @@
         "--maxConcurrent",
         "50"
       ],
-      "console": "integratedTerminal"
+      "console" : "internalConsole",
     },
     {
       "type": "node",
@@ -103,14 +95,15 @@
         "--hooks",
         "examples/hooks/lua-markdown-hooks.js"
       ],
-      "console": "integratedTerminal"
+      "console" : "internalConsole",
     },
     {
       "type": "node",
       "request": "launch",
       "name": "Debug BeDoc CLI - LPC to Wikitext (with upload) - Chokidar",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/examples/chokidar/index.js",
+      "program": "${workspaceFolder}/examples/chokidar-as-cli/index.js",
+      "cwd": "${workspaceFolder}/examples/chokidar-as-cli",
       "args": [
         "--debug",
         "--debugLevel",
@@ -128,7 +121,16 @@
         "--maxConcurrent",
         "50"
       ],
-      "console": "integratedTerminal"
+      "console" : "internalConsole",
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug BeDoc CLI - LPC to Wikitext - Chokidar as NPM",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/examples/chokidar-as-npm/index.js",
+      "cwd": "${workspaceFolder}/examples/chokidar-as-npm",
+      "console" : "internalConsole",
     },
   ]
 }
