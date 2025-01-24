@@ -4,8 +4,7 @@ import {program} from "commander"
 import console from "node:console"
 import process from "node:process"
 
-import {Core, Environment} from "./core/Core.js"
-import Configuration from "./core/Configuration.js"
+import BeDoc, {Environment} from "./core/Core.js"
 import {ConfigurationParameters} from "./core/ConfigurationParameters.js"
 
 import * as ActionUtil from "./core/util/ActionUtil.js"
@@ -17,8 +16,6 @@ const {resolveDirectory} = FDUtil
 // Main entry point
 ;(async() => {
   try {
-    const startTime = process.hrtime()
-
     // Get package info
     const basePath = resolveDirectory(process.cwd())
     const packageJson = loadPackageJson(basePath)
@@ -65,26 +62,16 @@ const {resolveDirectory} = FDUtil
       optionsWithSources[key] = element
     }
 
-    // Inject the basepath from the CLI
-    optionsWithSources.basePath = {value: basePath, source: "cli"}
-    optionsWithSources.packageJson = {value: packageJson, source: "cli"}
-
-    // Validate options using ConfigValidator
-    const configuration = new Configuration()
-    const validatedConfig = await configuration.validate(optionsWithSources)
-    if(validatedConfig.status === "error") {
-      console.error(
-        `The following errors were found in the configuration:\n\n${validatedConfig.error}`,
-      )
-      process.exit(0)
-    }
-
-    // Set environment to CLI
-    validatedConfig.env = Environment.CLI
-
     // Create core instance with validated config
-    Core.new(validatedConfig).then((core) => core.processFiles(startTime))
-    // Done.
+    BeDoc
+      .new({
+        options: {
+          ...optionsWithSources,
+          basePath: {value: basePath, source: "cli"},
+          packageJson: {value: packageJson, source: "cli"},
+        },
+        source: Environment.CLI
+      })
   } catch(e) {
     if(e instanceof Error) {
       if(e instanceof AggregateError) {

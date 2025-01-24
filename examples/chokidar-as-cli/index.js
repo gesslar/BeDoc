@@ -3,7 +3,7 @@ import chokidar from "chokidar"
 import {exec} from "child_process"
 
 // Directory to watch
-const watchDirectory = "./examples/source/lpc" // Change to the directory you want to watch
+const watchDirectory = "./source/lpc"
 
 // Initialize file watcher
 const watcher = chokidar.watch(watchDirectory, {
@@ -31,13 +31,13 @@ const standardOptions = [
 // Process files on change
 const processFile = (path, event) => {
   console.log(`File ${event}: ${path}`)
-  exec(`node ./src/cli.js ${standardOptions.join(" ")} --input "${path}"`, (error, stdout, stderr) => {
+  exec(`cd ../.. && bedoc ${standardOptions.join(" ")} --input "${path}"`, (error, stdout, stderr) => {
     if(error) {
       console.error(`Error processing file ${path}:`, error.message)
       return
     }
 
-    console.log(`Processed ${path} successfully:\n${stdout}`)
+    console.log(`Processed ${path} successfully${stdout? `:\n${stdout}`: "."}`)
 
     if(stderr)
       console.warn(`Warnings:\n${stderr}`)

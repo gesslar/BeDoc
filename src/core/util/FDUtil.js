@@ -290,7 +290,6 @@ function readFile(fileObject) {
  *
  * @param {object} fileObject - The file map containing the file path
  * @param {string} content - The content to write
- * @returns {Promise<void>}
  */
 function writeFile(fileObject, content) {
   const absolutePath = fileObject.absolutePath
@@ -298,7 +297,7 @@ function writeFile(fileObject, content) {
   if(!absolutePath)
     throw new Error("No absolute path in file map")
 
-  return fs.writeFileSync(absolutePath, content, "utf8")
+  fs.writeFileSync(absolutePath, content, "utf8")
 }
 
 export {
