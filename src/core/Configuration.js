@@ -159,6 +159,12 @@ export default class Configuration {
       options.packageJson = {value: jsonObj, source}
     }
 
+    // Add defaults which are missing
+    for(const [key, param] of Object.entries(ConfigurationParameters)) {
+      if(options[key] === undefined && param.default !== undefined)
+        options[key] = {value: param.default, source: "default"}
+    }
+
     return options
   }
 

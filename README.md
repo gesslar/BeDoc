@@ -1,13 +1,13 @@
-# BeDoc
-
 [![CodeQL Advanced](https://github.com/gesslar/BeDoc/actions/workflows/codeql.yml/badge.svg)](https://github.com/gesslar/BeDoc/actions/workflows/codeql.yml)
 [![Dependabot Updates](https://github.com/gesslar/BeDoc/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/gesslar/BeDoc/actions/workflows/dependabot/dependabot-updates)
 [![Auto PR and Merge - dev 🤗](https://github.com/gesslar/BeDoc/actions/workflows/autopr-dev.yml/badge.svg?branch=dev)](https://github.com/gesslar/BeDoc/actions/workflows/autopr-dev.yml)
 
-
 # BeDoc
 
-**BeDoc** is a powerful, pluggable documentation generator designed to handle any programming language and output format. With its extensible framework, you can easily create custom parsers and printers to generate structured documentation for your projects.
+**BeDoc** is a powerful, pluggable documentation generator designed to handle
+any programming language and output format. With its extensible framework, you
+can easily create custom parsers and printers to generate structured
+documentation for your projects.
 
 ---
 
