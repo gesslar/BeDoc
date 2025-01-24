@@ -1,5 +1,4 @@
 import {setTimeout as timeoutPromise} from "timers/promises"
-
 import * as DataUtil from "./util/DataUtil.js"
 import * as ValidUtil from "./util/ValidUtil.js"
 
@@ -53,10 +52,14 @@ class HooksManager {
   static async new(arg) {
     const instance = new HooksManager(arg)
     const debug = instance.log.newDebug()
+
+    debug("Creating new HooksManager instance with args: `%o`", 2, arg)
+
     const hooksFile = instance.hooksFile
 
     debug("Loading hooks from `%s", 2, hooksFile.absoluteUri)
 
+    debug("Checking hooks file exists: %j", 2, hooksFile)
     const hooksFileContent = await import(hooksFile.absoluteUri)
 
     debug("Hooks file loaded successfully", 2)

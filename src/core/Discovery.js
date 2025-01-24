@@ -42,7 +42,7 @@ export default class Discovery {
         ])),
       )
     } else {
-      debug("Discovering actions", 1)
+      debug("Discovering actions", 2)
 
       for(const actionType of actionTypes) {
         if(this.core.packageJson[actionType]) {

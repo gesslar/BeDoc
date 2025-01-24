@@ -1,4 +1,5 @@
 import process from "node:process"
+import {Environment} from "./Core.js"
 
 import {
   ConfigurationParameters,
@@ -15,8 +16,10 @@ const {getFiles, resolveDirectory, resolveFilename} = FDUtil
 const {fdType, fdTypes} = FDUtil
 
 export default class Configuration {
-  async validate(options) {
+  async validate({options, source}) {
     const finalOptions = {}
+
+    this.#mapEntryOptions({options, source})
 
     // While the entry points do wrap the entire process in a try/catch, we
     // should also do this here, so we can trap everything and instead
@@ -132,6 +135,33 @@ export default class Configuration {
     }
   }
 
+  #mapEntryOptions({options, source}) {
+    // CLI already has done all the work via commander
+    if(source === Environment.CLI)
+      return options
+
+    for(const [key, value] of Object.entries(options)) {
+      options[key] = {value, source}
+    }
+
+    // We will need to inject some options if they are not available
+    const cwd = process.cwd()
+    const dir = resolveDirectory(cwd)
+
+    // Inject basePath if not available
+    if(!options.basePath)
+      options.basePath = {value: dir, source}
+
+    // Inject packageJson if not available
+    if(!options.packageJson) {
+      const jsonFile = resolveFilename("package.json", dir)
+      const jsonObj = loadJson(jsonFile)
+      options.packageJson = {value: jsonObj, source}
+    }
+
+    return options
+  }
+
   /**
    * Validate the ConfigurationParameters object. This is a sanity check to
    * ensure that the ConfigurationParameters object is valid.
@@ -168,28 +198,28 @@ export default class Configuration {
   /**
    * Find all options from all sources
    *
-   * @param {object} cliOptions - The command line options.
+   * @param {object} entryOptions - The command line options.
    * @returns {Promise<object[]>} All options from all sources.
    */
-  #findAllOptions(cliOptions) {
+  #findAllOptions(entryOptions) {
     const allOptions = []
 
     const environmentVariables = this.#getEnvironmentVariables()
     if(environmentVariables)
       allOptions.push({source: "environment", options: environmentVariables})
 
-    const packageJson = cliOptions.packageJson
-    if(packageJson.bedoc)
+    const packageJson = entryOptions.packageJson
+    if(packageJson?.bedoc)
       allOptions.push({source: "packageJson", options: packageJson.bedoc})
 
     // Then the config file, if the options specified a config file
     const useConfig =
-      cliOptions.config ||
+      entryOptions?.config ||
       packageJson?.bedoc?.config ||
       environmentVariables?.config
 
     if(useConfig) {
-      const configFilename = packageJson?.bedoc?.config || cliOptions.config
+      const configFilename = packageJson?.bedoc?.config || entryOptions.config
 
       if(!configFilename)
         throw new Error("No config file specified")
@@ -200,7 +230,7 @@ export default class Configuration {
       allOptions.push({source: "config", options: config})
     }
 
-    allOptions.push({source: "cli", options: cliOptions})
+    allOptions.push({source: "entry", options: entryOptions})
 
     return allOptions
   }
@@ -234,14 +264,14 @@ export default class Configuration {
    * @returns {Promise<object>} The merged options.
    */
   async #mergeOptions(allOptions) {
-    const cliIndex = allOptions.findIndex(
-      (option) => option.source && option.source === "cli",
+    const entryIndex = allOptions.findIndex(
+      option => option.source && option.source === "entry",
     )
-    const cliOptions = allOptions[cliIndex].options
-    const nonCliOptions = allOptions.filter(
-      (option) => option.source && option.source !== "cli",
+    const entryOptions = allOptions[entryIndex].options
+    const nonEntryOptions = allOptions.filter(
+      option => option.source && option.source !== "entry",
     )
-    const optionsOnly = nonCliOptions.map((option) => option.options)
+    const optionsOnly = nonEntryOptions.map((option) => option.options)
     const mergedOptions = optionsOnly.reduce((acc, options) => {
       for(const [key, value] of Object.entries(options)) acc[key] = value
 
@@ -249,22 +279,22 @@ export default class Configuration {
     }, {})
 
     const mappedOptions = await mapObject(mergedOptions, (option, value) => {
-      const {value: cliValue, source: cliSource} = cliOptions[option] ?? {
+      const {value: entryValue, source: entrySource} = entryOptions[option] ?? {
         value: undefined,
         source: undefined,
       }
 
-      const cliDefaulted = cliSource === "default"
+      const entryDefaulted = entrySource === "default"
 
-      if(cliValue && value !== cliValue)
-        return cliDefaulted ? value : cliValue
+      if(entryValue && value !== entryValue)
+        return entryDefaulted ? value : entryValue
 
       return value
     })
 
     // Last, but not least, add any defaulted options that are not in the
     // mapped options
-    for(const [key, value] of Object.entries(cliOptions)) {
+    for(const [key, value] of Object.entries(entryOptions)) {
       if(!mappedOptions[key]) {
         if(value.source)
           mappedOptions[key] = value.value

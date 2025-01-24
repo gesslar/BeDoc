@@ -27,10 +27,11 @@ export default class Conveyor {
       const slot = Promise.race(semaphore) // Wait for an available slot
       semaphore.push(slot.then(async() => {
         const result = await this.#processFile(file)
+
         if(result.status === "success")
-          this.#succeeded.push({result, file})
+          this.#succeeded.push({input: file, output: result.file})
         else
-          this.#errored.push({result, file})
+          this.#errored.push({input: file, error: result.error})
       }))
       semaphore.shift() // Remove the oldest promise
     }
@@ -38,9 +39,7 @@ export default class Conveyor {
     // Wait for all tasks to complete
     await Promise.all(semaphore)
 
-    const result = {succeeded: this.#succeeded, errored: this.#errored}
-
-    return result
+    return {succeeded: this.#succeeded, errored: this.#errored}
   }
 
   /**
@@ -51,6 +50,7 @@ export default class Conveyor {
    */
   async #processFile(file) {
     const debug = this.logger.newDebug()
+
     try {
       debug("Processing file: `%s`", 2, file.path)
 
@@ -81,12 +81,15 @@ export default class Conveyor {
         return {status: "error", message: "Invalid print result"}
 
       const writeResult = await this.#writeOutput(destFile, content)
-      debug("Wrote output for: `%s` (%d bytes)", 2, writeResult.file.path, content.length)
-      return {status: "success", file: writeResult.file}
+
+      if(writeResult.status === "success")
+        debug("Wrote output for: `%s` (%d bytes)", 2, file.path, content.length)
+
+      return writeResult
     } catch(error) {
       const mess = `Error processing file ${file.path}: ${error.message}\n${error.stack}`
       this.logger.error(mess)
-      return {status: "error", message: mess}
+      return {status: "error", error}
     }
   }
 
@@ -99,7 +102,12 @@ export default class Conveyor {
    */
   async #writeOutput(destFile, content) {
     const destFileMap = composeFilename(this.output.path, destFile)
-    const result = await writeFile(destFileMap, content)
-    return {file: destFileMap, result}
+    try {
+      writeFile(destFileMap, content)
+
+      return {status: "success", file: destFileMap}
+    } catch(error) {
+      return {status: "error", output: destFileMap, error}
+    }
   }
 }
