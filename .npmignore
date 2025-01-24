@@ -1,0 +1,11 @@
+node_modules
+.vscode-test/
+*.vsix
+.env
+temp/
+TODO/
+.github/
+.vscode/
+examples/
+**/*.tgz
+eslint.config.js
