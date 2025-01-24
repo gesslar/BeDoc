@@ -38,10 +38,10 @@ Install BeDoc globally using NPM:
 npm install -g bedoc
 ```
 
-Or add it to your project as a dependency:
+Or add it to your project as a dev dependency:
 
 ```bash
-npm install bedoc
+npm install bedoc --save-dev
 ```
 
 ---
@@ -51,7 +51,7 @@ npm install bedoc
 Here’s how to use BeDoc programmatically:
 
 ```javascript
-const BeDoc = require('bedoc');
+import BeDoc from "@gesslar/bedoc"
 
 // Initialize BeDoc with your configuration
 const docGenerator = new BeDoc({
