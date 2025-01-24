@@ -1,6 +1,6 @@
+import console from "node:console"
 import chokidar from "chokidar"
 import BeDoc, {Environment} from "@gesslar/bedoc"
-import console from "node:console"
 
 // Directory to watch
 const watchDirectory = "./source/lpc"
