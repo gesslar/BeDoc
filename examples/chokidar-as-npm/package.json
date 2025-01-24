@@ -11,8 +11,5 @@
   },
   "dependencies": {
     "chokidar": "^4.0.3"
-  },
-  "devDependencies": {
-    "@gesslar/bedoc": "github:gesslar/bedoc"
   }
 }

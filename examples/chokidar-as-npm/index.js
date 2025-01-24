@@ -1,18 +1,16 @@
 import console from "node:console"
 import chokidar from "chokidar"
-import BeDoc, {Environment} from "@gesslar/bedoc"
+import BeDoc, {Environment} from "../../src/core/Core.js"
 
 // Directory to watch
 const watchDirectory = "./source/lpc"
 
 // BeDoc configuration
 const bedocOptions = {
-  debug: false,
-  debugLevel: 3,
   output: "../output/wikitext/",
   language: "lpc",
   format: "wikitext",
-  hooks: "../hooks/lpc-wikitext-hooks.js",
+  hooks: "./hooks/lpc-wikitext-hooks.js",
   maxConcurrent: 5
 }
 
