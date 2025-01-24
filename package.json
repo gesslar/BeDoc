@@ -4,12 +4,15 @@
   "description": "Pluggable documentation engine for any language and format",
   "publisher": "gesslar",
   "main": "./src/core/Core.js",
-  "repository": "github:gesslar/BeDoc",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gesslar/BeDoc.git"
+  },
   "bugs": {
     "url": "https://github.com/gesslar/BeDoc/issues"
   },
   "bin": {
-    "bedoc": "./src/cli.js"
+    "bedoc": "src/cli.js"
   },
   "type": "module",
   "scripts": {
