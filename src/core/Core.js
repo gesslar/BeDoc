@@ -6,20 +6,24 @@ import Logger from "./Logger.js"
 import ParseManager from "./action/ParseManager.js"
 import PrintManager from "./action/PrintManager.js"
 import Conveyor from "./Conveyor.js"
+import Configuration from "./Configuration.js"
 
 import * as ActionUtil from "./util/ActionUtil.js"
 import * as DataUtil from "./util/DataUtil.js"
+import * as FDUtil from "./util/FDUtil.js"
 
 const {loadPackageJson} = ActionUtil
 const {schemaCompare} = DataUtil
+const {getFiles} = FDUtil
 
-const Environment = {
+export const Environment = Object.freeze({
   EXTENSION: "extension",
+  NPM: "npm",
   ACTION: "action",
   CLI: "cli",
-}
+})
 
-class Core {
+export default class Core {
   constructor(options) {
     this.options = options
     const {debug: debugMode, debugLevel} = options
@@ -28,12 +32,17 @@ class Core {
     this.debugOptions = this.logger.options
   }
 
-  static async new(options) {
-    const instance = new Core({...options, name: "BeDoc"})
+  static async new({options, source}) {
+    const configuration = new Configuration()
+
+    const validatedConfig = await configuration.validate({options, source})
+    if(validatedConfig.status === "error")
+      throw new AggregateError(validatedConfig.errors, "BeDoc configuration failed")
+
+    const instance = new Core({...validatedConfig, name: "BeDoc"})
     const debug = instance.logger.newDebug()
 
-    debug("Initializing Core instance", 1)
-    debug("Core passed options: %o", 3, options)
+    debug("Creating new BeDoc instance with options: `%o`", 2, validatedConfig)
 
     const discovery = new Discovery(instance)
     const actionDefinitions = await discovery.discoverActions()
@@ -42,10 +51,11 @@ class Core {
       parse: [],
       print: [],
     }
+
     for(const search of [{parse: "language", print: "format"}]) {
       for(const [actionType, criterion] of Object.entries(search)) {
         filteredActions[actionType] = actionDefinitions[actionType].filter(
-          (a) => a.action.meta[criterion] === options[criterion],
+          (a) => a.action.meta[criterion] === validatedConfig[criterion],
         )
       }
     }
@@ -69,9 +79,11 @@ class Core {
       throw new Error(message)
     }
 
+    debug("Found matching actions: `%o`", 3, matches)
+
     const chosenActions = matches[0]
 
-    if(Object.values(chosenActions).some((a) => !a))
+    if(Object.values(chosenActions).some(a => !a))
       throw new Error("No found matching parser and printer")
 
     const satisfied = schemaCompare(
@@ -104,13 +116,13 @@ class Core {
       {manager: instance.parser, action: "parse"},
       {manager: instance.printer, action: "print"},
     ]) {
-      if(options.hooks) {
+      if(validatedConfig.hooks) {
         const {manager, action} = target
         const hooks = await HooksManager.new({
           action: action,
-          hooksFile: options.hooks,
+          hooksFile: validatedConfig.hooks,
           logger: new Logger(instance.debugOptions),
-          timeout: options.hooksTimeout,
+          timeout: validatedConfig.hooksTimeout,
         })
 
         if(hooks)
@@ -121,13 +133,14 @@ class Core {
     return instance
   }
 
-  async processFiles(startTime) {
+  async processFiles(glob, startTime = process.hrtime()) {
     const debug = this.logger.newDebug()
     debug("Starting file processing with conveyor", 1)
 
-    const {input, output} = this.options
+    const {output} = this.options
 
-    if(!input)
+    const input = await getFiles(glob)
+    if(!input?.length)
       throw new Error("No input files specified")
 
     // Instantiate the conveyor
@@ -142,6 +155,9 @@ class Core {
 
     // Initiate the conveyor
     const result = await conveyor.convey(input, this.options.maxConcurrent)
+
+    debug("Conveyor complete", 1)
+
     const endTime = (process.hrtime(startTime)[1] / 1_000_000).toFixed(2)
     const processEnd = (process.hrtime(processStart)[1] / 1_000_000).toFixed(2)
 
@@ -150,21 +166,13 @@ class Core {
     const errored = result.errored
     const succeeded = result.succeeded
 
-    const failureRate = ((errored.length / totalFiles) * 100).toFixed(2)
-    const successRate = (100 - failureRate).toFixed(2)
-
     const message = `Processed ${totalFiles} files: ${succeeded.length} succeeded, ${errored.length} errored ` +
       `in ${processEnd}ms [total: ${endTime}ms]`
 
-    this.logger.info(message)
-
-    const successFiles =
-      succeeded.map((r) => `- ${r.file.path} => ${r.result.file.path}`).join("\n")
-    const successMessage = `Processed ${succeeded.length} files successfully [${successRate}%]\n` +
-    successFiles
-    this.logger.info(successMessage)
+    this.logger.debug(message, 1)
 
     if(errored. length > 0) {
+      const failureRate = ((errored.length / totalFiles) * 100).toFixed(2)
       const errorMessage = `Errors processing ${errored.length} files [${failureRate}%]` +
         errored.map(r => `\n- ${r.file.module}: ${r.result.message}`).join("")
 
@@ -172,7 +180,7 @@ class Core {
     }
 
     debug("File processing complete", 1)
+
+    return result
   }
 }
-
-export {Core, Environment}
