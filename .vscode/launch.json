@@ -10,30 +10,30 @@
       "args": [
         "--debug",
         "--debugLevel",
-        "1",
+        "0",
         "--input",
         "examples/source/lpc/**/*.c",
         "--output",
         "examples/output/markdown/",
-        "--language",
-        "lpc",
-        "--format",
-        "markdown",
+        "--parser",
+        "examples/node_modules_test/bedoc-lpc-parser/bedoc-lpc-parser.js",
+        "--printer",
+        "examples/node_modules_test/bedoc-markdown-printer/bedoc-markdown-printer.js",
         "--hooks",
         "examples/hooks/lpc-markdown-hooks.js"
       ],
-      "console" : "internalConsole",
+      "console" : "integratedTerminal"
     },
     {
       "type": "node",
       "request": "launch",
       "name": "Debug BeDoc CLI - LPC to Wikitext",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/src/cli.js",
+      "program": "clear && ${workspaceFolder}/src/cli.js",
       "args": [
         "--debug",
         "--debugLevel",
-        "1",
+        "2",
         "--input",
         "examples/source/lpc/**/*.c",
         "--output",
@@ -47,7 +47,7 @@
         "--maxConcurrent",
         "50"
       ],
-      "console" : "internalConsole",
+      "console" : "integratedTerminal"
     },
     {
       "type": "node",

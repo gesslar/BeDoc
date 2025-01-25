@@ -45,20 +45,16 @@ export default class Core {
     debug("Creating new BeDoc instance with options: `%o`", 2, validatedConfig)
 
     const discovery = new Discovery(instance)
-    const actionDefinitions = await discovery.discoverActions()
+    const actionDefinitions = await discovery.discoverActions({
+      printer: validatedConfig.printer,
+      parser: validatedConfig.parser,
+    })
 
-    const filteredActions = {
-      parse: [],
-      print: [],
-    }
+    const filteredActions = discovery.satisfyCriteria(
+      actionDefinitions, validatedConfig
+    )
 
-    for(const search of [{parse: "language", print: "format"}]) {
-      for(const [actionType, criterion] of Object.entries(search)) {
-        filteredActions[actionType] = actionDefinitions[actionType].filter(
-          (a) => a.action.meta[criterion] === validatedConfig[criterion],
-        )
-      }
-    }
+    debug("Filtered actions: `%o`", 2, filteredActions)
 
     const matches = []
     // Now let us find the ones that agree to a contract
@@ -69,6 +65,11 @@ export default class Core {
         if(satisfied.status === "success")
           matches.push({parse: parser, print: printer})
       }
+    }
+
+    if(matches.length === 0) {
+      const message = `No matching actions found for language: ${validatedConfig.language} and format: ${validatedConfig.format}`
+      throw new Error(message)
     }
 
     // We only want one!
@@ -108,6 +109,7 @@ export default class Core {
     debug("Attaching parse action to instance: `%o`", 2, chosenActions.parse.module)
     instance.parser = new ParseManager(chosenActions.parse, instance.logger)
 
+    // not using module anymore
     debug("Attaching print action to instance: `%o`", 2, chosenActions.print.module)
     instance.printer = new PrintManager(chosenActions.print, instance.logger)
 
@@ -135,6 +137,7 @@ export default class Core {
 
   async processFiles(glob, startTime = process.hrtime()) {
     const debug = this.logger.newDebug()
+
     debug("Starting file processing with conveyor", 1)
 
     const {output} = this.options
@@ -171,12 +174,16 @@ export default class Core {
 
     this.logger.debug(message, 1)
 
-    if(errored. length > 0) {
-      const failureRate = ((errored.length / totalFiles) * 100).toFixed(2)
-      const errorMessage = `Errors processing ${errored.length} files [${failureRate}%]` +
-        errored.map(r => `\n- ${r.file.module}: ${r.result.message}`).join("")
+    if(errored.length > 0) {
+      // const failureRate = ((errored.length / totalFiles) * 100).toFixed(2)
+      // const errorMessage =
+      //   `Errors processing ${errored.length} files [${failureRate}%]`
+      // const errorLines = errored.map(r => {
+      //   const stackLine = log.lastStackLine(r.error, 0)
+      //   return `\n- ${r.input.module}: ${stackLine} - ${r.error.message}`
+      // }).join("")
 
-      this.logger.error(errorMessage)
+      // this.logger(errorMessage+errorLines)
     }
 
     debug("File processing complete", 1)

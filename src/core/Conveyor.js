@@ -87,9 +87,7 @@ export default class Conveyor {
 
       return writeResult
     } catch(error) {
-      const mess = `Error processing file ${file.path}: ${error.message}\n${error.stack}`
-      this.logger.error(mess)
-      return {status: "error", error}
+      return {status: "error", file, error}
     }
   }
 

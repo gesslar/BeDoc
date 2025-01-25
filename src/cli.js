@@ -63,7 +63,7 @@ const {resolveDirectory} = FDUtil
     }
 
     // Create core instance with validated config
-    BeDoc
+    const bedoc = await BeDoc
       .new({
         options: {
           ...optionsWithSources,
@@ -72,19 +72,20 @@ const {resolveDirectory} = FDUtil
         },
         source: Environment.CLI
       })
-  } catch(e) {
-    if(e instanceof Error) {
-      if(e instanceof AggregateError) {
-        for(const error of e.errors) {
-          console.error(`Error: ${error.message}`)
-        }
-      } else if(e.stack) {
-        console.error(e.stack)
+    const filesToProcess = bedoc.options.input.map(f => f.absolutePath)
+    const result = await bedoc.processFiles(filesToProcess)
+    const errored = result.errored
+    if(errored.length > 0)
+      throw new AggregateError(errored.map(e => e.error), "Error processing files")
+  } catch(error) {
+    if(error instanceof Error) {
+      if(error instanceof AggregateError) {
+        error.errors.forEach(e => console.error("Error: %s", e.message))
       } else {
-        console.error(`Error: ${e.message}`)
+        console.error("Error: %s", error.message)
       }
     } else {
-      console.error(`Error: ${e}`)
+      console.error("Error: %o", error)
     }
 
     process.exit(1)

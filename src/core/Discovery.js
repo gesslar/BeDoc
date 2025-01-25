@@ -5,12 +5,10 @@ import {execSync} from "child_process"
 import * as FDUtil from "./util/FDUtil.js"
 import * as ActionUtil from "./util/ActionUtil.js"
 import * as DataUtil from "./util/DataUtil.js"
-import * as ValidUtil from "./util/ValidUtil.js"
 
 const {ls, resolveDirectory, resolveFilename, getFiles} = FDUtil
 const {actionTypes, actionMetaRequirements, loadJson} = ActionUtil
 const {isType} = DataUtil
-const {assert} = ValidUtil
 
 let debug
 
@@ -26,9 +24,10 @@ export default class Discovery {
   /**
    * Discover actions from local or global node_modules
    *
+   * @param {object[]} specified The specified actions to discover
    * @returns {Promise<object>} A map of discovered modules
    */
-  async discoverActions() {
+  async discoverActions({printer, parser} = {}) {
     const bucket = []
     const options = this.core.options ?? {}
 
@@ -55,7 +54,6 @@ export default class Discovery {
       }
 
       const directories = [
-        // "c:/temp",
         "./node_modules",
         execSync("npm root -g").toString().trim(),
       ]
@@ -63,14 +61,24 @@ export default class Discovery {
       const moduleDirectories = directories.map(resolveDirectory)
       for(const moduleDirectory of moduleDirectories) {
         const {directories: dirs} = await ls(moduleDirectory.absolutePath)
-        debug("Found %d directories in `%s`", 2, dirs.length, moduleDirectory.absolutePath)
-        const bedocDirs = dirs.filter((d) => d.name.startsWith("bedoc-"))
-        const exports = bedocDirs.map((d) => this.#getModuleExports(d))
+
+        debug("Found %d directories in `%s`", 2,
+          dirs.length, moduleDirectory.absolutePath
+        )
+
+        const bedocDirs = dirs.filter(d => d.name.startsWith("bedoc-"))
+        const exports = bedocDirs.map(d => this.#getModuleExports(d))
         bucket.push(...exports.flat())
       }
     }
 
-    return await this.#loadActionsAndContracts(bucket)
+    return await this.#loadActionsAndContracts(
+      bucket,
+      {
+        print: printer,
+        parse: parser
+      }
+    )
   }
 
   /**
@@ -82,9 +90,9 @@ export default class Discovery {
   #getModuleExports(dirMap) {
     const packageJsonFile = resolveFilename("package.json", dirMap)
     const packageJson = loadJson(packageJsonFile)
-    const bedocPackageJsonModules = packageJson.bedoc?.modules ?? []
-    const bedocModuleFiles = bedocPackageJsonModules.map((file) =>
-      resolveFilename(file, dirMap),
+    const bedocPackageJsonModules = packageJson.bedoc?.actions ?? []
+    const bedocModuleFiles = bedocPackageJsonModules.map(file =>
+      resolveFilename(file, dirMap)
     )
 
     return bedocModuleFiles
@@ -95,68 +103,82 @@ export default class Discovery {
    * respective contracts.
    *
    * @param {object[]} moduleFiles The module file objects to process
+   * @param {object} specific The specific actions to load
    * @returns {Promise<object>} The discovered action
    */
-  async #loadActionsAndContracts(moduleFiles) {
+  async #loadActionsAndContracts(moduleFiles, specific) {
     const resultActions = {}
+    actionTypes.forEach(actionType => (resultActions[actionType] = []))
 
-    actionTypes.forEach((actionType) => (resultActions[actionType] = []))
+    // Tag the specific actions to load, so we can filter them later
+    for(const [type, file] of Object.entries(specific)) {
+      if(file)
+        file.specificType = type
+    }
 
-    for(const moduleFile of moduleFiles) {
-      const result = {total: 0, accepted: 0}
-      const {actions, contracts} = await import(moduleFile.absoluteUri)
+    const toLoad = [
+      ...moduleFiles,
+      ...Object.values(specific).filter(Boolean),
+    ]
 
-      debug("Loaded actions from `%s`", 2, moduleFile.absoluteUri)
-      debug("Found %d actions and %d contracts", 3, actions.length, contracts.length)
+    const loadedActions = []
+    for(const file of toLoad) {
+      const loading = await this.#loadModule(file)
+      const loaded = loading.actions.map((action, index) => {
+        const contract = yaml.parse(loading.contracts[index])
 
-      assert(
-        actions.length === contracts.length,
-        "Actions and contracts must be the same length",
-        1,
+        return {file, action, contract}
+      })
+      loadedActions.push(...loaded)
+    }
+
+    const filtered = []
+    for(const [type, file] of Object.entries(specific)) {
+      // Find all the actions that match the specific type
+      const filtering = loadedActions.filter((_f,a,_c) => a[type])
+
+      // If the file is a specific type, filter it
+      if(file?.specificType === type)
+        filtered.push(loadedActions.find(
+          e => e.file.specificType === type)
+        )
+      // Otherwise, push all the actions that match the specific type
+      else
+        filtered.push(...filtering)
+    }
+
+    // Now check the metas for validity
+    for(const e of filtered) {
+      const {action, contract, file: moduleFile} = e
+      const meta = action.meta
+      if(!meta)
+        throw new TypeError("Action has no meta object:\n" +
+          JSON.stringify(moduleFile, null, 2) + "\n" +
+          JSON.stringify(action, null, 2))
+
+      const metaAction = meta.action
+      if(!metaAction)
+        throw new TypeError("Action has no meta action:\n" +
+          JSON.stringify(moduleFile, null, 2) + "\n" +
+          JSON.stringify(action, null, 2))
+
+      debug("Checking action `%s`", 2, metaAction)
+
+      const isValid = this.#validMeta(metaAction, {action, contract})
+
+      debug("Action `%o` in `%s` is %s", 3,
+        metaAction, moduleFile.module, isValid ? "valid" : "invalid"
       )
 
-      result.total = actions.length
+      if(isValid) {
+        debug("Action is a valid `%s` action", 3, metaAction)
 
-      for(let i = actions.length; i--; ) {
-        const tempContract = contracts[i]
-
-        if(isType(tempContract, "string"))
-          contracts[i] = yaml.parse(tempContract)
-        else if(isType(tempContract, "object"))
-          contracts[i] = tempContract
-        else
-          throw new Error(`Invalid contract type: ${typeof tempContract}`)
-
-        const curr = {
-          module: moduleFile.module,
-          action: actions[i],
-          contract: contracts[i],
-        }
-
-        const meta = curr.action.meta
-        const metaAction = meta?.action
-
-        debug("Checking action `%s`", 2, metaAction)
-
-        for(const actionType of actionTypes) {
-          const isValid = this.validMeta(actionType, curr)
-          debug("Action `%o` in `%s` is %s", 3, metaAction, moduleFile.module, isValid ? "valid" : "invalid")
-
-          if(isValid && metaAction === actionType) {
-            debug("Action is a valid `%s` action", 3, actionType)
-            result.accepted++
-            resultActions[actionType].push(curr)
-            continue
-          } else {
-            debug("Action is not a valid `%s` action", 3, actionType)
-          }
-        }
-
-        debug("Processed action `%s`", 2, metaAction)
-        debug("Result: %d/%d actions accepted", 3, result.accepted, result.total)
+        resultActions[metaAction].push({file: moduleFile, action, contract})
+      } else {
+        debug("Action is not a valid `%s` action", 3, metaAction)
       }
 
-      debug("Processed %d actions from `%s`", 2, result.total, moduleFile.module)
+      debug("Processed action `%s`", 2, metaAction)
     }
 
     for(const actionType of actionTypes) {
@@ -168,13 +190,71 @@ export default class Discovery {
       return acc + resultActions[curr].length
     }, 0)
 
-    debug("Loaded %d action definitions from %d modules", 2, total, moduleFiles.length)
+    debug("Loaded %d action definitions from %d modules", 2,
+      total, moduleFiles.length
+    )
 
     return resultActions
   }
 
-  validMeta(actionType, toValidate) {
+  satisfyCriteria(actions, validatedConfig) {
+    const satisfied = {parse: [], print: []}
+    const toMatch = {
+      parse: {criterion: "language", config: "parser"},
+      print: {criterion: "format", config: "printer"}
+    }
+
+    for(const [actionType, search] of Object.entries(toMatch)) {
+      const {criterion, config} = search
+
+      // First let's check if we wanted something specific
+      if(validatedConfig[config]) {
+        const found = actions[actionType].find(
+          a => a.file.specificType === actionType
+        )
+        if(found) {
+          satisfied[actionType].push(found)
+          continue
+        }
+      }
+
+      // Hmm! We didn't find anything specific. Let's check the criterion
+      const found = actions[actionType].filter(
+        a => a.action.meta[criterion] === validatedConfig[criterion]
+      )
+
+      // Shove them into the result!
+      satisfied[actionType].push(...found)
+
+      // That should about cover it!
+    }
+
+    return satisfied
+  }
+
+  /**
+   * Load a module and return its exports
+   *
+   * @param {object} module The module object to load
+   * @returns {Promise<object>} The module exports {actions, contracts}
+   */
+  async #loadModule(module) {
+    const {absoluteUri} = module
+    const moduleExports = await import(absoluteUri)
+
+    return {file: module, ...moduleExports}
+  }
+
+  /**
+   * Validates the meta requirements for an action
+   *
+   * @param {string} actionType The action type to validate
+   * @param {object} toValidate - The action object to validate
+   * @returns {boolean} Whether the action object meets the meta requirements
+   */
+  #validMeta(actionType, toValidate) {
     debug("Checking meta requirements for `%s`", 3, actionType)
+
     const requirements = actionMetaRequirements[actionType]
     if(!requirements)
       throw new Error(

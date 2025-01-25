@@ -5,7 +5,6 @@ export default class ActionManager {
   #meta = {}
   #hooks = null
   #contract
-  #module
   #log
   #debug
 
@@ -21,7 +20,7 @@ export default class ActionManager {
 
     debug("Setting up action", 2)
 
-    const {action, contract, module, meta} = actionDefinition
+    const {action, contract, meta} = actionDefinition
 
     if(!action)
       throw new Error("Action is required")
@@ -29,10 +28,6 @@ export default class ActionManager {
     if(!contract)
       throw new Error("Contract is required")
 
-    if(!module)
-      throw new Error("Module is required")
-
-    this.#module = module
     this.#action = action
     this.#contract = contract
     this.#meta = meta
@@ -60,10 +55,6 @@ export default class ActionManager {
 
   get contract() {
     return this.#contract
-  }
-
-  get module() {
-    return this.#module
   }
 
   get meta() {
