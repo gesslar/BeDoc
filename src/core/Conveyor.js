@@ -6,9 +6,9 @@ export default class Conveyor {
   #succeeded = []
   #errored = []
 
-  constructor(parser, printer, logger, output) {
-    this.parser = parser
-    this.printer = printer
+  constructor(parse, print, logger, output) {
+    this.parse = parse
+    this.print = print
     this.logger = logger
     this.output = output
   }
@@ -23,11 +23,14 @@ export default class Conveyor {
   async convey(files, maxConcurrent = 10) {
     const semaphore = Array(maxConcurrent).fill(Promise.resolve())
 
+    // Set up the actions
+    await this.parse.setupAction()
+    await this.print.setupAction()
+
     for(const file of files) {
       const slot = Promise.race(semaphore) // Wait for an available slot
       semaphore.push(slot.then(async() => {
         const result = await this.#processFile(file)
-
         if(result.status === "success")
           this.#succeeded.push({input: file, output: result.file})
         else
@@ -38,6 +41,10 @@ export default class Conveyor {
 
     // Wait for all tasks to complete
     await Promise.all(semaphore)
+
+    // Clean up actions
+    await this.parse.cleanupAction()
+    await this.print.cleanupAction()
 
     return {succeeded: this.#succeeded, errored: this.#errored}
   }
@@ -50,6 +57,7 @@ export default class Conveyor {
    */
   async #processFile(file) {
     const debug = this.logger.newDebug()
+    const {parse, print} = this
 
     try {
       debug("Processing file: `%s`", 2, file.path)
@@ -59,17 +67,20 @@ export default class Conveyor {
       debug("Read file content `%s` (%d bytes)", 2, file.path, fileContent.length)
 
       // Step 2: Parse file
-      const parseResult = await this.parser.parse(file, fileContent)
+      const parseResult = await parse.runAction({
+        file,
+        content: fileContent
+      })
       if(parseResult.status === "error")
         return parseResult
 
       debug("Parsed file successfully: `%s`", 2, file.path)
 
       // Step 3: Print file
-      const printResult = await this.printer.print(
+      const printResult = await print.runAction({
         file,
-        parseResult.result,
-      )
+        content: parseResult.result,
+      })
       if(printResult.status === "error")
         return printResult
 

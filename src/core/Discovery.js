@@ -10,15 +10,14 @@ const {ls, resolveDirectory, resolveFilename, getFiles} = FDUtil
 const {actionTypes, actionMetaRequirements, loadJson} = ActionUtil
 const {isType} = DataUtil
 
-let debug
-
 export default class Discovery {
   #logger
+  #debug
 
   constructor(core) {
     this.core = core
     this.#logger = core.logger
-    debug = this.#logger.newDebug()
+    this.#debug = this.#logger.newDebug()
   }
 
   /**
@@ -28,6 +27,10 @@ export default class Discovery {
    * @returns {Promise<object>} A map of discovered modules
    */
   async discoverActions({printer, parser} = {}) {
+    const debug = this.#debug
+
+    debug("Discovering actions", 2)
+
     const bucket = []
     const options = this.core.options ?? {}
 
@@ -41,22 +44,31 @@ export default class Discovery {
         ])),
       )
     } else {
-      debug("Discovering actions", 2)
+      debug("Mock path not set, discovering actions in node_modules", 1)
 
-      for(const actionType of actionTypes) {
-        if(this.core.packageJson[actionType]) {
-          const action = this.core.packageJson[actionType]
+      debug("Looking for actions in project's package.json", 2)
+      if(this.core.packageJson?.bedoc?.modules) {
+        const actions = this.core.packageJson?.bedoc?.modules
 
-          debug("Found action in package.json: %o", 3, action)
+        debug("Found %d actions in package.json: %d", 3, actions)
+        debug("Actions found in package.json action in package.json: %o", 3, actions)
 
-          bucket.push(action)
-        }
+        if(actions && typeof(actions) === "object")
+          bucket.push(...actions)
+        else
+          debug("No actions found in package.json", 3)
+      } else {
+        debug("No actions found in project's package.json", 2)
       }
 
+      debug("Looking for actions in node_modules (global and locally installed", 2)
       const directories = [
         "./node_modules",
         execSync("npm root -g").toString().trim(),
       ]
+
+      debug("Found %d directories to search for actions", 2, directories.length)
+      debug("Directories to search for actions: %o", 3, directories)
 
       const moduleDirectories = directories.map(resolveDirectory)
       for(const moduleDirectory of moduleDirectories) {
@@ -67,17 +79,19 @@ export default class Discovery {
         )
 
         const bedocDirs = dirs.filter(d => d.name.startsWith("bedoc-"))
+        debug("Found %d bedoc directories under %s", 2, bedocDirs.length, moduleDirectory.absolutePath)
+
         const exports = bedocDirs.map(d => this.#getModuleExports(d))
+        debug("Found %d module exports under %s", 2, exports.length, moduleDirectory.absolutePath)
+
         bucket.push(...exports.flat())
       }
     }
 
+    debug("Discovered %d actions", 2, bucket.length)
+
     return await this.#loadActionsAndContracts(
-      bucket,
-      {
-        print: printer,
-        parse: parser
-      }
+      bucket, {print: printer, parse: parser}
     )
   }
 
@@ -88,9 +102,16 @@ export default class Discovery {
    * @returns {object[]} The discovered module exports
    */
   #getModuleExports(dirMap) {
+    const debug = this.#debug
+    debug("Getting module exports from `%s`", 3, dirMap.absolutePath)
+
     const packageJsonFile = resolveFilename("package.json", dirMap)
+    debug("Loading package.json from `%s`", 3, packageJsonFile.absolutePath)
+
     const packageJson = loadJson(packageJsonFile)
-    const bedocPackageJsonModules = packageJson.bedoc?.actions ?? []
+    debug("Loaded package.json from `%s`", 3, packageJsonFile.absolutePath)
+
+    const bedocPackageJsonModules = packageJson.bedoc?.modules ?? []
     const bedocModuleFiles = bedocPackageJsonModules.map(file =>
       resolveFilename(file, dirMap)
     )
@@ -107,13 +128,21 @@ export default class Discovery {
    * @returns {Promise<object>} The discovered action
    */
   async #loadActionsAndContracts(moduleFiles, specific) {
+    const debug = this.#debug
+
+    debug("Loading actions and contracts", 2)
+    debug("Loading %d module files", 2, moduleFiles.length)
+    debug("Specific actions to load: %o", 2, specific)
+
     const resultActions = {}
     actionTypes.forEach(actionType => (resultActions[actionType] = []))
 
     // Tag the specific actions to load, so we can filter them later
     for(const [type, file] of Object.entries(specific)) {
-      if(file)
+      if(file) {
+        debug("Tagging specific action `%s` as `%s`", 3, file.absolutePath, type)
         file.specificType = type
+      }
     }
 
     const toLoad = [
@@ -121,8 +150,13 @@ export default class Discovery {
       ...Object.values(specific).filter(Boolean),
     ]
 
+    debug("Loading %d combined actions", 2, toLoad.length)
+    debug("Actions to load: %o", 3, toLoad)
+
     const loadedActions = []
     for(const file of toLoad) {
+      debug("Loading module `%s`", 2, file.absolutePath)
+
       const loading = await this.#loadModule(file)
       const loaded = loading.actions.map((action, index) => {
         const contract = yaml.parse(loading.contracts[index])
@@ -132,20 +166,39 @@ export default class Discovery {
       loadedActions.push(...loaded)
     }
 
-    const filtered = []
-    for(const [type, file] of Object.entries(specific)) {
-      // Find all the actions that match the specific type
-      const filtering = loadedActions.filter((_f,a,_c) => a[type])
+    debug("Loaded %d actions", 2, loadedActions.length)
 
-      // If the file is a specific type, filter it
-      if(file?.specificType === type)
-        filtered.push(loadedActions.find(
-          e => e.file.specificType === type)
+    const filtered = []
+    for(const actionType of actionTypes) {
+      const file = specific[actionType]
+      const matchingActions = []
+      if(file) {
+        debug("Filtering actions for specific `%s`", 2, actionType)
+        const found = loadedActions.find(
+          e => e.file.absolutePath === file.absolutePath
         )
-      // Otherwise, push all the actions that match the specific type
-      else
-        filtered.push(...filtering)
+
+        if(!found)
+          throw new Error(`Could not find specific action: ${file.absolutePath}`)
+
+        matchingActions.push(found)
+      } else {
+        debug("No specific action required for `%s`", 2, actionType)
+
+        const found = loadedActions.filter(
+          e => e.action.meta.action === actionType
+        )
+        matchingActions.push(...found)
+      }
+
+      debug("Filtered %d actions for `%s`", 2,
+        matchingActions.length, actionType
+      )
+
+      filtered.push(...matchingActions)
     }
+
+    debug("Filtered %d actions", 2, filtered.length)
 
     // Now check the metas for validity
     for(const e of filtered) {
@@ -198,29 +251,45 @@ export default class Discovery {
   }
 
   satisfyCriteria(actions, validatedConfig) {
+    const debug = this.#debug
     const satisfied = {parse: [], print: []}
     const toMatch = {
       parse: {criterion: "language", config: "parser"},
       print: {criterion: "format", config: "printer"}
     }
 
+    debug("Satisfying criteria for actions", 2)
     for(const [actionType, search] of Object.entries(toMatch)) {
+      debug("Satisfying criteria for `%s` actions", 2, actionType)
+
       const {criterion, config} = search
+      debug("Criterion: %s, Config: %s", 3, criterion, config)
 
       // First let's check if we wanted something specific
       if(validatedConfig[config]) {
+        debug("Checking for specific `%s` action", 3, actionType)
         const found = actions[actionType].find(
           a => a.file.specificType === actionType
         )
         if(found) {
+          debug("Found specific `%s` action", 3, actionType)
           satisfied[actionType].push(found)
           continue
         }
+
+        debug("No specific `%s` action found", 3, actionType)
       }
 
       // Hmm! We didn't find anything specific. Let's check the criterion
-      const found = actions[actionType].filter(
-        a => a.action.meta[criterion] === validatedConfig[criterion]
+      debug("Checking for `%s` actions with criterion `%s`", 3, actionType, criterion)
+      const found = actions[actionType].filter(a => {
+        debug("Meta criterion value: %o", 4, a.action.meta[criterion])
+        debug("Config criterion value: %o", 4, validatedConfig[criterion])
+        return a.action.meta[criterion] === validatedConfig[criterion]
+      })
+
+      debug("Found %d `%s` actions with criterion `%s`", 3,
+        found.length, actionType, criterion
       )
 
       // Shove them into the result!
@@ -239,6 +308,10 @@ export default class Discovery {
    * @returns {Promise<object>} The module exports {actions, contracts}
    */
   async #loadModule(module) {
+    const debug = this.#debug
+
+    debug("Loading module `%j`", 2, module)
+
     const {absoluteUri} = module
     const moduleExports = await import(absoluteUri)
 
@@ -253,6 +326,7 @@ export default class Discovery {
    * @returns {boolean} Whether the action object meets the meta requirements
    */
   #validMeta(actionType, toValidate) {
+    const debug = this.#debug
     debug("Checking meta requirements for `%s`", 3, actionType)
 
     const requirements = actionMetaRequirements[actionType]

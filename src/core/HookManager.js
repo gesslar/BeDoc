@@ -8,17 +8,17 @@ const {assert} = ValidUtil
 const freeze = Object.freeze
 
 const hookEvents = freeze(["start", "section_load", "enter", "exit", "end"])
-const hookPoints = freeze(
+export const hookPoints = freeze(
   await allocateObject(
     hookEvents.map((event) => event.toUpperCase()),
     hookEvents,
   ),
 )
 
-class HooksManager {
+export default class HookManager {
   #hooksFile = null
   #log = null
-  #hooks = {}
+  #hooks = null
   #action = null
   #timeout = 1
 
@@ -49,11 +49,19 @@ class HooksManager {
     return this.#timeout
   }
 
+  get setup() {
+    return this.hooks?.setup || null
+  }
+
+  get cleanup() {
+    return this.hooks?.cleanup || null
+  }
+
   static async new(arg) {
-    const instance = new HooksManager(arg)
+    const instance = new HookManager(arg)
     const debug = instance.log.newDebug()
 
-    debug("Creating new HooksManager instance with args: `%o`", 2, arg)
+    debug("Creating new HookManager instance with args: `%o`", 2, arg)
 
     const hooksFile = instance.hooksFile
 
@@ -116,7 +124,7 @@ class HooksManager {
         1,
       )
 
-      const hookExecution = await hook.call(this, ...args)
+      const hookExecution = await hook.call(this.hooks, ...args)
       const hookTimeout = this.parent.timeout
       const expireAsync = () =>
         timeoutPromise(
@@ -133,11 +141,4 @@ class HooksManager {
       return result
     }
   }
-}
-
-export {
-  // Class
-  HooksManager,
-  // Constants
-  hookPoints,
 }

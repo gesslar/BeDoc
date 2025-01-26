@@ -80,9 +80,9 @@ const {resolveDirectory} = FDUtil
   } catch(error) {
     if(error instanceof Error) {
       if(error instanceof AggregateError) {
-        error.errors.forEach(e => console.error("Error: %s", e.message))
+        error.errors.forEach(e => console.error(e))
       } else {
-        console.error("Error: %s", error.message)
+        console.error(error.message)
       }
     } else {
       console.error("Error: %o", error)

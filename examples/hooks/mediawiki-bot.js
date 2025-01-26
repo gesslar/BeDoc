@@ -70,10 +70,9 @@ class MediaWikiBot {
       })
 
       this.token = editTokenResponse.data.query.tokens.csrftoken
+
       return true
     } catch(error) {
-      console.error("Login error:", error.message)
-
       if(error.response)
         console.error("Response data:", error.response.data)
 
@@ -85,37 +84,36 @@ class MediaWikiBot {
     if(!this.token)
       throw new Error("Not logged in. Call login() first.")
 
-    try {
-      const formData = new FormData()
-      formData.append("action", "edit")
-      formData.append("title", title)
-      formData.append("text", content)
-      formData.append("token", this.token)
-      formData.append("format", "json")
-      formData.append("summary", summary)
+    const formData = new FormData()
+    formData.append("action", "edit")
+    formData.append("title", title)
+    formData.append("text", content)
+    formData.append("token", this.token)
+    formData.append("format", "json")
+    formData.append("summary", summary)
+    formData.append("bot", "true")
+    formData.append("contentmodel", "wikitext")
 
-      const response = await this.client.post(`${this.baseUrl}/api.php`, formData, {
-        headers: formData.getHeaders()
-      })
 
-      if(response.data.edit && response.data.edit.result === "Success") {
-        return {
-          success: true,
-          pageid: response.data.edit.pageid,
-          title: response.data.edit.title,
-          revision: response.data.edit.newrevid
-        }
-      } else {
-        throw new Error(`Edit failed: ${JSON.stringify(response.data)}`)
+    const response = await this.client.post(`${this.baseUrl}/api.php`, formData, {
+      headers: formData.getHeaders()
+    })
+
+    if(response.data.edit && response.data.edit.result === "Success") {
+      return {
+        success: true,
+        result: response.data.edit
       }
-    } catch(error) {
-      console.error("Edit error:", error.message)
-
-      if(error.response)
-        console.error("Response data:", error.response.data)
-
-      throw error
+    } else {
+      throw new Error(`Edit failed: ${JSON.stringify(response.data)}`)
     }
+  } catch(error) {
+    console.error("Edit error:", error.message)
+
+    if(error.response)
+      console.error("Response data:", error.response.data)
+
+    throw error
   }
 }
 

@@ -29,11 +29,11 @@
       "request": "launch",
       "name": "Debug BeDoc CLI - LPC to Wikitext",
       "skipFiles": ["<node_internals>/**"],
-      "program": "clear && ${workspaceFolder}/src/cli.js",
+      "program": "${workspaceFolder}/src/cli.js",
       "args": [
         "--debug",
         "--debugLevel",
-        "2",
+        "4",
         "--input",
         "examples/source/lpc/**/*.c",
         "--output",
@@ -58,7 +58,7 @@
       "args": [
         "--debug",
         "--debugLevel",
-        "4",
+        "0",
         "--input",
         "examples/source/lpc/**/*.c",
         "--output",
@@ -72,7 +72,7 @@
         "--maxConcurrent",
         "50"
       ],
-      "console" : "internalConsole",
+      "console" : "integratedTerminal",
     },
     {
       "type": "node",
@@ -95,7 +95,7 @@
         "--hooks",
         "examples/hooks/lua-markdown-hooks.js"
       ],
-      "console" : "internalConsole",
+      "console" : "integratedTerminal",
     },
     {
       "type": "node",
@@ -121,7 +121,7 @@
         "--maxConcurrent",
         "50"
       ],
-      "console" : "internalConsole",
+      "console" : "integratedTerminal",
     },
     {
       "type": "node",
@@ -130,7 +130,7 @@
       "skipFiles": ["<node_internals>/**"],
       "program": "${workspaceFolder}/examples/chokidar-as-npm/index.js",
       "cwd": "${workspaceFolder}/examples/chokidar-as-npm",
-      "console" : "internalConsole",
+      "console" : "integratedTerminal",
     },
   ]
 }
