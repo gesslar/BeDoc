@@ -82,7 +82,7 @@ const {resolveDirectory} = FDUtil
       if(error instanceof AggregateError) {
         error.errors.forEach(e => console.error(e))
       } else {
-        console.error(error.message)
+        console.error(error.message, error.stack)
       }
     } else {
       console.error("Error: %o", error)

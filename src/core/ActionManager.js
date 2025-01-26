@@ -6,6 +6,7 @@ export default class ActionManager {
   #contract
   #log
   #debug
+  #file
 
   constructor(actionDefinition, logger) {
     this.#log = logger
@@ -19,7 +20,7 @@ export default class ActionManager {
 
     debug("Setting up action", 2)
 
-    const {action, contract} = actionDefinition
+    const {action, file, contract} = actionDefinition
 
     if(!action)
       throw new Error("Action is required")
@@ -29,6 +30,7 @@ export default class ActionManager {
 
     this.#action = action
     this.#contract = contract
+    this.#file = file
 
     debug("Action setup complete", 2)
   }
@@ -104,7 +106,6 @@ export default class ActionManager {
   }
 
   async setupAction() {
-    console.log("setupAction", this.meta)
     this.#debug("Setting up action for %s", 2, this.meta.action)
 
     await this.#setupHooks()
@@ -125,11 +126,14 @@ export default class ActionManager {
   }
 
   async cleanupAction() {
-    console.log("Post action", this.meta)
     this.#debug("Post action", 2)
     this.#debug("Cleaning up action for %s", 2, this.meta.action)
 
     await this.#cleanupHooks()
     await this.#cleanupAction()
+  }
+
+  toString() {
+    return `${this.#file?.module || "UNDEFINED"} (${this.meta?.action || "UNDEFINED"})`
   }
 }

@@ -12,7 +12,7 @@ import * as ActionUtil from "./util/ActionUtil.js"
 import * as DataUtil from "./util/DataUtil.js"
 import * as FDUtil from "./util/FDUtil.js"
 
-const {loadPackageJson,actionTypes} = ActionUtil
+const {loadPackageJson} = ActionUtil
 const {schemaCompare} = DataUtil
 const {getFiles} = FDUtil
 
@@ -33,102 +33,85 @@ export default class Core {
   }
 
   static async new({options, source}) {
-    const configuration = new Configuration()
+    const config = new Configuration()
 
-    const validatedConfig = await configuration.validate({options, source})
-    if(validatedConfig.status === "error")
-      throw new AggregateError(
-        validatedConfig.errors,
-        "BeDoc configuration failed"
-      )
+    const validConfig = await config.validate({options, source})
+    if(validConfig.status === "error")
+      throw new AggregateError(validConfig.errors,"BeDoc configuration failed")
 
-    const instance = new Core({...validatedConfig, name: "BeDoc"})
+    const instance = new Core({...validConfig, name: "BeDoc"})
     const debug = instance.logger.newDebug()
 
-    debug("Creating new BeDoc instance with options: `%o`", 2, validatedConfig)
+    debug("Creating new BeDoc instance with options: `%o`", 2, validConfig)
 
     const discovery = new Discovery(instance)
-    const actionDefinitions = await discovery.discoverActions({
-      printer: validatedConfig.printer,
-      parser: validatedConfig.parser,
+    const {printer: validPrint, parser: validParse} = validConfig
+
+    const actionDefs = await discovery.discoverActions({
+      print: validPrint,
+      parse: validParse
     })
 
-    const filteredActions = discovery.satisfyCriteria(
-      actionDefinitions, validatedConfig
-    )
+    const validCrit = discovery.satisfyCriteria(actionDefs, validConfig)
 
-    debug("Filtered actions: `%o`", 2, filteredActions)
+    debug("Actions that met criteria: `%o`", 2, validCrit)
 
-    const matches = []
-    // Now let us find the ones that agree to a contract
-    for(const printer of filteredActions.print) {
-      for(const parser of filteredActions.parse) {
-        const satisfied = schemaCompare(parser.contract, printer.contract)
+    if(Object.values(validCrit).some(arr => arr.length === 0))
+      throw new Error("No found matching parser and printer")
 
-        if(satisfied.status === "success")
-          matches.push({parse: parser, print: printer})
+    const validSchemas = {print: [], parse: []}
+    let printers = validCrit.print.length
+    while(printers--) {
+      const printer = validCrit.print[printers]
+      const printerSchema = printer.contract
+      const satisfied = []
+      for(const parser of validCrit.parse) {
+        const parserSchema = parser.contract
+        const result = schemaCompare(parserSchema, printerSchema)
+        if(result.status === "success")
+          satisfied.push(parser)
+      }
+
+      if(satisfied.length > 0) {
+        validSchemas.print.push(printer)
+        validSchemas.parse.push(...satisfied)
       }
     }
 
-    if(matches.length === 0) {
-      const message = `No matching actions found for language: `+
-        `${validatedConfig.language} and format: ${validatedConfig.format}`
+    const finalActions = {}
+    for(const [key, value] of Object.entries(validSchemas)) {
+      if(value.length === 0)
+        throw new Error(`No matching ${key} found`)
 
-      throw new Error(message)
-    }
+      if(value.length > 1)
+        throw new Error(`Multiple matching ${key} found`)
 
-    // We only want one!
-    if(matches.length > 1) {
-      const message =
-        `Multiple matching actions found: ` +
-        `${matches.map((m) => m.print.name).join(", ")}`
-      throw new Error(message)
-    }
-
-    debug("Found matching actions: `%o`", 3, matches)
-
-    const chosenActions = matches[0]
-
-    if(Object.values(chosenActions).some(a => !a))
-      throw new Error("No found matching parser and printer")
-
-    const contracts = Object.values(chosenActions)
-      .map(a => a.contract)
-      .sort(a => a.provides) // Parser first
-    const satisfied = schemaCompare(...contracts)
-    if(satisfied.status === "error") {
-      instance.logger.error(
-        `Action contract failed: ${satisfied.errors}`,
-      )
-      throw new AggregateError(satisfied.errors, "Action contract failed")
-    } else if(satisfied.status !== "success") {
-      throw new Error(
-        `Action contract failed: ${satisfied.message}`,
-      )
+      finalActions[key] = validSchemas[key][0]
     }
 
     debug("Contracts satisfied between parser and printer", 2)
 
     // Adding to instance
     instance.actions = {}
-    for(const actionDefinition of Object.values(chosenActions)) {
-      const {action: actionType} = actionDefinition.action.meta
+    const managers = {print: PrintManager, parse: ParseManager}
+    for(const [, value] of Object.entries(finalActions)) {
+      const {action: actionType} = value.action.meta
 
       debug("Attaching `%o` action to instance", 2, actionType)
-      instance[actionType] = new ParseManager(
-        chosenActions[actionType], instance.logger
+      instance.actions[actionType] = new managers[actionType](
+        value, instance.logger
       )
 
-      if(validatedConfig.hooks) {
+      if(validConfig.hooks) {
         const hookManager = await HookManager.new({
           action: actionType,
-          hooksFile: validatedConfig.hooks,
+          hooksFile: validConfig.hooks,
           logger: new Logger(instance.debugOptions),
-          timeout: validatedConfig.hooksTimeout,
+          timeout: validConfig.hooksTimeout,
         })
 
         if(hookManager)
-          instance[actionType].hookManager = hookManager
+          instance.actions[actionType].hookManager = hookManager
       }
     }
 
@@ -148,8 +131,8 @@ export default class Core {
 
     // Instantiate the conveyor
     const conveyor = new Conveyor(
-      this.parse,
-      this.print,
+      this.actions.parse,
+      this.actions.print,
       this.logger,
       output,
     )

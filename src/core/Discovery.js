@@ -26,7 +26,7 @@ export default class Discovery {
    * @param {object[]} specified The specified actions to discover
    * @returns {Promise<object>} A map of discovered modules
    */
-  async discoverActions({printer, parser} = {}) {
+  async discoverActions({print, parse} = {}) {
     const debug = this.#debug
 
     debug("Discovering actions", 2)
@@ -91,7 +91,7 @@ export default class Discovery {
     debug("Discovered %d actions", 2, bucket.length)
 
     return await this.#loadActionsAndContracts(
-      bucket, {print: printer, parse: parser}
+      bucket, {print: print, parse: parse}
     )
   }
 
