@@ -1,7 +1,7 @@
 import process from "node:process"
 
 import Discovery from "./Discovery.js"
-import {HooksManager} from "./HooksManager.js"
+import HookManager from "./HookManager.js"
 import Logger from "./Logger.js"
 import ParseManager from "./action/ParseManager.js"
 import PrintManager from "./action/PrintManager.js"
@@ -33,100 +33,85 @@ export default class Core {
   }
 
   static async new({options, source}) {
-    const configuration = new Configuration()
+    const config = new Configuration()
 
-    const validatedConfig = await configuration.validate({options, source})
-    if(validatedConfig.status === "error")
-      throw new AggregateError(validatedConfig.errors, "BeDoc configuration failed")
+    const validConfig = await config.validate({options, source})
+    if(validConfig.status === "error")
+      throw new AggregateError(validConfig.errors,"BeDoc configuration failed")
 
-    const instance = new Core({...validatedConfig, name: "BeDoc"})
+    const instance = new Core({...validConfig, name: "BeDoc"})
     const debug = instance.logger.newDebug()
 
-    debug("Creating new BeDoc instance with options: `%o`", 2, validatedConfig)
+    debug("Creating new BeDoc instance with options: `%o`", 2, validConfig)
 
     const discovery = new Discovery(instance)
-    const actionDefinitions = await discovery.discoverActions()
+    const {printer: validPrint, parser: validParse} = validConfig
 
-    const filteredActions = {
-      parse: [],
-      print: [],
-    }
+    const actionDefs = await discovery.discoverActions({
+      print: validPrint,
+      parse: validParse
+    })
 
-    for(const search of [{parse: "language", print: "format"}]) {
-      for(const [actionType, criterion] of Object.entries(search)) {
-        filteredActions[actionType] = actionDefinitions[actionType].filter(
-          (a) => a.action.meta[criterion] === validatedConfig[criterion],
-        )
-      }
-    }
+    const validCrit = discovery.satisfyCriteria(actionDefs, validConfig)
 
-    const matches = []
-    // Now let us find the ones that agree to a contract
-    for(const printer of filteredActions.print) {
-      for(const parser of filteredActions.parse) {
-        const satisfied = schemaCompare(parser.contract, printer.contract)
+    debug("Actions that met criteria: `%o`", 2, validCrit)
 
-        if(satisfied.status === "success")
-          matches.push({parse: parser, print: printer})
-      }
-    }
-
-    // We only want one!
-    if(matches.length > 1) {
-      const message =
-        `Multiple matching actions found: ` +
-        `${matches.map((m) => m.print.name).join(", ")}`
-      throw new Error(message)
-    }
-
-    debug("Found matching actions: `%o`", 3, matches)
-
-    const chosenActions = matches[0]
-
-    if(Object.values(chosenActions).some(a => !a))
+    if(Object.values(validCrit).some(arr => arr.length === 0))
       throw new Error("No found matching parser and printer")
 
-    const satisfied = schemaCompare(
-      chosenActions.parse.contract,
-      chosenActions.print.contract,
-    )
+    const validSchemas = {print: [], parse: []}
+    let printers = validCrit.print.length
+    while(printers--) {
+      const printer = validCrit.print[printers]
+      const printerSchema = printer.contract
+      const satisfied = []
+      for(const parser of validCrit.parse) {
+        const parserSchema = parser.contract
+        const result = schemaCompare(parserSchema, printerSchema)
+        if(result.status === "success")
+          satisfied.push(parser)
+      }
 
-    if(satisfied.status === "error") {
-      instance.logger.error(
-        `[Core.new] action contract failed: ${satisfied.errors}`,
-      )
-      throw new AggregateError(satisfied.errors, "Action contract failed")
-    } else if(satisfied.status !== "success") {
-      throw new Error(
-        `[Core.new] Action contract failed: ${satisfied.message}`,
-      )
+      if(satisfied.length > 0) {
+        validSchemas.print.push(printer)
+        validSchemas.parse.push(...satisfied)
+      }
+    }
+
+    const finalActions = {}
+    for(const [key, value] of Object.entries(validSchemas)) {
+      if(value.length === 0)
+        throw new Error(`No matching ${key} found`)
+
+      if(value.length > 1)
+        throw new Error(`Multiple matching ${key} found`)
+
+      finalActions[key] = validSchemas[key][0]
     }
 
     debug("Contracts satisfied between parser and printer", 2)
 
     // Adding to instance
-    debug("Attaching parse action to instance: `%o`", 2, chosenActions.parse.module)
-    instance.parser = new ParseManager(chosenActions.parse, instance.logger)
+    instance.actions = {}
+    const managers = {print: PrintManager, parse: ParseManager}
+    for(const [, value] of Object.entries(finalActions)) {
+      const {action: actionType} = value.action.meta
 
-    debug("Attaching print action to instance: `%o`", 2, chosenActions.print.module)
-    instance.printer = new PrintManager(chosenActions.print, instance.logger)
+      debug("Attaching `%o` action to instance", 2, actionType)
+      instance.actions[actionType] = new managers[actionType](
+        value, instance.logger
+      )
 
-    // Setup and attach hooks
-    for(const target of [
-      {manager: instance.parser, action: "parse"},
-      {manager: instance.printer, action: "print"},
-    ]) {
-      if(validatedConfig.hooks) {
-        const {manager, action} = target
-        const hooks = await HooksManager.new({
-          action: action,
-          hooksFile: validatedConfig.hooks,
+      if(validConfig.hooks) {
+        const hookManager = await HookManager.new({
+          action: actionType,
+          hooksFile: validConfig.hooks,
           logger: new Logger(instance.debugOptions),
-          timeout: validatedConfig.hooksTimeout,
+          timeout: validConfig.hooksTimeout,
         })
 
-        if(hooks)
-          manager.hooks = hooks
+        if(hookManager)
+          instance.actions[actionType].hookManager = hookManager
       }
     }
 
@@ -135,6 +120,7 @@ export default class Core {
 
   async processFiles(glob, startTime = process.hrtime()) {
     const debug = this.logger.newDebug()
+
     debug("Starting file processing with conveyor", 1)
 
     const {output} = this.options
@@ -145,8 +131,8 @@ export default class Core {
 
     // Instantiate the conveyor
     const conveyor = new Conveyor(
-      this.parser,
-      this.printer,
+      this.actions.parse,
+      this.actions.print,
       this.logger,
       output,
     )
@@ -171,12 +157,16 @@ export default class Core {
 
     this.logger.debug(message, 1)
 
-    if(errored. length > 0) {
-      const failureRate = ((errored.length / totalFiles) * 100).toFixed(2)
-      const errorMessage = `Errors processing ${errored.length} files [${failureRate}%]` +
-        errored.map(r => `\n- ${r.file.module}: ${r.result.message}`).join("")
+    if(errored.length > 0) {
+      // const failureRate = ((errored.length / totalFiles) * 100).toFixed(2)
+      // const errorMessage =
+      //   `Errors processing ${errored.length} files [${failureRate}%]`
+      // const errorLines = errored.map(r => {
+      //   const stackLine = log.lastStackLine(r.error, 0)
+      //   return `\n- ${r.input.module}: ${stackLine} - ${r.error.message}`
+      // }).join("")
 
-      this.logger.error(errorMessage)
+      // this.logger(errorMessage+errorLines)
     }
 
     debug("File processing complete", 1)

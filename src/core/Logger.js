@@ -119,8 +119,8 @@ export default class Logger {
     return `[${this.#name}] ${loggerColours[level]}${tag}${loggerColours.reset}: ${message}`
   }
 
-  lastStackLine(stepsRemoved = 3) {
-    const stack = ErrorStackParser.parse(new Error())
+  lastStackLine(error = new Error(), stepsRemoved = 3) {
+    const stack = ErrorStackParser.parse(error)
     return stack[stepsRemoved]
   }
 
