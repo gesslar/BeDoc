@@ -116,7 +116,7 @@
         "--format",
         "wikitext",
         "--hooks",
-        "examples/hooks/lpc-wikitext-hooks.js",
+        "examples/hooks/lua-wikitext-hooks.js",
       ],
       "console" : "integratedTerminal",
     },
