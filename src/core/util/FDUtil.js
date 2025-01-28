@@ -272,7 +272,7 @@ async function ls(directory) {
  * Reads the content of a file synchronously.
  *
  * @param {object} fileObject - The file map containing the file path
- * @returns {Promise<string>} The file contents
+ * @returns {string} The file contents
  */
 function readFile(fileObject) {
   const {absolutePath} = fileObject

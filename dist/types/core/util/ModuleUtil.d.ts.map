@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "ModuleUtil.d.ts",
+  "sourceRoot": "",
+  "sources": [
+    "../../../../src/core/util/ModuleUtil.js"
+  ],
+  "names": [],
+  "mappings": "AAGA;IACE;;;;;OAKG;IACH,2BAHW,MAAM,GACJ,MAAM,CAIlB;IAED;;;;;OAKG;IACH,gCAHW,MAAM,GACJ,OAAO,CAAC,MAAM,CAAC,CAO3B;IAED;;;;OAIG;IACH,0BAFa,OAAO,CAAC,MAAM,CAAC,CAO3B;CACF"
+}

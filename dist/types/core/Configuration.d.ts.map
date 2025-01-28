@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "Configuration.d.ts",
+  "sourceRoot": "",
+  "sources": [
+    "../../../src/core/Configuration.js"
+  ],
+  "names": [],
+  "mappings": "AAiBA;IACE;;;;;;OAqHC;;CAwMF"
+}

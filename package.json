@@ -14,12 +14,20 @@
   "bin": {
     "bedoc": "src/cli.js"
   },
+  "exports": {
+    ".": {
+      "import": "./src/core/Core.js",
+      "types": "./dist/types/core/Core.d.ts"
+    }
+  },
   "type": "module",
+  "types": "dist/types/index.d.ts",
   "scripts": {
     "lint:check": "npx eslint .",
     "lint:fix": "npx eslint . --fix"
   },
   "dependencies": {
+    "@gesslar/bedoc": "^1.2.0",
     "commander": "^13.0.0",
     "dotenv": "^16.4.7",
     "error-stack-parser": "^2.1.4",

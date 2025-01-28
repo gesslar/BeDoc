@@ -56,7 +56,7 @@ export const Hooks = {
           wikitext
         )
 
-        const {title,oldrevid,newrevid} = edit.result
+        const {title,oldrevid} = edit.result
         if(oldrevid !== undefined) {
           if(oldrevid === 0) {
             info(`Page created successfully ${this.baseUrl}/index.php?title=${title}`)

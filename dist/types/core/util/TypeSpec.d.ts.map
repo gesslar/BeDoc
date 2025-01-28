@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "TypeSpec.d.ts",
+  "sourceRoot": "",
+  "sources": [
+    "../../../../src/core/util/TypeSpec.js"
+  ],
+  "names": [],
+  "mappings": "AAIA;IAGE,uCAQC;IAJC,aAAwB;IACxB,eAAgC;IAChC,6BAA2C;IAI7C,mBAMC;IAED;;;;MAOC;IAED,6BAEC;IACD,8BAEC;IACD,6BAEC;IACD,6BAEC;IACD,0BAEC;IACD,8CAEC;IACD,yBAEC;IAED,yCAqCC;;CAoBF"
+}
