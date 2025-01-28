@@ -6,6 +6,7 @@ const {readFile, writeFile, composeFilename} = FDUtil
 
 export default class Conveyor {
   #succeeded = []
+  #warned  = []
   #errored = []
 
   constructor(parse, print, logger, output) {
@@ -33,8 +34,10 @@ export default class Conveyor {
       const slot = Promise.race(semaphore) // Wait for an available slot
       semaphore.push(slot.then(async() => {
         const result = await this.#processFile(file)
-        if(result.status === "success" || result.status === "warning")
+        if(result.status === "success")
           this.#succeeded.push({input: file, output: result.file})
+        else if(result.status === "warning")
+          this.#warned.push({input: file, warning: result.warning})
         else {
           this.#errored.push({input: file, error: result.error})
         }
@@ -49,7 +52,11 @@ export default class Conveyor {
     await this.parse.cleanupAction()
     await this.print.cleanupAction()
 
-    return {succeeded: this.#succeeded, errored: this.#errored}
+    return {
+      succeeded: this.#succeeded,
+      errored: this.#errored,
+      warned: this.#warned
+    }
   }
 
   /**
@@ -78,7 +85,15 @@ export default class Conveyor {
       if(parseResult.status === "error")
         return parseResult
 
-      debug("Parsed file successfully: `%s`", 2, file.path)
+      if(parseResult.status === "warning")
+        debug("Parsed file successfully, but with warnings: `%s`", 2, file.path)
+      else
+        debug("Parsed file successfully: `%s`", 2, file.path)
+
+      if(!parseResult.result?.functions?.length) {
+        const mess = format("No functions found in `%s`. No file written.", file.path)
+        return {status: "warning", file, warning: mess}
+      }
 
       // Step 3: Print file
       const printResult = await print.runAction({
