@@ -247,7 +247,7 @@ function newTypeSpec(string, options) {
  * @param {object} options Additional options for checking
  * @returns {boolean} Whether the value is of the specified type
  */
-function isType(value, type, options) {
+function isType(value, type, options = {}) {
   const typeSpec = type instanceof TypeSpec ? type : newTypeSpec(type, options)
   // we're comparing a typeSpec object to a File object. this will always
   // return false. do fix.
@@ -453,6 +453,8 @@ function schemaCompare(schema, definition, stack = [], logger = new Logger()) {
 }
 
 export {
+  // Classes
+  TypeSpec,
   // Variables
   dataTypes,
   emptyableTypes,
