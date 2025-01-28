@@ -11,7 +11,7 @@ interface ConfigurationOptions {
 
 interface ValidateParams {
     options: ConfigurationOptions;
-    source: typeof Environment;
+    source: EnvironmentType;
 }
 
 interface ValidationResult {

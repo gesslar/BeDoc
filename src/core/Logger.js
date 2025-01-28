@@ -33,7 +33,7 @@ import * as StringUtil from "./util/StringUtil.js"
 const {resolveFilename} = FDUtil
 const {capitalize} = StringUtil
 
-const loggerColours = {
+export const loggerColours = {
   debug: [
     "\x1b[38;5;19m", // Debug level 0: Dark blue
     "\x1b[38;5;27m", // Debug level 1: Medium blue

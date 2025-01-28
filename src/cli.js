@@ -75,6 +75,11 @@ const {resolveDirectory} = FDUtil
     const filesToProcess = bedoc.options.input.map(f => f.absolutePath)
     const result = await bedoc.processFiles(filesToProcess)
     const errored = result.errored
+    const warned = result.warned
+
+    if(warned.length > 0)
+      warned.forEach(w => bedoc.logger.warn(w.warning))
+
     if(errored.length > 0)
       throw new AggregateError(errored.map(e => e.error), "Error processing files")
   } catch(error) {
