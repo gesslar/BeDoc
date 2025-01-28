@@ -23,10 +23,12 @@ export default class Discovery {
   /**
    * Discover actions from local or global node_modules
    *
-   * @param {object[]} specified The specified actions to discover
+   * @param {object} [specific] Configuration options for action discovery
+   * @param {object} [specific.print] Print-related configuration options
+   * @param {object} [specific.parse] Parse-related configuration options
    * @returns {Promise<object>} A map of discovered modules
    */
-  async discoverActions({print, parse} = {}) {
+  async discoverActions(specific = {}) {
     const debug = this.#debug
 
     debug("Discovering actions", 2)
@@ -90,9 +92,7 @@ export default class Discovery {
 
     debug("Discovered %d actions", 2, bucket.length)
 
-    return await this.#loadActionsAndContracts(
-      bucket, {print: print, parse: parse}
-    )
+    return await this.#loadActionsAndContracts(bucket, specific)
   }
 
   /**

@@ -1,3 +1,5 @@
+import {format} from "node:util"
+
 import * as FDUtil from "./util/FDUtil.js"
 
 const {readFile, writeFile, composeFilename} = FDUtil
@@ -31,10 +33,11 @@ export default class Conveyor {
       const slot = Promise.race(semaphore) // Wait for an available slot
       semaphore.push(slot.then(async() => {
         const result = await this.#processFile(file)
-        if(result.status === "success")
+        if(result.status === "success" || result.status === "warning")
           this.#succeeded.push({input: file, output: result.file})
-        else
+        else {
           this.#errored.push({input: file, error: result.error})
+        }
       }))
       semaphore.shift() // Remove the oldest promise
     }
@@ -57,6 +60,7 @@ export default class Conveyor {
    */
   async #processFile(file) {
     const debug = this.logger.newDebug()
+    const warn = (...arg) => this.logger.warn(...arg)
     const {parse, print} = this
 
     try {
@@ -87,9 +91,16 @@ export default class Conveyor {
       debug("Printed file successfully: `%s`", 2, file.path)
 
       // Step 4: Write output
-      const {destFile, content} = printResult
-      if(!destFile || !content)
-        return {status: "error", message: "Invalid print result"}
+      const {status: printStatus, destFile, content} = printResult
+      const isNullish = (value) => value == null // Checks null or undefined
+
+      if(printStatus !== "success" || isNullish(destFile) || isNullish(content)) {
+        return {status: "error", file, error: new Error("Invalid print result")}
+      } else if(!destFile || !content) {
+        const mess = format("No content or destination file for %s", file.path)
+        warn(mess)
+        return {status: "warning", file, warning: mess}
+      }
 
       const writeResult = await this.#writeOutput(destFile, content)
 

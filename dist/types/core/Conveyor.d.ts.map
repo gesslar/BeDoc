@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "Conveyor.d.ts",
+  "sourceRoot": "",
+  "sources": [
+    "../../../src/core/Conveyor.js"
+  ],
+  "names": [],
+  "mappings": "AAMA;IAIE,8DAKC;IAJC,WAAkB;IAClB,WAAkB;IAClB,YAAoB;IACpB,YAAoB;IAGtB;;;;;;OAMG;IACH,qCAHW,MAAM,GACJ,OAAO,CAAC,MAAM,CAAC,CA8B3B;;CAgFF"
+}
