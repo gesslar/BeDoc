@@ -1,4 +1,4 @@
-import { Environment } from './Core';
+import { EnvironmentType } from './Core';
 
 interface ConfigurationOption {
     value: unknown;
