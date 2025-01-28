@@ -1,0 +1,20 @@
+{
+  "include": ["src/**/*.js"], // Match all .js files in the src/ directory
+  "exclude": ["node_modules"], // Ignore node_modules/ (but NOT src/)
+  "compilerOptions": {
+    "target": "ES2022", // Modern JavaScript output
+    "allowJs": true, // Process .js files
+    "declaration": true, // Generate .d.ts files
+    "emitDeclarationOnly": true, // Only output .d.ts files
+    "declarationMap": true, // Generate .d.ts.map for IDE support
+    "module": "NodeNext", // Use ESM-compatible Node.js modules
+    "moduleResolution": "nodenext", // Resolve ESM imports properly
+    "rootDir": "src", // Base input directory
+    "outDir": "dist/types", // Emit .d.ts files to a separate directory
+    "strict": true, // Enable strict type-checking
+    "esModuleInterop": true, // Interoperability for CommonJS modules
+    "forceConsistentCasingInFileNames": true, // Avoid case-sensitive issues
+    "skipLibCheck": true, // Skip checking .d.ts files in node_modules/
+    "noEmitOnError": true // Prevent output if there are errors
+  }
+}
