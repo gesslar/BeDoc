@@ -25,7 +25,6 @@
 
 import console from "node:console"
 import ErrorStackParser from "error-stack-parser"
-
 import {Environment} from "./Core.js"
 
 import * as FDUtil from "./util/FDUtil.js"
@@ -68,7 +67,6 @@ const loggerColours = {
 
 export default class Logger {
   #name = null
-  #debugMode = false
   #debugLevel = 0
 
   constructor(options) {
@@ -88,10 +86,6 @@ export default class Logger {
     return this.#name
   }
 
-  get debugMode() {
-    return this.#debugMode
-  }
-
   get debugLevel() {
     return this.#debugLevel
   }
@@ -99,14 +93,12 @@ export default class Logger {
   get options() {
     return {
       name: this.#name,
-      debugMode: this.#debugMode,
       debugLevel: this.#debugLevel,
     }
   }
 
   setOptions(options) {
     this.#name = options.name ?? this.#name
-    this.#debugMode = options.debugMode
     this.#debugLevel = options.debugLevel
   }
 
@@ -170,7 +162,7 @@ export default class Logger {
   }
 
   debug(message, level = 0, ...arg) {
-    if(this.debugMode === true && level <= (this.debugLevel ?? 4))
+    if(level <= (this.debugLevel ?? 4))
       console.debug(this.#compose("debug", message, level), ...arg)
   }
 

@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "ConfigurationParameters.d.ts",
+  "sourceRoot": "",
+  "sources": [
+    "../../../src/core/ConfigurationParameters.js"
+  ],
+  "names": [],
+  "mappings": "AAIA;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;GAqIE;AAEF,0DAAqE"
+}
