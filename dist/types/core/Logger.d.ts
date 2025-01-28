@@ -10,6 +10,14 @@ interface LoggerOptions {
 type LogLevel = 'debug' | 'warn' | 'info' | 'error';
 type DebugLevel = 0 | 1 | 2 | 3 | 4;
 
+export declare const loggerColours: {
+    debug: string[];
+    info: string;
+    warn: string;
+    error: string;
+    reset: string;
+};
+
 /**
  * Logger class
  *

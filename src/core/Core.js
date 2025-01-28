@@ -2,7 +2,7 @@ import process from "node:process"
 
 import Discovery from "./Discovery.js"
 import HookManager from "./HookManager.js"
-import Logger from "./Logger.js"
+import Logger, {loggerColours} from "./Logger.js"
 import ParseManager from "./action/ParseManager.js"
 import PrintManager from "./action/PrintManager.js"
 import Conveyor from "./Conveyor.js"
@@ -149,11 +149,21 @@ export default class Core {
 
     // Grab the results
     const totalFiles = input.length
-    const errored = result.errored
     const succeeded = result.succeeded
+    const warned = result.warned
+    const errored = result.errored
 
-    const message = `Processed ${totalFiles} files: ${succeeded.length} succeeded, ${errored.length} errored ` +
-      `in ${processEnd}ms [total: ${endTime}ms]`
+    const {
+      info: succeedColour, warn: warnColour, error: errorColour, reset
+    } = loggerColours
+
+
+    const success = `${succeedColour}${succeeded.length}${reset}`
+    const warn = `${warnColour}${warned.length}${reset}`
+    const error = `${errorColour}${errored.length}${reset}`
+
+    const message = `Processed ${totalFiles} files: ${success} succeeded, ${error} errored, ` +
+      `${warn} warned in ${processEnd}ms [total: ${endTime}ms]`
 
     this.logger.debug(message, 1)
 
