@@ -1,6 +1,6 @@
 {
   "name": "@gesslar/bedoc",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Pluggable documentation engine for any language and format",
   "publisher": "gesslar",
   "main": "./src/core/Core.js",
@@ -18,6 +18,13 @@
     ".": {
       "import": "./src/core/Core.js",
       "types": "./dist/types/core/Core.d.ts"
+    },
+    "./BeDoc": {
+      "import": "./src/core/Core.js",
+      "types": "./dist/types/core/Core.d.ts"
+    },
+    "./*": {
+      "types": "./dist/types/*"
     }
   },
   "type": "module",
@@ -38,6 +45,8 @@
   },
   "devDependencies": {
     "@stylistic/eslint-plugin-js": "^3.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.22.0",
+    "@typescript-eslint/parser": "^8.22.0",
     "axios": "^1.7.9",
     "chokidar": "^4.0.3",
     "eslint": "^9.18.0",
