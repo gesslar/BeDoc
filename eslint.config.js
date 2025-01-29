@@ -2,6 +2,7 @@ import js from "@eslint/js"
 // https://www.npmjs.com/package/eslint-plugin-jsdoc
 import jsdoc from "eslint-plugin-jsdoc";
 import stylisticJs from "@stylistic/eslint-plugin-js"
+import plugin from "@stylistic/eslint-plugin-js";
 
 export default [
   js.configs.recommended,
@@ -26,7 +27,8 @@ export default [
     files: ["src/**/*.{mjs,cjs,js}", "examples/**/*.js"],
     plugins: {
       "@stylistic/js": stylisticJs,
-      jsdoc: jsdoc
+      jsdoc: jsdoc,
+      plugin,
     },
     rules: {
       "@stylistic/js/arrow-spacing": ["error", { before: true, after: true }],
