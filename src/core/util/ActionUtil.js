@@ -1,6 +1,6 @@
 import * as FDUtil from "./FDUtil.js"
 
-const {readFile, resolveFilename} = FDUtil
+const {readFile, fileExists, composeFilename} = FDUtil
 
 const freeze = Object.freeze
 
@@ -27,14 +27,18 @@ function loadJson(jsonFileObject) {
 /**
  * Loads the package.json file asynchronously
  *
- * @param {string|object} basePath - The base path to use
- * @returns {object} The parsed package.json content
+ * @param {string|object|null} basePath - The base path to use
+ * @returns {object?} The parsed package.json content or null if the file does
+ *                    not exist
  */
 function loadPackageJson(basePath = null) {
-  const packageJsonFileObject = resolveFilename("./package.json", basePath)
-  const jsonContent = readFile(packageJsonFileObject)
-  const json = JSON.parse(jsonContent)
-  return json
+  const packageJsonFileObject = composeFilename(basePath, "./package.json")
+  if(fileExists(packageJsonFileObject)) {
+    const jsonContent = readFile(packageJsonFileObject)
+    const json = JSON.parse(jsonContent)
+    return json
+  } else
+    return null
 }
 
 export {

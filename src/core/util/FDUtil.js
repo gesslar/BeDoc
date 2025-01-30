@@ -43,6 +43,51 @@ function pathToUri(pathName) {
 }
 
 /**
+ * Check if a file can be read. Returns true if the file can be read, false
+ *
+ * @param {FileMap} FileMap - The file map to check
+ * @returns {boolean} Whether the file can be read
+ */
+function canReadFile(FileMap) {
+  try {
+    fs.accessSync(FileMap.absolutePath, fs.constants.R_OK)
+    return true
+  } catch(_error) {
+    return false
+  }
+}
+
+/**
+ * Check if a file can be written. Returns true if the file can be written,
+ *
+ * @param {FileMap} FileMap - The file map to check
+ * @returns {boolean} Whether the file can be written
+ */
+function canWriteFile(FileMap) {
+  try {
+    fs.accessSync(FileMap.absolutePath, fs.constants.W_OK)
+    return true
+  } catch(error) {
+    return false
+  }
+}
+
+/**
+ * Check if a file exists
+ *
+ * @param {FileMap} FileMap - The file map to check
+ * @returns {boolean} Whether the file exists
+ */
+function fileExists(FileMap) {
+  try {
+    fs.accessSync(FileMap.absolutePath)
+    return true
+  } catch(error) {
+    return false
+  }
+}
+
+/**
  * Convert a URI to a path
  *
  * @param {string} pathName - The URI to convert
@@ -78,14 +123,16 @@ function resolveFilename(fileName, directoryObject = null) {
     directoryObject = resolveDirectory(directoryNamePart)
 
   const fileObject = composeFilename(directoryObject, fileNamePart)
-  try {
-    fs.opendirSync(directoryObject.absolutePath).closeSync()
-  } catch(e) {
-    void e
+
+  if(!fileObject)
     throw new Error(
-      `Failed to resolve directory: ${directoryObject.absolutePath}, looking for file: ${fileNamePart}`,
+      `Failed to resolve file: ${fileName}, looking for file: ${fileNamePart}`,
     )
-  }
+
+  if(!fileExists(fileObject))
+    throw new Error(
+      `Failed to resolve file: ${fileObject.absolutePath}`,
+    )
 
   return {
     ...fileObject,
@@ -305,9 +352,12 @@ export {
   fdType,
   fdTypes,
   // Functions
+  canReadFile,
+  canWriteFile,
   composeDirectory,
   composeFilename,
   deconstructFilenameToParts,
+  fileExists,
   fixSlashes,
   getFiles,
   ls,
