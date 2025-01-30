@@ -35,7 +35,7 @@ export default class HookManager {
     constructor({ action, hooksFile, logger, timeOut: timeout }: HookManagerConstructorParams);
 
     get action(): string;
-    get hooksFile(): FileMap;
+    get hooksFile(): FileMap | null;
     get hooks(): HooksDefinition | null;
     get log(): Logger;
     get timeout(): number;
@@ -51,6 +51,7 @@ export default class HookManager {
      */
     on(event: HookEvent, ...args: unknown[]): Promise<HookResult | undefined>;
 
+    HOOKS?: HookPoints
     #hooksFile: FileMap | null;
     #log: Logger | null;
     #hooks: HooksDefinition | null;

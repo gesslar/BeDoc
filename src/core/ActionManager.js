@@ -1,4 +1,4 @@
-import {hookPoints} from "./HookManager.js"
+import {HookPoints} from "./HookManager.js"
 
 export default class ActionManager {
   #action = null
@@ -48,7 +48,7 @@ export default class ActionManager {
       throw new Error("Hooks already set")
 
     this.action.hook = hookManager.on.bind(this.action)
-    this.action.HOOKS = hookPoints
+    this.action.HOOKS = HookPoints
     this.#hookManager = hookManager
     this.action.hooks = hookManager.hooks
   }
