@@ -23,6 +23,7 @@ export interface ActionDefinition {
   meta: MetaType
   setup?: (params: { parent: ActionManager; log: Logger }) => void
   run({ module, content }: { module: string; content: object }): Promise<string>
+  hook?: (event: string, ...args: unknown[]) => Promise<unknown>
 }
 
 export interface PrintActionDefinition extends ActionDefinition {
