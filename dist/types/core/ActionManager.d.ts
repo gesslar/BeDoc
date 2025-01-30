@@ -50,4 +50,6 @@ export default class ActionManager {
   toString(): string
   #private
 }
+
+export type ActionContract = string
 //# sourceMappingURL=ActionManager.d.ts.map
