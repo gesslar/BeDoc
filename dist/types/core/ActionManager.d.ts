@@ -21,13 +21,15 @@ export type MetaType = ParseMetaDefinition | PrintMetaDefinition
 
 export interface ActionDefinition {
   meta: MetaType
+  setup?: (params: { parent: ActionManager; log: Logger }) => void
+  run({ module, content }: { module: string; content: object }): Promise<string>
 }
 
-export interface PrintActionDefinition {
+export interface PrintActionDefinition extends ActionDefinition {
   meta: PrintMetaDefinition
 }
 
-export interface ParseActionDefinition {
+export interface ParseActionDefinition extends ActionDefinition {
   meta: ParseMetaDefinition
 }
 
