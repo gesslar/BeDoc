@@ -1,5 +1,5 @@
 import Logger from './Logger'
-import HookManager from './HookManager'
+import HookManager, {HookPoints} from './HookManager'
 
 export type MetaActionType = "print" | "parse"
 
@@ -24,6 +24,8 @@ export interface ActionDefinition {
   setup?: (params: { parent: ActionManager; log: Logger }) => void
   run({ module, content }: { module: string; content: object }): Promise<string>
   hook?: (event: string, ...args: unknown[]) => Promise<unknown>
+
+  HOOKS?: HookPoints
 }
 
 export interface PrintActionDefinition extends ActionDefinition {

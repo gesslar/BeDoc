@@ -27,7 +27,7 @@ interface HookManagerConstructorParams {
     timeOut: number;
 }
 
-export const hookPoints: Readonly<Record<Uppercase<HookEventType>, HookEventType>>;
+export const HookPoints: Readonly<Record<Uppercase<HookEventType>, HookEventType>>;
 
 export default class HookManager {
     static new(arg: HookManagerConstructorParams): Promise<HookManager | null>;
@@ -51,7 +51,6 @@ export default class HookManager {
      */
     on(event: HookEventType, ...args: unknown[]): Promise<HookResult | undefined>;
 
-    HOOKS?: HookPoints
     #hooksFile: FileMap | null;
     #log: Logger | null;
     #hooks: HooksDefinition | null;
