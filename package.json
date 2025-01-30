@@ -1,6 +1,6 @@
 {
   "name": "@gesslar/bedoc",
-  "version": "1.4.4",
+  "version": "1.4.5",
   "description": "Pluggable documentation engine for any language and format",
   "publisher": "gesslar",
   "main": "./src/core/Core.js",
