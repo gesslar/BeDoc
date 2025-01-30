@@ -28,7 +28,7 @@ export default class Core {
     this.options = options
     const {debug: debugMode, debugLevel} = options
     this.logger = new Logger({name: "BeDoc", debugMode, debugLevel})
-    this.packageJson = loadPackageJson()?.bedoc ?? {}
+    this.packageJson = loadPackageJson(options.basePath)?.bedoc ?? {}
     this.debugOptions = this.logger.options
   }
 
