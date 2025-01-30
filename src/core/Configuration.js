@@ -12,7 +12,8 @@ import * as FDUtil from "./util/FDUtil.js"
 
 const {loadJson} = ActionUtil
 const {isNothing, isType, mapObject} = DataUtil
-const {getFiles, resolveDirectory, resolveFilename} = FDUtil
+const {getFiles, composeFilename, fileExists} = FDUtil
+const {resolveDirectory, resolveFilename} = FDUtil
 const {fdType, fdTypes} = FDUtil
 
 export default class Configuration {
@@ -154,9 +155,11 @@ export default class Configuration {
 
     // Inject packageJson if not available
     if(!options.packageJson) {
-      const jsonFile = resolveFilename("package.json", dir)
-      const jsonObj = loadJson(jsonFile)
-      options.packageJson = {value: jsonObj, source}
+      const jsonFile = composeFilename(dir, "package.json")
+      if(fileExists(jsonFile)) {
+        const jsonObj = loadJson(jsonFile)
+        options.packageJson = {value: jsonObj, source}
+      }
     }
 
     // Add defaults which are missing
