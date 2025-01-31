@@ -38,7 +38,7 @@ const constructors = [
   "Float64Array",
 ]
 
-const dataTypes = [...primitives, ...constructors.map((c) => c.toLowerCase())]
+const dataTypes = [...primitives, ...constructors.map(c => c.toLowerCase())]
 
 const emptyableTypes = ["string", "array", "object"]
 
@@ -96,7 +96,7 @@ function isArrayUnique(arr) {
  * @returns {Array} The intersection of the two arrays.
  */
 function arrayIntersection(arr1, arr2) {
-  return arr1.filter((value) => arr2.includes(value))
+  return arr1.filter(value => arr2.includes(value))
 }
 
 /**
@@ -390,7 +390,7 @@ function deepFreezeObject(obj) {
  * @returns {boolean} - True if valid, throws an error otherwise.
  */
 function schemaCompare(schema, definition, stack = [], logger = new Logger()) {
-  const breadcrumb = (key) => (stack.length ? `@${stack.join(".")}` : key)
+  const breadcrumb = key => (stack.length ? `@${stack.join(".")}` : key)
   const tag = "[DataUtil.schemaCompare]"
   const pad = `${" ".repeat(stack.length * 2)}${stack.length ? "└─ " : ""}`
   const debug = (message, key) =>

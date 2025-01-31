@@ -1,7 +1,7 @@
 import Logger from './Logger';
 import { FileMap } from './util/FDUtil';
 
-type HookEvent = 'start' | 'section_load' | 'enter' | 'exit' | 'end';
+export type HookEventType = 'start' | 'section_load' | 'enter' | 'exit' | 'end';
 
 interface HookResult {
     status?: 'success' | 'error';
@@ -27,7 +27,7 @@ interface HookManagerConstructorParams {
     timeOut: number;
 }
 
-export const hookPoints: Readonly<Record<Uppercase<HookEvent>, HookEvent>>;
+export const HookPoints: Readonly<Record<Uppercase<HookEventType>, HookEventType>>;
 
 export default class HookManager {
     static new(arg: HookManagerConstructorParams): Promise<HookManager | null>;
@@ -35,7 +35,7 @@ export default class HookManager {
     constructor({ action, hooksFile, logger, timeOut: timeout }: HookManagerConstructorParams);
 
     get action(): string;
-    get hooksFile(): FileMap;
+    get hooksFile(): FileMap | null;
     get hooks(): HooksDefinition | null;
     get log(): Logger;
     get timeout(): number;
@@ -49,7 +49,7 @@ export default class HookManager {
      * @param args - The hook arguments
      * @returns The result of the hook
      */
-    on(event: HookEvent, ...args: unknown[]): Promise<HookResult | undefined>;
+    on(event: HookEventType, ...args: unknown[]): Promise<HookResult | undefined>;
 
     #hooksFile: FileMap | null;
     #log: Logger | null;
