@@ -10,7 +10,7 @@ const freeze = Object.freeze
 const hookEvents = freeze(["start", "section_load", "enter", "exit", "end"])
 export const HookPoints = freeze(
   await allocateObject(
-    hookEvents.map((event) => event.toUpperCase()),
+    hookEvents.map(event => event.toUpperCase()),
     hookEvents,
   ),
 )

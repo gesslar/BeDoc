@@ -6,12 +6,10 @@ import plugin from "@stylistic/eslint-plugin-js";
 
 export default [
   js.configs.recommended,
-  jsdoc.configs['flat/recommended'],
-  {
+  jsdoc.configs['flat/recommended'], {
     name: "gesslar/bedoc/ignores",
     ignores: ["docs/", "_docs/", "TODO/", "examples/source/"],
-  },
-  {
+  }, {
     name: "gesslar/bedoc/languageOptions",
     languageOptions: {
       ecmaVersion: "latest",
@@ -31,8 +29,9 @@ export default [
       plugin,
     },
     rules: {
+      "@stylistic/js/arrow-parens": ["error", "as-needed"],
       "@stylistic/js/arrow-spacing": ["error", { before: true, after: true }],
-        // Ensure control statements and their bodies are not on the same line
+      // Ensure control statements and their bodies are not on the same line
       "@stylistic/js/brace-style": ["error", "1tbs", {allowSingleLine: false}],
       "@stylistic/js/padding-line-between-statements": [
         "error",
@@ -50,32 +49,32 @@ export default [
       "@stylistic/js/keyword-spacing": ["error", {
         before: false,
         after: true,
-        "overrides": {
+        overrides: {
           // Control statements
-          "return":  { before: true, after: true },
-          "if":      { after: false },
-          "else":    { before: true, after: true },
-          "for":     { after: false },
-          "while":   { after: false },
-          "do":      { after: false },
-          "switch":  { after: false },
-          "case":    { before: true, after: true },
-          "throw":   { before: true, after: false } ,
+          return:  { before: true, after: true },
+          if:      { after: false },
+          else:    { before: true, after: true },
+          for:     { after: false },
+          while:   { after: false },
+          do:      { after: false },
+          switch:  { after: false },
+          case:    { before: true, after: true },
+          throw:   { before: true, after: false } ,
 
           // Keywords
-          "as":      { before: true, after: true },
-          "of":      { before: true, after: true },
-          "from":    { before: true, after: true },
-          "async":   { before: true, after: true },
-          "await":   { before: true, after: false },
-          "class":   { before: true, after: true },
-          "const":   { before: true, after: true },
-          "let":     { before: true, after: true },
-          "var":     { before: true, after: true },
+          as:      { before: true, after: true },
+          of:      { before: true, after: true },
+          from:    { before: true, after: true },
+          async:   { before: true, after: true },
+          await:   { before: true, after: false },
+          class:   { before: true, after: true },
+          const:   { before: true, after: true },
+          let:     { before: true, after: true },
+          var:     { before: true, after: true },
 
           // Exception handling
-          "catch":   { before: true, after: false },
-          "finally": { before: true, after: true },
+          catch:   { before: true, after: false },
+          finally: { before: true, after: true },
         }
       }],
       "@stylistic/js/max-len": ["warn", {
@@ -89,25 +88,30 @@ export default [
       "@stylistic/js/no-tabs": "error",
       "@stylistic/js/no-trailing-spaces": ["error"],
       "@stylistic/js/object-curly-spacing": ["error", "never", {
-        "objectsInObjects": false,
-        "arraysInObjects": false
+        objectsInObjects: false,
+        arraysInObjects: false
       }],
       "@stylistic/js/quotes": ["error", "double", {
-        avoidEscape: true, allowTemplateLiterals: true
+        avoidEscape: true,
+        allowTemplateLiterals: true
       }],
       "@stylistic/js/semi": ["error", "never"],
       "@stylistic/js/space-before-function-paren": ["error", "never"],
       "@stylistic/js/yield-star-spacing": ["error", { before: true, after: false }],
       "constructor-super": "error",
       "no-unexpected-multiline": "error",
-      "no-unused-vars": ["warn", {
-        "argsIgnorePattern": "^_+", "destructuredArrayIgnorePattern": "^_+", "varsIgnorePattern": "^_+"
+      "no-unused-vars": ["error", {
+        caughtErrors: "all",
+        caughtErrorsIgnorePattern: "^_+",
+        argsIgnorePattern: "^_+",
+        destructuredArrayIgnorePattern: "^_+",
+        varsIgnorePattern: "^_+"
       }],
       "no-useless-assignment": "error",
 
       // JSDoc
-      "jsdoc/require-description": "warn",
-      "jsdoc/tag-lines": ["error", "any",{"startLines":1}]
+      "jsdoc/require-description": "error",
+      "jsdoc/tag-lines": ["error", "any", {"startLines":1}]
     }
   }
 ]
