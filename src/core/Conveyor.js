@@ -107,7 +107,7 @@ export default class Conveyor {
 
       // Step 4: Write output
       const {status: printStatus, destFile, content} = printResult
-      const isNullish = (value) => value == null // Checks null or undefined
+      const isNullish = value => value == null // Checks null or undefined
 
       if(printStatus !== "success" || isNullish(destFile) || isNullish(content)) {
         return {status: "error", file, error: new Error("Invalid print result")}

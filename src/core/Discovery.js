@@ -5,8 +5,9 @@ import {execSync} from "child_process"
 import * as FDUtil from "./util/FDUtil.js"
 import * as ActionUtil from "./util/ActionUtil.js"
 import * as DataUtil from "./util/DataUtil.js"
+import {composeDirectory,directoryExists} from "./util/FDUtil.js"
 
-const {ls, resolveDirectory, resolveFilename, getFiles} = FDUtil
+const {ls,resolveFilename,getFiles} = FDUtil
 const {actionTypes, actionMetaRequirements, loadJson} = ActionUtil
 const {isType} = DataUtil
 
@@ -72,7 +73,9 @@ export default class Discovery {
       debug("Found %d directories to search for actions", 2, directories.length)
       debug("Directories to search for actions: %o", 3, directories)
 
-      const moduleDirectories = directories.map(resolveDirectory)
+      const moduleDirectories = directories
+        .map(composeDirectory)
+        .filter(directoryExists)
       for(const moduleDirectory of moduleDirectories) {
         const {directories: dirs} = await ls(moduleDirectory.absolutePath)
 
@@ -310,9 +313,9 @@ export default class Discovery {
   async #loadModule(module) {
     const debug = this.#debug
 
-    debug("Loading module `%j`", 2, module)
+    debug("2 Loading module `%j`", 2, module)
 
-    const {absoluteUri} = module
+    const {absolutePath: absoluteUri} = module
     const moduleExports = await import(absoluteUri)
 
     return {file: module, ...moduleExports}

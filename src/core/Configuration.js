@@ -49,7 +49,7 @@ export default class Configuration {
     // Find them and add them to an array; the rest will be in pushed to the
     // end of the priority array.
     const orderedSections = []
-    ConfigurationPriorityKeys.forEach((key) => {
+    ConfigurationPriorityKeys.forEach(key => {
       if(!ConfigurationParameters[key])
         throw new Error(`Invalid priority key: ${key}`)
 
@@ -58,10 +58,10 @@ export default class Configuration {
     })
 
     const remainingSections = Object.keys(ConfigurationParameters).filter(
-      (key) => !ConfigurationPriorityKeys.includes(key),
+      key => !ConfigurationPriorityKeys.includes(key),
     )
     orderedSections.push(
-      ...remainingSections.map((key) => {
+      ...remainingSections.map(key => {
         return {key, value: finalOptions[key]}
       }),
     )
@@ -106,7 +106,7 @@ export default class Configuration {
         if(key === "input" || key === "exclude") {
           if(isType(value, "array"))
             value = await Promise.all(
-              value.map((pattern) => getFiles(pattern)),
+              value.map(pattern => getFiles(pattern)),
             )
           else if(isType(value, "string"))
             value = await getFiles(value)
@@ -251,7 +251,7 @@ export default class Configuration {
    */
   #getEnvironmentVariables() {
     const environmentVariables = {}
-    const params = Object.keys(ConfigurationParameters).map((param) => {
+    const params = Object.keys(ConfigurationParameters).map(param => {
       return {
         param,
         env: `bedoc_${param}`.toUpperCase(),
@@ -280,7 +280,7 @@ export default class Configuration {
     const nonEntryOptions = allOptions.filter(
       option => option.source && option.source !== "entry",
     )
-    const optionsOnly = nonEntryOptions.map((option) => option.options)
+    const optionsOnly = nonEntryOptions.map(option => option.options)
     const mergedOptions = optionsOnly.reduce((acc, options) => {
       for(const [key, value] of Object.entries(options)) acc[key] = value
 
