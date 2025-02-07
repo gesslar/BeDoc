@@ -119,7 +119,7 @@ export default class ActionManager {
       throw new Error(`No \`run\` function found for action \`${this.meta.action}\``)
 
     const actionResult = await func.call(
-      this.action, {module: file.module, content}
+      this.action, {moduleName: file.module, moduleContent: content}
     )
 
     return actionResult

@@ -1,8 +1,8 @@
-import process from "node:process"
+import {hrtime} from "node:process"
 
 import Discovery from "./Discovery.js"
 import HookManager from "./HookManager.js"
-import Logger, {loggerColours} from "./Logger.js"
+import Logger from "./Logger.js"
 import ParseManager from "./action/ParseManager.js"
 import PrintManager from "./action/PrintManager.js"
 import Conveyor from "./Conveyor.js"
@@ -118,7 +118,7 @@ export default class Core {
     return instance
   }
 
-  async processFiles(glob, startTime = process.hrtime()) {
+  async processFiles(glob) {
     const debug = this.logger.newDebug()
 
     debug("Starting file processing with conveyor", 1)
@@ -137,46 +137,23 @@ export default class Core {
       output,
     )
 
-    const processStart = process.hrtime()
+    const processStart = hrtime.bigint()
 
     // Initiate the conveyor
-    const result = await conveyor.convey(input, this.options.maxConcurrent)
+    const processResult = await conveyor.convey(
+      input, this.options.maxConcurrent
+    )
 
     debug("Conveyor complete", 1)
 
-    const endTime = (process.hrtime(startTime)[1] / 1_000_000).toFixed(2)
-    const processEnd = (process.hrtime(processStart)[1] / 1_000_000).toFixed(2)
+    const processEnd = hrtime.bigint()
 
-    // Grab the results
-    const totalFiles = input.length
-    const succeeded = result.succeeded
-    const warned = result.warned
-    const errored = result.errored
-
-    const {
-      info: succeedColour, warn: warnColour, error: errorColour, reset
-    } = loggerColours
-
-
-    const success = `${succeedColour}${succeeded.length}${reset}`
-    const warn = `${warnColour}${warned.length}${reset}`
-    const error = `${errorColour}${errored.length}${reset}`
-
-    const message = `Processed ${totalFiles} files: ${success} succeeded, ${error} errored, ` +
-      `${warn} warned in ${processEnd}ms [total: ${endTime}ms]`
-
-    this.logger.debug(message, 1)
-
-    if(errored.length > 0) {
-      // const failureRate = ((errored.length / totalFiles) * 100).toFixed(2)
-      // const errorMessage =
-      //   `Errors processing ${errored.length} files [${failureRate}%]`
-      // const errorLines = errored.map(r => {
-      //   const stackLine = log.lastStackLine(r.error, 0)
-      //   return `\n- ${r.input.module}: ${stackLine} - ${r.error.message}`
-      // }).join("")
-
-      // this.logger(errorMessage+errorLines)
+    const result = {
+      totalFiles: input.length,
+      succeeded: processResult.succeeded,
+      warned: processResult.warned,
+      errored: processResult.errored,
+      duration: ((Number(processEnd - processStart)) / 1_000_000).toFixed(2)
     }
 
     debug("File processing complete", 1)
