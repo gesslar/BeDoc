@@ -101,10 +101,10 @@ export default class HookManager {
    * Trigger a hook
    *
    * @param {string} event - The type of hook to trigger
-   * @param {...any} args - The hook arguments
+   * @param {object} args - The hook arguments as an object
    * @returns {Promise<any>} The result of the hook
    */
-  async on(event, ...args) {
+  async on(event, args) {
     const debug = this.log.newDebug()
 
     debug("Triggering hook for event `%s`", 4, event)
@@ -113,18 +113,14 @@ export default class HookManager {
       throw new Error("Event type is required for hook invocation")
 
     if(!hookEvents.includes(event))
-      throw new Error(`[HookManager.on] Invalid event type: ${event}`)
+      throw new Error(`Invalid event type: ${event}`)
 
     const hook = this.hooks[event]
 
     if(hook) {
-      assert(
-        isType(hook, "function"),
-        `[HookManager.on] Hook "${event}" is not a function`,
-        1,
-      )
+      assert(isType(hook, "function"), `Hook "${event}" is not a function`, 1)
 
-      const hookExecution = await hook.call(this.hooks, ...args)
+      const hookExecution = await hook.call(this.hooks, args)
       const hookTimeout = this.parent.timeout
       const expireAsync = () =>
         timeoutPromise(
@@ -139,6 +135,8 @@ export default class HookManager {
       debug("Hook executed successfully for event: `%s`", 4, event)
 
       return result
+    } else {
+      return null
     }
   }
 }

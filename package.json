@@ -1,6 +1,6 @@
 {
   "name": "@gesslar/bedoc",
-  "version": "1.4.10",
+  "version": "1.5.0",
   "description": "Pluggable documentation engine for any language and format",
   "publisher": "gesslar",
   "main": "./src/core/Core.js",
@@ -37,7 +37,6 @@
     "commander": "^13.0.0",
     "dotenv": "^16.4.7",
     "error-stack-parser": "^2.1.4",
-    "eslint-plugin-jsdoc": "^50.6.2",
     "globby": "^14.0.2",
     "micromatch": "^4.0.8",
     "node-fetch": "^3.3.2",
@@ -49,6 +48,7 @@
     "@typescript-eslint/parser": "^8.22.0",
     "axios": "^1.7.9",
     "chokidar": "^4.0.3",
+    "eslint-plugin-jsdoc": "^50.6.3",
     "eslint": "^9.18.0",
     "form-data": "^4.0.1"
   },

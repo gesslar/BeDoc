@@ -1,6 +1,7 @@
 [![CodeQL Advanced](https://github.com/gesslar/BeDoc/actions/workflows/codeql.yml/badge.svg)](https://github.com/gesslar/BeDoc/actions/workflows/codeql.yml)
 [![Dependabot Updates](https://github.com/gesslar/BeDoc/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/gesslar/BeDoc/actions/workflows/dependabot/dependabot-updates)
 [![Auto PR and Merge - dev 🤗](https://github.com/gesslar/BeDoc/actions/workflows/autopr-dev.yml/badge.svg?branch=dev)](https://github.com/gesslar/BeDoc/actions/workflows/autopr-dev.yml)
+[![CodeFactor](https://www.codefactor.io/repository/github/gesslar/bedoc/badge)](https://www.codefactor.io/repository/github/gesslar/bedoc)
 
 # BeDoc
 
