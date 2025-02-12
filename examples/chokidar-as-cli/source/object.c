@@ -73,7 +73,7 @@ object top_environment(object ob) {}
  * up through nested environments.
  *
  * @param {object} ob The object to get the environments of.
- * @return {object[]} An array of environments of the object.
+ * @return {object*} An array of environments of the object.
  */
 object *all_environment(object ob) {}
 
@@ -81,7 +81,7 @@ object *all_environment(object ob) {}
  * Retrieves all living objects present in the specified room.
  *
  * @param {object} room The room to search for living objects in.
- * @return {object[]} An array of living objects present in the room.
+ * @return {object*} An array of living objects present in the room.
  */
 object *present_livings(object room) {}
 
@@ -89,7 +89,7 @@ object *present_livings(object room) {}
  * Retrieves all player objects present in the specified room.
  *
  * @param {object} room The room to search for player objects in.
- * @return {object[]} An array of player objects present in the room.
+ * @return {object*} An array of player objects present in the room.
  */
 object *present_players(object room) {}
 
@@ -98,7 +98,7 @@ object *present_players(object room) {}
  * specified room.
  *
  * @param {object} room The room to search for NPCs in.
- * @return {object[]} An array of NPC objects present in the room.
+ * @return {object*} An array of NPC objects present in the room.
  */
 object *present_npcs(object room) {}
 
@@ -116,9 +116,9 @@ object get_living(string name, object room) {}
  * Locates living objects by the specified names within the
  * specified room.
  *
- * @param {string|string[]} names The name of the living objects to locate.
+ * @param {string|string*} names The name of the living objects to locate.
  * @param {object} room The room to search for the living objects in.
- * @return {object[]} An array of located living objects.
+ * @return {object*} An array of located living objects.
  */
 object *get_livings(mixed names, object room) {}
 
@@ -136,9 +136,9 @@ object get_player(string name, object room) {}
  * Locates player objects by the specified names within the
  * specified room.
  *
- * @param {string|string[]} names The name of the player objects to locate.
+ * @param {string|string*} names The name of the player objects to locate.
  * @param {object} room The room to search for the player objects in.
- * @return {object[]} An array of located player objects.
+ * @return {object*} An array of located player objects.
  */
 object *get_players(mixed names, object room) {}
 
@@ -169,7 +169,7 @@ object this_caller() {}
  *
  * @param {mixed} file The file or object to find clones of.
  * @param {object} container The container to search within.
- * @return {object[]} An array of clones of the specified file present in
+ * @return {object*} An array of clones of the specified file present in
  *                      the container.
  */
 object *present_clones(mixed file, object container) {}
@@ -207,7 +207,7 @@ varargs int same_env_check(object one, object two, int top_env) {}
  * @param {string} arg The argument to match objects against.
  * @param {object} source The object to search within (optional, default: caller's environment).
  * @param {function} f An optional custom filter function (optional).
- * @return {object[]} An array of located objects or 0 if none are found.
+ * @return {object*} An array of located objects or 0 if none are found.
  */
 varargs object *find_targets(object tp, string arg, object source, function f) {}
 
@@ -230,7 +230,7 @@ varargs object find_target(object tp, string arg, object source, function f) {}
  *
  * @param {mixed} file The file or object to find clones of.
  * @param {int} env_only Whether to only return clones that have an environment (optional).
- * @return {object[]} An array of objects that are clones of the specified file.
+ * @return {object*} An array of objects that are clones of the specified file.
  */
 varargs object *clones(mixed file, int env_only) {}
 

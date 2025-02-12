@@ -1,0 +1,8 @@
+# Ignore everything in output
+./output/*
+# But allow directories to be tracked so we can reach .keep files
+!./output/*/
+# And ignore everything in those directories
+./output/*/*
+# Except .keep files
+!./output/*/.keep

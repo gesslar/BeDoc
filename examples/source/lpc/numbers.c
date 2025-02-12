@@ -41,7 +41,7 @@ varargs float remainder(mixed a, mixed b) {}
 /**
  * Calculates the sum of all elements in an array.
  *
- * @param {mixed[]} arr The array of numbers to sum.
+ * @param {mixed*} arr The array of numbers to sum.
  * @return {int} The sum of all elements in the array.
  */
 int sum(mixed *arr) {}
