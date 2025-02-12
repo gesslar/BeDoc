@@ -101,24 +101,25 @@ export const Hooks = {
         const editResult = await bot.createOrEditPage(request)
 
         if(editResult.status === "error") {
-          try {
-            const data = JSON.parse(editResult.error.message)
-            const secs = 10 + (count * 2)
+          const data = JSON.parse(editResult.error.message)
+          const secs = 10 + (count * 2)
 
-            if(data?.error?.code === "ratelimited") {
+          if(data?.error?.code) {
+            if(data.error.code === "ratelimited") {
               this.log.warn(`Rate limited for \`${moduleName}\`. Trying again in ${secs} seconds.`)
 
               await timeoutPromise(secs*1_000)
               module.count = count+1
               return this.end(module)
+            } else {
+              throw new Error(`Error uploading \`${moduleName}\`: ${data.error.info}`)
             }
-          } catch(_error) {
-            throw editResult.error
           }
         }
 
+        // console.log(editResult)
+        // console.log(editResult.result)
         const {title, oldrevid, _newrevid} = editResult.result
-
         const sanitizedUrl =
           `${BASE_URL}/index.php?title=${encodeURIComponent(title)}`
         if(oldrevid !== undefined) {
