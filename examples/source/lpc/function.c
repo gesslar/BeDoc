@@ -37,7 +37,7 @@ varargs string call_trace(int colour) {}
  * 5. Returns the assembled callback as an array
  *
  * @param {mixed} arg The arguments to assemble into a callback.
- * @return {mixed[]} The assembled callback.
+ * @return {mixed*} The assembled callback.
  */
 mixed *assemble_call_back(mixed arg...) {}
 
@@ -66,7 +66,7 @@ varargs mixed call_if(mixed ob, string func, mixed arg...) {}
  *
  * @param {string} action The action to delay.
  * @param {float} delay The amount of time to delay the action.
- * @param {mixed[]} cb The callback to execute after the delay.
+ * @param {mixed*} cb The callback to execute after the delay.
  * @return {int} The ID of the delayed action.
  */
 varargs int delay_act(string act, float delay, mixed *cb) {}

@@ -37,7 +37,7 @@ varargs int log_file(string file, string str, mixed arg...) {}
  * Reads a file and returns its content as an array of lines.
  *
  * @param {string} file The path of the file to read.
- * @return {string[]} Array of lines, excluding comments and empty lines.
+ * @return {string*} Array of lines, excluding comments and empty lines.
  */
 string *explode_file(string file) {}
 
@@ -45,7 +45,7 @@ string *explode_file(string file) {}
  * Writes an array of lines to a file.
  *
  * @param {string} file The path of the file to write to.
- * @param {string[]} lines The array of lines to write.
+ * @param {string*} lines The array of lines to write.
  * @param {int} overwrite Whether to overwrite existing content (optional, default: 0).
  */
 varargs void implode_file(string file, string *lines, int overwrite) {}
@@ -70,7 +70,7 @@ varargs string temp_file(mixed arg) {}
  * Extracts directory and file components from a path.
  *
  * @param {mixed} path The path or object to process.
- * @return {string[]} Array containing [directory, filename].
+ * @return {string*} Array containing [directory, filename].
  */
 string *dir_file(mixed path) {}
 
@@ -79,7 +79,7 @@ string *dir_file(mixed path) {}
  *
  * @param {string} path The path to check.
  * @param {int} file_too Whether the file should exist (optional).
- * @return {string[]} Array containing [directory, filename] or null if invalid.
+ * @return {string*} Array containing [directory, filename] or null if invalid.
  */
 varargs string *valid_dir_file(string path, int file_too) {}
 
