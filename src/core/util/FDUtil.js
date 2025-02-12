@@ -256,7 +256,7 @@ async function getFiles(globPattern) {
     !globbyArray.length
   )
     throw new Error(
-      "[getFiles] Invalid glob pattern: Array must contain only strings.",
+      `Invalid glob pattern: Array must contain only strings. Got ${JSON.stringify(globPattern)}`,
     )
 
   // Use Globby to fetch matching files

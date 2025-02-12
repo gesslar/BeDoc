@@ -3,7 +3,7 @@ import chokidar from "chokidar"
 import BeDoc, {Environment} from "../../src/core/Core.js"
 
 // Directory to watch
-const watchDirectory = "./source/lpc"
+const watchDirectory = "./source/"
 
 // BeDoc configuration
 const bedocOptions = {

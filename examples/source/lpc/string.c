@@ -56,7 +56,7 @@ string no_ansi(string str) {}
  * Returns a string that is a simple list of the elements of an array,
  * joined by a conjunction. If no conjunction is provided, "and" will be used.
  *
- * @param {string[]} arr The array to make a list from.
+ * @param {string*} arr The array to make a list from.
  * @param {string} conjunction The word to join the last two elements (optional, default: "and")
  * @return {string} The simple list string.
  */

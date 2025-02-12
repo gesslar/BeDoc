@@ -315,7 +315,7 @@ export default class Discovery {
 
     debug("2 Loading module `%j`", 2, module)
 
-    const {absolutePath: absoluteUri} = module
+    const {absoluteUri} = module
     const moduleExports = await import(absoluteUri)
 
     return {file: module, ...moduleExports}
