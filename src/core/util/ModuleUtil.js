@@ -1,5 +1,6 @@
 import {createRequire} from "module"
 import FDUtil from "./FDUtil.js"
+import JSON5 from "json5"
 
 export default class ModuleUtil {
   /**
@@ -21,7 +22,7 @@ export default class ModuleUtil {
   static async loadJson(jsonFileObject) {
     // Read the file
     const jsonContent = await FDUtil.readFile(jsonFileObject)
-    const json = JSON.parse(jsonContent)
+    const json = JSON5.parse(jsonContent)
     return json
   }
 
@@ -33,7 +34,7 @@ export default class ModuleUtil {
   static async loadPackageJson() {
     const packageJsonFileObject = FDUtil.resolveFilename("./package.json")
     const jsonContent = await FDUtil.readFile(packageJsonFileObject)
-    const json = JSON.parse(jsonContent)
+    const json = JSON5.parse(jsonContent)
     return json
   }
 }
