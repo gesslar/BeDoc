@@ -71,9 +71,7 @@ export default class ActionManager {
     if(!setup)
       return
 
-    await this.action.setup.call(
-      this.action, {parent: this, log: this.#log}
-    )
+    await this.action.setup.call(this.action, {log: this.#log})
   }
 
   async #cleanupAction() {

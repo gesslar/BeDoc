@@ -50,10 +50,10 @@ export default class Discovery {
       debug("Mock path not set, discovering actions in node_modules", 1)
 
       debug("Looking for actions in project's package.json", 2)
-      if(this.core.packageJson?.bedoc?.modules) {
-        const actions = this.core.packageJson?.bedoc?.modules
+      if(this.core.packageJson?.modules) {
+        const actions = this.core.packageJson?.modules
 
-        debug("Found %d actions in package.json: %d", 3, actions)
+        debug("Found %d actions in package.json", 3, actions)
         debug("Actions found in package.json action in package.json: %o", 3, actions)
 
         if(actions && typeof(actions) === "object")
@@ -158,7 +158,7 @@ export default class Discovery {
 
     const loadedActions = []
     for(const file of toLoad) {
-      debug("Loading module `%s`", 2, file.absolutePath)
+      debug("Loading module `%s`", 2, file.absoluteUri)
 
       const loading = await this.#loadModule(file)
       const loaded = loading.actions.map((action, index) => {
@@ -283,8 +283,10 @@ export default class Discovery {
         debug("No specific `%s` action found", 3, actionType)
       }
 
+
       // Hmm! We didn't find anything specific. Let's check the criterion
       debug("Checking for `%s` actions with criterion `%s`", 3, actionType, criterion)
+      debug("Validated config to check against: %o", 3, validatedConfig)
       const found = actions[actionType].filter(a => {
         debug("Meta criterion value: %o", 4, a.action.meta[criterion])
         debug("Config criterion value: %o", 4, validatedConfig[criterion])
