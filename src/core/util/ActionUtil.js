@@ -1,4 +1,6 @@
 import * as FDUtil from "./FDUtil.js"
+import process from "node:process"
+import JSON5 from "json5"
 
 const {readFile, fileExists, composeFilename} = FDUtil
 
@@ -20,7 +22,7 @@ const actionMetaRequirements = freeze({
 function loadJson(jsonFileObject) {
   // Read the file
   const jsonContent = readFile(jsonFileObject)
-  const json = JSON.parse(jsonContent)
+  const json = JSON5.parse(jsonContent)
   return json
 }
 
@@ -31,11 +33,11 @@ function loadJson(jsonFileObject) {
  * @returns {object?} The parsed package.json content or null if the file does
  *                    not exist
  */
-function loadPackageJson(basePath = null) {
+function loadPackageJson(basePath = process.cwd()) {
   const packageJsonFileObject = composeFilename(basePath, "./package.json")
   if(fileExists(packageJsonFileObject)) {
     const jsonContent = readFile(packageJsonFileObject)
-    const json = JSON.parse(jsonContent)
+    const json = JSON5.parse(jsonContent)
     return json
   } else
     return null
