@@ -1,5 +1,6 @@
 import process from "node:process"
 import {Environment} from "./Core.js"
+import JSON5 from "json5"
 
 import {
   ConfigurationParameters,
@@ -217,7 +218,7 @@ export default class Configuration {
     if(environmentVariables)
       allOptions.push({source: "environment", options: environmentVariables})
 
-    const packageJson = entryOptions.packageJson
+    const packageJson = entryOptions?.packageJson
     if(packageJson?.bedoc)
       allOptions.push({source: "packageJson", options: packageJson.bedoc})
 
@@ -228,12 +229,16 @@ export default class Configuration {
       environmentVariables?.config
 
     if(useConfig) {
-      const configFilename = packageJson?.bedoc?.config || entryOptions.config
+      const configFile =
+        packageJson?.bedoc?.config
+          ? resolveFilename(packageJson?.bedoc?.config)
+          : entryOptions.config?.value
+            ? resolveFilename(entryOptions.config.value)
+            : null
 
-      if(!configFilename)
+      if(!configFile)
         throw new Error("No config file specified")
 
-      const configFile = resolveFilename(configFilename)
       const config = loadJson(configFile)
 
       allOptions.push({source: "config", options: config})
@@ -303,7 +308,7 @@ export default class Configuration {
 
     // Last, but not least, add any defaulted options that are not in the
     // mapped options
-    for(const [key, value] of Object.entries(entryOptions)) {
+    for(const [key, value] of Object.entries(entryOptions ?? {})) {
       if(!mappedOptions[key]) {
         if(value.source)
           mappedOptions[key] = value.value
@@ -329,7 +334,7 @@ export default class Configuration {
           switch(param.type.toString()) {
             case "boolean":
             case "number":
-              options[key] = JSON.parse(options[key])
+              options[key] = JSON5.parse(options[key])
               break
           }
         }

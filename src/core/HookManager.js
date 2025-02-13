@@ -90,6 +90,7 @@ export default class HookManager {
       return null
 
     hooksObj.log = instance.log
+    hooksObj.timeout = this.timeout
     instance.#hooks = hooksObj
 
     debug("Hooks loaded successfully for `%s`", 2, instance.action)
@@ -121,7 +122,7 @@ export default class HookManager {
       assert(isType(hook, "function"), `Hook "${event}" is not a function`, 1)
 
       const hookExecution = await hook.call(this.hooks, args)
-      const hookTimeout = this.parent.timeout
+      const hookTimeout = this.timeout
       const expireAsync = () =>
         timeoutPromise(
           hookTimeout,
