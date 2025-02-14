@@ -145,7 +145,7 @@ export default class Configuration {
     }
   }
 
-  #mapEntryOptions({options, source}) {
+  #mapEntryOptions({options = {}, source}) {
     // CLI already has done all the work via commander
     if(source === Environment.CLI)
       return options

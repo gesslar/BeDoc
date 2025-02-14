@@ -6,16 +6,16 @@ import BeDoc, {Environment} from "../../src/core/Core.js"
 const watchDirectory = "./source/"
 
 // BeDoc configuration
-const bedocOptions = {
-  output: "../output/wikitext/",
-  language: "lpc",
-  format: "wikitext",
-  hooks: "./hooks/lpc-wikitext-hooks.js",
-  maxConcurrent: 5
-}
+// const bedocOptions = {
+//   output: "../output/wikitext/",
+//   language: "lpc",
+//   format: "wikitext",
+//   hooks: "./hooks/lpc-wikitext-hooks.js",
+//   maxConcurrent: 5
+// }
 
 // Initialize BeDoc Core instance
-const bedoc = await BeDoc.new({options: bedocOptions, source: Environment.NPM})
+const bedoc = await BeDoc.new({source: Environment.NPM})
 
 // Initialize file watcher
 const watcher = chokidar.watch(watchDirectory, {
