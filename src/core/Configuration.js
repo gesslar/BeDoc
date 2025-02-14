@@ -162,15 +162,6 @@ export default class Configuration {
     if(!options.basePath)
       options.basePath = {value: dir, source}
 
-    // Inject packageJson if not available
-    if(!options.packageJson) {
-      const jsonFile = composeFilename(dir, "package.json")
-      if(fileExists(jsonFile)) {
-        const jsonObj = loadJson(jsonFile)
-        options.packageJson = {value: jsonObj, source}
-      }
-    }
-
     // Add defaults which are missing
     for(const [key, param] of Object.entries(ConfigurationParameters)) {
       if(options[key] === undefined && param.default !== undefined)
@@ -226,19 +217,28 @@ export default class Configuration {
       allOptions.push({source: "environment", options: environmentVariables})
 
     const packageJson = entryOptions?.packageJson
-    if(packageJson?.bedoc)
-      allOptions.push({source: "packageJson", options: packageJson.bedoc})
+    if(packageJson) {
+      allOptions.push({source: "packageJson", options: packageJson})
+    } else {
+      const packageJsonFile = composeFilename(process.cwd(), "package.json")
+      if(fileExists(packageJsonFile)) {
+        const packageJson = loadJson(packageJsonFile)
+
+        if(packageJson.bedoc)
+          allOptions.push({source: "packageJson", options: packageJson.bedoc})
+      }
+    }
 
     // Then the config file, if the options specified a config file
     const useConfig =
       entryOptions?.config ||
-      packageJson?.bedoc?.config ||
+      packageJson?.config ||
       environmentVariables?.config
 
     if(useConfig) {
       const configFile =
-        packageJson?.bedoc?.config
-          ? resolveFilename(packageJson?.bedoc?.config)
+        packageJson?.config
+          ? resolveFilename(packageJson?.config)
           : entryOptions.config?.value
             ? resolveFilename(entryOptions.config.value)
             : null
@@ -294,7 +294,8 @@ export default class Configuration {
     )
     const optionsOnly = nonEntryOptions.map(option => option.options)
     const mergedOptions = optionsOnly.reduce((acc, options) => {
-      for(const [key, value] of Object.entries(options)) acc[key] = value
+      for(const [key, value] of Object.entries(options))
+        acc[key] = value
 
       return acc
     }, {})

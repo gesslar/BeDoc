@@ -40,7 +40,7 @@ export default class Discovery {
     const options = this.core.options ?? {}
 
     if(options?.mockPath) {
-      debug("Discovering mock actions in `%s`", 1, options.mockPath)
+      debug("Discovering mock actions in `%s`", 2, options.mockPath)
 
       bucket.push(
         ...(await getFiles([
@@ -49,7 +49,7 @@ export default class Discovery {
         ])),
       )
     } else {
-      debug("Mock path not set, discovering actions in node_modules", 1)
+      debug("Mock path not set, discovering actions in node_modules", 2)
 
       debug("Looking for actions in project's package.json", 2)
       if(this.core.packageJson?.modules) {
