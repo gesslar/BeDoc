@@ -3,6 +3,7 @@
 import {program} from "commander"
 import console from "node:console"
 import process from "node:process"
+import {fileURLToPath,URL} from "node:url"
 
 import BeDoc, {Environment} from "./core/Core.js"
 import {ConfigurationParameters} from "./core/ConfigurationParameters.js"
@@ -10,18 +11,21 @@ import {ConfigurationParameters} from "./core/ConfigurationParameters.js"
 import * as ActionUtil from "./core/util/ActionUtil.js"
 import * as FDUtil from "./core/util/FDUtil.js"
 
-const {loadPackageJson} = ActionUtil
-const {resolveDirectory} = FDUtil
+const {loadJson} = ActionUtil
+const {resolveFilename,resolveDirectory} = FDUtil
 
 // Main entry point
 ;(async() => {
   try {
     // Get package info
     const basePath = resolveDirectory(process.cwd())
-    const packageJson = loadPackageJson(basePath)
+    const thisPath = resolveDirectory(fileURLToPath(new URL("..", import.meta.url)))
+    const bedocPackageJson = loadJson(resolveFilename("package.json", thisPath))
 
     // Setup program
-    program.name(packageJson.name).description(packageJson.description)
+    program
+      .name(bedocPackageJson.name)
+      .description(bedocPackageJson.description)
 
     // Build CLI
     for(const [name, parameter] of Object.entries(ConfigurationParameters)) {
@@ -42,7 +46,7 @@ const {resolveDirectory} = FDUtil
 
     // Add version option last
     program.version(
-      packageJson.version,
+      bedocPackageJson.version,
       "-v, --version",
       "Output the version number",
     )
@@ -68,7 +72,6 @@ const {resolveDirectory} = FDUtil
         options: {
           ...optionsWithSources,
           basePath: {value: basePath, source: "cli"},
-          packageJson: {value: packageJson, source: "cli"},
         },
         source: Environment.CLI
       })
