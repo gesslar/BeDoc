@@ -4,6 +4,7 @@ name: Auto PR and Merge - dev 🤗
 # Defines when this workflow will run
 on:
   push:
+  merge_group:
     branches:
       - dev # Only triggers when pushing to the 'dev' branch
 
