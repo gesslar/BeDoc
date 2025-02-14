@@ -225,7 +225,7 @@ export default class Discovery {
           JSON.stringify(moduleFile, null, 2) + "\n" +
           JSON.stringify(action, null, 2))
 
-      debug("Checking action `%s`", 2, metaAction)
+      debug("Checking action %o", 2, metaAction)
 
       const isValid = this.#validMeta(metaAction, {action, contract})
 
@@ -246,7 +246,7 @@ export default class Discovery {
 
     for(const actionType of actionTypes) {
       const total = resultActions[actionType].length
-      debug("Found %o `%o` actions", 2, total, actionType)
+      debug("Found %o %o actions", 2, total, actionType)
     }
 
     const total = Object.keys(resultActions).reduce((acc, curr) => {
@@ -280,7 +280,7 @@ export default class Discovery {
 
       // First let's check if we wanted something specific
       if(validatedConfig[config]) {
-        debug("Checking for specific `%s` action", 3, actionType)
+        debug("Checking for specific %o action", 3, actionType)
         const found = actions[actionType].find(
           a => a.file.specificType.includes(actionType)
         )
@@ -294,7 +294,7 @@ export default class Discovery {
       }
 
       // Hmm! We didn't find anything specific. Let's check the criterion
-      debug("Checking for `%s` actions with criterion `%s`", 3, actionType, criterion)
+      debug("Checking for %o actions with criterion %o", 3, actionType, criterion)
       debug("Validated config to check against: %o", 3, validatedConfig)
       const found = actions[actionType].filter(a => {
         debug("Meta criterion value: %o", 4, a.action.meta[criterion])
@@ -341,7 +341,7 @@ export default class Discovery {
    */
   #validMeta(actionType, toValidate) {
     const debug = this.#debug
-    debug("Checking meta requirements for `%s`", 3, actionType)
+    debug("Checking meta requirements for %o", 3, actionType)
 
     const requirements = actionMetaRequirements[actionType]
     if(!requirements)

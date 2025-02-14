@@ -7,10 +7,12 @@ export default class ActionManager {
   #log
   #debug
   #file
+  #variables
 
-  constructor(actionDefinition, logger) {
+  constructor({actionDefinition, logger, variables}) {
     this.#log = logger
     this.#debug = this.#log.newDebug()
+    this.#variables = variables
 
     this.#initialize(actionDefinition)
   }
@@ -65,6 +67,10 @@ export default class ActionManager {
     return this.#log
   }
 
+  get variables() {
+    return this.#variables
+  }
+
   async #setupAction() {
     const setup = this.action?.setup
 
@@ -90,7 +96,11 @@ export default class ActionManager {
       return
 
     await this.hookManager.setup.call(
-      this.hookManager.hooks, {parent: this.action, log: this.#log}
+      this.hookManager.hooks, {
+        action: this.action,
+        variables: this.#variables,
+        log: this.#log
+      }
     )
   }
 

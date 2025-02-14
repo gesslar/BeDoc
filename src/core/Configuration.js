@@ -246,14 +246,42 @@ export default class Configuration {
       if(!configFile)
         throw new Error("No config file specified")
 
-      const config = loadJson(configFile)
+      const configObject = loadJson(configFile)
+      const subConfigName =
+        entryOptions?.sub ||
+        packageJson?.sub ||
+        environmentVariables?.sub
 
-      allOptions.push({source: "config", options: config})
+      // If we didn't specify a subconfiguration, let's just remove
+      // it so it doesn't pollute anything.
+      if(!subConfigName)
+        delete configObject.sub
+
+      const finalConfig = subConfigName?.value
+        ? this.#resolveSubconfigs(configObject, subConfigName.value)
+        : configObject
+
+      allOptions.push({source: "config", options: finalConfig})
     }
 
     allOptions.push({source: "entry", options: entryOptions})
 
     return allOptions
+  }
+
+  #resolveSubconfigs(configObject, subConfigName) {
+    const subConfig = configObject.sub?.find(sub => sub.name === subConfigName)
+
+    if(!subConfig)
+      throw new Error(`No such subconfiguration \`${subConfigName}\``)
+
+    // We don't need this anymore
+    delete subConfig.name
+
+    for(const [key,val] of Object.entries(subConfig))
+      configObject[key] = val
+
+    return configObject
   }
 
   /**

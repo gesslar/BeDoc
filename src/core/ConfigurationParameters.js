@@ -120,6 +120,14 @@ const ConfigurationParameters = Object.freeze({
       mustExist: true,
     },
   },
+  sub: {
+    short: "s",
+    param: "name",
+    description: "Specify a subconfiguration",
+    type: newTypeSpec("string"),
+    required: false,
+    dependent: "config",
+  },
   debug: {
     short: "d",
     description: "Enable debug mode",
