@@ -45,11 +45,9 @@ export default class Core {
     debug("Creating new BeDoc instance with options: `%o`", 2, validConfig)
 
     const discovery = new Discovery(instance)
-    const {printer: validPrint, parser: validParse} = validConfig
-
     const actionDefs = await discovery.discoverActions({
-      print: validPrint,
-      parse: validParse
+      print: validConfig.printer,
+      parse: validConfig.parser
     })
 
     const validCrit = discovery.satisfyCriteria(actionDefs, validConfig)
@@ -97,7 +95,7 @@ export default class Core {
     for(const [, value] of Object.entries(finalActions)) {
       const {action: actionType} = value.action.meta
 
-      debug("Attaching `%o` action to instance", 2, actionType)
+      debug("Attaching %o action to instance", 2, actionType)
       instance.actions[actionType] = new managers[actionType](
         value, instance.logger
       )

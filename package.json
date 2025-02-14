@@ -1,8 +1,10 @@
 {
   "name": "@gesslar/bedoc",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Pluggable documentation engine for any language and format",
   "publisher": "gesslar",
+  "author": "gesslar",
+  "license": "Unlicense",
   "main": "./src/core/Core.js",
   "repository": {
     "type": "git",
@@ -63,19 +65,5 @@
     "language",
     "format",
     "hooks"
-  ],
-  "author": "gesslar",
-  "license": "Unlicense",
-  "contributes": {
-    "commands": [
-      {
-        "command": "vscode-bedoc.generateDocs",
-        "title": "BeDoc: Generate Documentation"
-      }
-    ]
-  },
-  "extensionKind": [
-    "workspace",
-    "ui"
   ]
 }
