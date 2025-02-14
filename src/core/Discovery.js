@@ -7,7 +7,7 @@ import * as ActionUtil from "./util/ActionUtil.js"
 import * as DataUtil from "./util/DataUtil.js"
 import {composeDirectory,directoryExists} from "./util/FDUtil.js"
 
-const {ls,resolveFilename,getFiles} = FDUtil
+const {ls,fileExists,composeFilename,getFiles} = FDUtil
 const {actionTypes, actionMetaRequirements, loadJson} = ActionUtil
 const {isType} = DataUtil
 
@@ -52,6 +52,7 @@ export default class Discovery {
       debug("Mock path not set, discovering actions in node_modules", 2)
 
       debug("Looking for actions in project's package.json", 2)
+
       if(this.core.packageJson?.modules) {
         const actions = this.core.packageJson?.modules
 
@@ -66,30 +67,46 @@ export default class Discovery {
         debug("No actions found in project's package.json", 2)
       }
 
-      debug("Looking for actions in node_modules (global and locally installed", 2)
+      debug("Looking for actions in node_modules (global and locally installed)", 2)
       const directories = [
-        "./node_modules",
+        execSync("npm root").toString().trim(),
         execSync("npm root -g").toString().trim(),
-      ]
+      ].filter(Boolean)
+
+      const nodeModulesDirs = directories
+        .map(composeDirectory)
+        .filter(directoryExists)
 
       debug("Found %o directories to search for actions", 2, directories.length)
       debug("Directories to search for actions: %o", 3, directories)
 
-      const moduleDirectories = directories
-        .map(composeDirectory)
-        .filter(directoryExists)
-      for(const moduleDirectory of moduleDirectories) {
-        const {directories: dirs} = await ls(moduleDirectory.absolutePath)
+      for(const nodeModulesDir of nodeModulesDirs) {
+        const dirsToSearch = []
+        const {directories: moduleDirs} = await ls(nodeModulesDir.absolutePath)
 
-        debug("Found %o directories in `%s`", 2,
-          dirs.length, moduleDirectory.absolutePath
-        )
+        debug("Found %o directories in %o", 2, moduleDirs.length, nodeModulesDir.absolutePath)
 
-        const bedocDirs = dirs.filter(d => d.name.startsWith("bedoc-"))
-        debug("Found %o bedoc directories under %s", 2, bedocDirs.length, moduleDirectory.absolutePath)
+        // Handle scoped packages (e.g., @bedoc/something)
+        const scopedDirs = moduleDirs.filter(d => d.name.startsWith("@"))
 
-        const exports = bedocDirs.map(d => this.#getModuleExports(d))
-        debug("Found %o module exports under %s", 2, exports.length, moduleDirectory.absolutePath)
+        dirsToSearch.push(...moduleDirs)
+
+        // If we find a scope (e.g., "@bedoc"), look inside it for bedoc modules
+        for(const scopedDir of scopedDirs) {
+          const {directories: scopedPackages} = await ls(scopedDir.absolutePath)
+
+          debug("Found %o directories under scoped package %o", 2, directories.length, scopedDir.name)
+
+          dirsToSearch.push(...scopedPackages)
+        }
+
+        debug("Found %o directories to search for actions", 2, dirsToSearch.length)
+
+        const exports = dirsToSearch
+          .filter(d => !d.name.startsWith("."))
+          .map(d => this.#getModuleExports(d))
+
+        debug("Found %o module exports under %o", 2, exports.length, nodeModulesDir.absolutePath)
 
         bucket.push(...exports.flat())
       }
@@ -108,18 +125,27 @@ export default class Discovery {
    */
   #getModuleExports(dirMap) {
     const debug = this.#debug
-    debug("Getting module exports from `%s`", 3, dirMap.absolutePath)
+    debug("Getting module exports from %o", 3, dirMap.absolutePath)
 
-    const packageJsonFile = resolveFilename("package.json", dirMap)
-    debug("Loading package.json from `%s`", 3, packageJsonFile.absolutePath)
+    const packageJsonFile = composeFilename(dirMap, "package.json")
+    if(!fileExists(packageJsonFile))
+      return []
+
+    debug("Loading package.json from %o", 3, packageJsonFile.absolutePath)
 
     const packageJson = loadJson(packageJsonFile)
-    debug("Loaded package.json from `%s`", 3, packageJsonFile.absolutePath)
+    debug("Loaded package.json from %o", 3, packageJsonFile.absolutePath)
 
     const bedocPackageJsonModules = packageJson.bedoc?.modules ?? []
-    const bedocModuleFiles = bedocPackageJsonModules.map(file =>
-      resolveFilename(file, dirMap)
-    )
+
+    debug("Discovered %o published modules", 2, bedocPackageJsonModules.length)
+    debug("Published modules %o", 3, bedocPackageJsonModules)
+
+    const bedocModuleFiles = bedocPackageJsonModules
+      .map(m => composeFilename(dirMap, m))
+      .filter(m => fileExists(m))
+
+    debug("Composed modules %o", 3, bedocModuleFiles)
 
     return bedocModuleFiles
   }
