@@ -148,6 +148,7 @@ export default class Conveyor {
         return writeResult
       }
 
+      debug("Output not specified. Writing skipped.", 2)
 
       return {status: "success"}
 
