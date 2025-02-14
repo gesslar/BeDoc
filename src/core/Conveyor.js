@@ -6,7 +6,7 @@ const {readFile, writeFile, composeFilename} = FDUtil
 
 export default class Conveyor {
   #succeeded = []
-  #warned  = []
+  #warned = []
   #errored = []
 
   constructor(parse, print, logger, output) {
@@ -24,33 +24,46 @@ export default class Conveyor {
    * @returns {Promise<object>} - Resolves when all files are processed.
    */
   async convey(files, maxConcurrent = 10) {
-    const semaphore = Array(maxConcurrent).fill(Promise.resolve())
+    const fileQueue = [...files]
+    const activePromises = []
 
-    // Set up the actions
-    await this.parse.setupAction()
-    await this.print.setupAction()
+    await Promise.all([
+      this.parse.setupAction(),
+      this.print.setupAction()
+    ])
 
-    for(const file of files) {
-      const slot = Promise.race(semaphore) // Wait for an available slot
-      semaphore.push(slot.then(async() => {
-        const result = await this.#processFile(file)
-        if(result.status === "success")
-          this.#succeeded.push({input: file, output: result.file})
-        else if(result.status === "warning")
-          this.#warned.push({input: file, warning: result.warning})
-        else {
-          this.#errored.push({input: file, error: result.error})
+    const processNextFile = file => {
+      return this.#processFile(file).then(processedResult => {
+        // Store result
+        if(processedResult.status === "success") {
+          this.#succeeded.push({input: file, output: processedResult.file})
+        } else if(processedResult.status === "warning") {
+          this.#warned.push({input: file, warning: processedResult.warning})
+        } else {
+          this.#errored.push({input: file, error: processedResult.error})
         }
-      }))
-      semaphore.shift() // Remove the oldest promise
+
+        // Start next job if queue isn't empty
+        if(fileQueue.length > 0) {
+          const nextFile = fileQueue.shift()
+          return processNextFile(nextFile)
+        }
+      })
     }
 
-    // Wait for all tasks to complete
-    await Promise.all(semaphore)
+    // Initial fill of the worker pool
+    while(activePromises.length < maxConcurrent && fileQueue.length > 0) {
+      const file = fileQueue.shift()
+      activePromises.push(processNextFile(file))
+    }
 
-    // Clean up actions
-    await this.parse.cleanupAction()
-    await this.print.cleanupAction()
+    // Wait for all processing to complete
+    await Promise.all(activePromises)
+
+    await Promise.all([
+      this.parse.cleanupAction(),
+      this.print.cleanupAction()
+    ])
 
     return {
       succeeded: this.#succeeded,
@@ -67,15 +80,14 @@ export default class Conveyor {
    */
   async #processFile(file) {
     const debug = this.logger.newDebug()
-    const warn = (...arg) => this.logger.warn(...arg)
     const {parse, print} = this
 
     try {
-      debug("Processing file: `%s`", 2, file.path)
+      debug("Processing file: %o", 2, file.path)
 
       // Step 1: Read file
-      const fileContent = await readFile(file)
-      debug("Read file content `%s` (%d bytes)", 2, file.path, fileContent.length)
+      const fileContent = readFile(file)
+      debug("Read file content %o (%o bytes)", 2, file.path, fileContent.length)
 
       // Step 2: Parse file
       const parseResult = await parse.runAction({
@@ -86,12 +98,12 @@ export default class Conveyor {
         return parseResult
 
       if(parseResult.status === "warning")
-        debug("Parsed file successfully, but with warnings: `%s`", 2, file.path)
+        debug("Parsed file successfully, but with warnings: %o", 2, file.path)
       else
-        debug("Parsed file successfully: `%s`", 2, file.path)
+        debug("Parsed file successfully: %o", 2, file.path)
 
-      if(!parseResult.result?.functions?.length) {
-        const mess = format("No functions found in `%s`. No file written.", file.path)
+      if(!parseResult.result) {
+        const mess = format("No content found in %o. No file written.", file.path)
         return {status: "warning", file, warning: mess}
       }
 
@@ -103,24 +115,34 @@ export default class Conveyor {
       if(printResult.status === "error")
         return printResult
 
-      debug("Printed file successfully: `%s`", 2, file.path)
+      debug("Printed file successfully: %o", 2, file.path)
 
       // Step 4: Write output
-      const {status: printStatus, destFile, content} = printResult
-      const isNullish = (value) => value == null // Checks null or undefined
+      const {status: printStatus, destFile, destContent} = printResult
+      const isNullish = value => value == null // Checks null or undefined
 
-      if(printStatus !== "success" || isNullish(destFile) || isNullish(content)) {
-        return {status: "error", file, error: new Error("Invalid print result")}
-      } else if(!destFile || !content) {
-        const mess = format("No content or destination file for %s", file.path)
-        warn(mess)
-        return {status: "warning", file, warning: mess}
+      switch(printStatus) {
+        case "warning":
+        case "error":
+          return printResult
+        case "success":
+          if(isNullish(destFile) || isNullish(destContent))
+            return {
+              status: "warning",
+              warning: format("No content or destination file for %o", file.path)
+            }
+
+          break
+        default:
+          throw new Error(`Invalid status received from printing ${file.module}`)
       }
 
-      const writeResult = await this.#writeOutput(destFile, content)
+      const writeResult = await this.#writeOutput(destFile, destContent)
 
       if(writeResult.status === "success")
-        debug("Wrote output for: `%s` (%d bytes)", 2, file.path, content.length)
+        debug("Wrote output %o (%o bytes)", 2, writeResult.file.path, destContent.length)
+      else
+        debug("Error writing output for: `%s`", 2, file.path)
 
       return writeResult
     } catch(error) {
@@ -132,13 +154,18 @@ export default class Conveyor {
    * Writes the output to the destination.
    *
    * @param {string} destFile - Destination file path.
-   * @param {string} content - File content.
+   * @param {string} destContent - File content.
    * @returns {Promise<object>} - Resolves when the file is written.
    */
-  async #writeOutput(destFile, content) {
+  async #writeOutput(destFile, destContent) {
+    const debug = this.logger.newDebug()
+
     const destFileMap = composeFilename(this.output.path, destFile)
+
+    debug("Writing output to %o => %o", 2, destFile, destFileMap.absolutePath)
+
     try {
-      writeFile(destFileMap, content)
+      writeFile(destFileMap, destContent)
 
       return {status: "success", file: destFileMap}
     } catch(error) {

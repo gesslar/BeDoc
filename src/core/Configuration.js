@@ -1,5 +1,6 @@
 import process from "node:process"
 import {Environment} from "./Core.js"
+import JSON5 from "json5"
 
 import {
   ConfigurationParameters,
@@ -41,7 +42,9 @@ export default class Configuration {
       )
 
     const allOptions = this.#findAllOptions(options)
+
     Object.assign(finalOptions, await this.#mergeOptions(allOptions))
+
     this.#fixOptionValues(finalOptions)
 
     // Priority keys are those which must be processed first. They are
@@ -49,7 +52,7 @@ export default class Configuration {
     // Find them and add them to an array; the rest will be in pushed to the
     // end of the priority array.
     const orderedSections = []
-    ConfigurationPriorityKeys.forEach((key) => {
+    ConfigurationPriorityKeys.forEach(key => {
       if(!ConfigurationParameters[key])
         throw new Error(`Invalid priority key: ${key}`)
 
@@ -58,10 +61,10 @@ export default class Configuration {
     })
 
     const remainingSections = Object.keys(ConfigurationParameters).filter(
-      (key) => !ConfigurationPriorityKeys.includes(key),
+      key => !ConfigurationPriorityKeys.includes(key),
     )
     orderedSections.push(
-      ...remainingSections.map((key) => {
+      ...remainingSections.map(key => {
         return {key, value: finalOptions[key]}
       }),
     )
@@ -76,6 +79,12 @@ export default class Configuration {
         throw new SyntaxError(
           `Options \`${key}\` and \`${param.exclusiveOf}\` are mutually exclusive`,
         )
+    }
+
+    // Check for mandatory values
+    for(const [key, {required}] of Object.entries(ConfigurationParameters)) {
+      if(required && !orderedSections.find(s => s.key === key))
+        throw new SyntaxError(`Missing mandatory key \`${key}\``)
     }
 
     for(const section of orderedSections) {
@@ -106,7 +115,7 @@ export default class Configuration {
         if(key === "input" || key === "exclude") {
           if(isType(value, "array"))
             value = await Promise.all(
-              value.map((pattern) => getFiles(pattern)),
+              value.map(pattern => getFiles(pattern)),
             )
           else if(isType(value, "string"))
             value = await getFiles(value)
@@ -212,12 +221,11 @@ export default class Configuration {
    */
   #findAllOptions(entryOptions) {
     const allOptions = []
-
     const environmentVariables = this.#getEnvironmentVariables()
     if(environmentVariables)
       allOptions.push({source: "environment", options: environmentVariables})
 
-    const packageJson = entryOptions.packageJson
+    const packageJson = entryOptions?.packageJson
     if(packageJson?.bedoc)
       allOptions.push({source: "packageJson", options: packageJson.bedoc})
 
@@ -228,12 +236,16 @@ export default class Configuration {
       environmentVariables?.config
 
     if(useConfig) {
-      const configFilename = packageJson?.bedoc?.config || entryOptions.config
+      const configFile =
+        packageJson?.bedoc?.config
+          ? resolveFilename(packageJson?.bedoc?.config)
+          : entryOptions.config?.value
+            ? resolveFilename(entryOptions.config.value)
+            : null
 
-      if(!configFilename)
+      if(!configFile)
         throw new Error("No config file specified")
 
-      const configFile = resolveFilename(configFilename)
       const config = loadJson(configFile)
 
       allOptions.push({source: "config", options: config})
@@ -251,7 +263,7 @@ export default class Configuration {
    */
   #getEnvironmentVariables() {
     const environmentVariables = {}
-    const params = Object.keys(ConfigurationParameters).map((param) => {
+    const params = Object.keys(ConfigurationParameters).map(param => {
       return {
         param,
         env: `bedoc_${param}`.toUpperCase(),
@@ -280,7 +292,7 @@ export default class Configuration {
     const nonEntryOptions = allOptions.filter(
       option => option.source && option.source !== "entry",
     )
-    const optionsOnly = nonEntryOptions.map((option) => option.options)
+    const optionsOnly = nonEntryOptions.map(option => option.options)
     const mergedOptions = optionsOnly.reduce((acc, options) => {
       for(const [key, value] of Object.entries(options)) acc[key] = value
 
@@ -303,7 +315,7 @@ export default class Configuration {
 
     // Last, but not least, add any defaulted options that are not in the
     // mapped options
-    for(const [key, value] of Object.entries(entryOptions)) {
+    for(const [key, value] of Object.entries(entryOptions ?? {})) {
       if(!mappedOptions[key]) {
         if(value.source)
           mappedOptions[key] = value.value
@@ -329,7 +341,7 @@ export default class Configuration {
           switch(param.type.toString()) {
             case "boolean":
             case "number":
-              options[key] = JSON.parse(options[key])
+              options[key] = JSON5.parse(options[key])
               break
           }
         }

@@ -72,6 +72,7 @@ const {resolveDirectory} = FDUtil
         },
         source: Environment.CLI
       })
+
     const filesToProcess = bedoc.options.input.map(f => f.absolutePath)
     const result = await bedoc.processFiles(filesToProcess)
     const errored = result.errored

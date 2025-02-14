@@ -1,0 +1,9 @@
+{
+  "parser": "examples/node_modules_test/bedoc-lpc-markdown-combined/bedoc-lpc-markdown-combined.js",
+  "printer": "examples/node_modules_test/bedoc-lpc-markdown-combined/bedoc-lpc-markdown-combined.js",
+  "output": "examples/output/markdown",
+  "input": [
+    "examples/source/lpc/arrays.c",
+    "examples/source/lpc/base64.c"
+  ],
+}

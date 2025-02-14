@@ -1,9 +1,11 @@
 import console from "node:console"
 import chokidar from "chokidar"
 import {exec} from "child_process"
+import path from "node:path"
+import process from "node:process"
 
 // Directory to watch
-const watchDirectory = "./source/lpc"
+const watchDirectory = "./source/"
 
 // Initialize file watcher
 const watcher = chokidar.watch(watchDirectory, {
@@ -17,7 +19,7 @@ const standardOptions = [
   "--debugLevel",
   "1",
   "--output",
-  "examples/output/wikitext/",
+  "./examples/output/wikitext",
   "--language",
   "lpc",
   "--format",
@@ -46,9 +48,9 @@ const processFile = (path, event) => {
 
 // Event Handlers
 watcher
-  .on("add", path => processFile(path, "added"))
-  .on("change", path => processFile(path, "modified"))
-  .on("unlink", path => console.log(`File removed: ${path}`))
+  .on("add", filePath => processFile(path.resolve(process.cwd(), filePath), "added"))
+  .on("change", filePath => processFile(path.resolve(process.cwd(), filePath), "modified"))
+  .on("unlink", filePath => console.log(`File removed: ${filePath}`))
 
 // Handle errors
 watcher.on("error", error => console.error(`Watcher error: ${error}`))

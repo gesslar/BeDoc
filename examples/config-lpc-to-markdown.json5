@@ -1,7 +1,7 @@
 {
   "language": "lpc",
   "format": "markdown",
-  "output": "output/markdown",
+  "output": "examples/output/markdown",
   "input": [
     "examples/source/lpc/arrays.c",
     "examples/source/lpc/base64.c"

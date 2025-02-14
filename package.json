@@ -1,8 +1,10 @@
 {
   "name": "@gesslar/bedoc",
-  "version": "1.4.3",
+  "version": "1.6.1",
   "description": "Pluggable documentation engine for any language and format",
   "publisher": "gesslar",
+  "author": "gesslar",
+  "license": "Unlicense",
   "main": "./src/core/Core.js",
   "repository": {
     "type": "git",
@@ -24,6 +26,7 @@
       "types": "./dist/types/core/Core.d.ts"
     },
     "./*": {
+      "import": "./src/*",
       "types": "./dist/types/*"
     }
   },
@@ -37,8 +40,8 @@
     "commander": "^13.0.0",
     "dotenv": "^16.4.7",
     "error-stack-parser": "^2.1.4",
-    "eslint-plugin-jsdoc": "^50.6.2",
     "globby": "^14.0.2",
+    "json5": "^2.2.3",
     "micromatch": "^4.0.8",
     "node-fetch": "^3.3.2",
     "yaml": "^2.7.0"
@@ -50,6 +53,7 @@
     "axios": "^1.7.9",
     "chokidar": "^4.0.3",
     "eslint": "^9.18.0",
+    "eslint-plugin-jsdoc": "^50.6.3",
     "form-data": "^4.0.1"
   },
   "keywords": [
@@ -61,19 +65,5 @@
     "language",
     "format",
     "hooks"
-  ],
-  "author": "gesslar",
-  "license": "Unlicense",
-  "contributes": {
-    "commands": [
-      {
-        "command": "vscode-bedoc.generateDocs",
-        "title": "BeDoc: Generate Documentation"
-      }
-    ]
-  },
-  "extensionKind": [
-    "workspace",
-    "ui"
   ]
 }

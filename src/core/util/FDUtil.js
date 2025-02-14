@@ -10,10 +10,10 @@ import * as ValidUtil from "./ValidUtil.js"
 const {isArrayUniform, isType, allocateObject} = DataUtil
 const {validType} = ValidUtil
 
-const freeze = (ob) => Object.freeze(ob)
+const freeze = ob => Object.freeze(ob)
 
 const fdTypes = freeze(["file", "directory"])
-const upperFdTypes = freeze(fdTypes.map((type) => type.toUpperCase()))
+const upperFdTypes = freeze(fdTypes.map(type => type.toUpperCase()))
 const fdType = freeze(await allocateObject(upperFdTypes, fdTypes))
 
 /**
@@ -67,7 +67,7 @@ function canWriteFile(FileMap) {
   try {
     fs.accessSync(FileMap.absolutePath, fs.constants.W_OK)
     return true
-  } catch(error) {
+  } catch(_error) {
     return false
   }
 }
@@ -82,7 +82,22 @@ function fileExists(FileMap) {
   try {
     fs.accessSync(FileMap.absolutePath)
     return true
-  } catch(error) {
+  } catch(_error) {
+    return false
+  }
+}
+
+/**
+ * Check if a directory exists
+ *
+ * @param {object} DirectoryMap - The directory map to check
+ * @returns {boolean} Whether the directory exists
+ */
+function directoryExists(DirectoryMap) {
+  try {
+    fs.accessSync(DirectoryMap.absolutePath)
+    return true
+  } catch(_error) {
     return false
   }
 }
@@ -231,9 +246,9 @@ async function getFiles(globPattern) {
       ? globPattern
       : globPattern
         .split("|")
-        .map((g) => g.trim())
+        .map(g => g.trim())
         .filter(Boolean)
-  ).map((g) => fixSlashes(g))
+  ).map(g => fixSlashes(g))
 
   if(
     Array.isArray(globbyArray) &&
@@ -241,12 +256,12 @@ async function getFiles(globPattern) {
     !globbyArray.length
   )
     throw new Error(
-      "[getFiles] Invalid glob pattern: Array must contain only strings.",
+      `Invalid glob pattern: Array must contain only strings. Got ${JSON.stringify(globPattern)}`,
     )
 
   // Use Globby to fetch matching files
   const filesArray = await globby(globbyArray)
-  const files = filesArray.map((file) => mapFilename(file))
+  const files = filesArray.map(file => mapFilename(file))
 
   // Flatten the result and remove duplicates
   return files
@@ -297,7 +312,7 @@ function composeDirectory(directory) {
 async function ls(directory) {
   const found = await fs.promises.readdir(directory, {withFileTypes: true})
   const results = await Promise.all(
-    found.map(async(dirent) => {
+    found.map(async dirent => {
       const fullPath = path.join(directory, dirent.name)
       const stat = await fs.promises.stat(fullPath)
       return {dirent, stat, fullPath}

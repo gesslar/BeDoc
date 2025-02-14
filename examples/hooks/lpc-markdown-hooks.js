@@ -13,14 +13,16 @@ export const Hooks = {
       this.log.debug("Init hooks for: %o", 2, this.name)
     },
 
-    async start({module, content}) {
+    async start(document) {
       const debug = this.debug
 
+      const {moduleName,moduleContent} = document
+
       debug("Start hook for %s (%d functions)", 2,
-        module, content.functions.length
+        moduleName, moduleContent.length
       )
 
-      const result = await this.getDadJokes(content.functions.length)
+      const result = await this.getDadJokes(moduleContent.length)
       const {status, jokes} = result
 
       if(status === "error")
@@ -31,12 +33,15 @@ export const Hooks = {
       this.jokes = jokes.map(joke => joke.joke)
     },
 
-    async enter({name, section}) {
-      if(name === "description") {
+    async enter(section) {
+      const {sectionName, sectionContent} = section
+
+      if(sectionName === "description") {
         const joke = this.jokes.pop()
 
-        if(joke)
-          section.description = [...section.description, joke]
+        return joke
+          ? [...sectionContent, joke]
+          : sectionContent
       }
     },
 
