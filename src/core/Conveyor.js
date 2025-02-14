@@ -6,7 +6,7 @@ const {readFile, writeFile, composeFilename} = FDUtil
 
 export default class Conveyor {
   #succeeded = []
-  #warned  = []
+  #warned = []
   #errored = []
 
   constructor(parse, print, logger, output) {
@@ -83,11 +83,11 @@ export default class Conveyor {
     const {parse, print} = this
 
     try {
-      debug("Processing file: `%s`", 2, file.path)
+      debug("Processing file: %o", 2, file.path)
 
       // Step 1: Read file
       const fileContent = readFile(file)
-      debug("Read file content `%s` (%d bytes)", 2, file.path, fileContent.length)
+      debug("Read file content %o (%o bytes)", 2, file.path, fileContent.length)
 
       // Step 2: Parse file
       const parseResult = await parse.runAction({
@@ -98,12 +98,12 @@ export default class Conveyor {
         return parseResult
 
       if(parseResult.status === "warning")
-        debug("Parsed file successfully, but with warnings: `%s`", 2, file.path)
+        debug("Parsed file successfully, but with warnings: %o", 2, file.path)
       else
-        debug("Parsed file successfully: `%s`", 2, file.path)
+        debug("Parsed file successfully: %o", 2, file.path)
 
       if(!parseResult.result) {
-        const mess = format("No content found in `%s`. No file written.", file.path)
+        const mess = format("No content found in %o. No file written.", file.path)
         return {status: "warning", file, warning: mess}
       }
 
@@ -115,7 +115,7 @@ export default class Conveyor {
       if(printResult.status === "error")
         return printResult
 
-      debug("Printed file successfully: `%s`", 2, file.path)
+      debug("Printed file successfully: %o", 2, file.path)
 
       // Step 4: Write output
       const {status: printStatus, destFile, destContent} = printResult
@@ -129,7 +129,7 @@ export default class Conveyor {
           if(isNullish(destFile) || isNullish(destContent))
             return {
               status: "warning",
-              warning: format("No content or destination file for %s", file.path)
+              warning: format("No content or destination file for %o", file.path)
             }
 
           break
@@ -140,7 +140,7 @@ export default class Conveyor {
       const writeResult = await this.#writeOutput(destFile, destContent)
 
       if(writeResult.status === "success")
-        debug("Wrote output for: `%s` (%d bytes)", 2, file.path, destContent.length)
+        debug("Wrote output %o (%o bytes)", 2, writeResult.file.path, destContent.length)
       else
         debug("Error writing output for: `%s`", 2, file.path)
 
@@ -158,7 +158,11 @@ export default class Conveyor {
    * @returns {Promise<object>} - Resolves when the file is written.
    */
   async #writeOutput(destFile, destContent) {
+    const debug = this.logger.newDebug()
+
     const destFileMap = composeFilename(this.output.path, destFile)
+
+    debug("Writing output to %o => %o", 2, destFile, destFileMap.absolutePath)
 
     try {
       writeFile(destFileMap, destContent)
