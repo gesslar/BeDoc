@@ -42,7 +42,9 @@ export default class Configuration {
       )
 
     const allOptions = this.#findAllOptions(options)
+
     Object.assign(finalOptions, await this.#mergeOptions(allOptions))
+
     this.#fixOptionValues(finalOptions)
 
     // Priority keys are those which must be processed first. They are
@@ -77,6 +79,12 @@ export default class Configuration {
         throw new SyntaxError(
           `Options \`${key}\` and \`${param.exclusiveOf}\` are mutually exclusive`,
         )
+    }
+
+    // Check for mandatory values
+    for(const [key, {required}] of Object.entries(ConfigurationParameters)) {
+      if(required && !orderedSections.find(s => s.key === key))
+        throw new SyntaxError(`Missing mandatory key \`${key}\``)
     }
 
     for(const section of orderedSections) {
@@ -213,7 +221,6 @@ export default class Configuration {
    */
   #findAllOptions(entryOptions) {
     const allOptions = []
-
     const environmentVariables = this.#getEnvironmentVariables()
     if(environmentVariables)
       allOptions.push({source: "environment", options: environmentVariables})
