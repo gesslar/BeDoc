@@ -372,7 +372,6 @@ export {
   composeDirectory,
   composeFilename,
   deconstructFilenameToParts,
-  directoryExists,
   fileExists,
   fixSlashes,
   getFiles,
