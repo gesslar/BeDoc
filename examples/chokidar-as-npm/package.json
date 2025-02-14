@@ -11,5 +11,12 @@
   },
   "dependencies": {
     "chokidar": "^4.0.3"
+  },
+  "bedoc": {
+    "output": "../output/wikitext/",
+    "language": "lpc",
+    "format": "wikitext",
+    "hooks": "./hooks/lpc-wikitext-hooks.js",
+    "maxConcurrent": 5
   }
 }

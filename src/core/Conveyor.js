@@ -137,14 +137,20 @@ export default class Conveyor {
           throw new Error(`Invalid status received from printing ${file.module}`)
       }
 
-      const writeResult = await this.#writeOutput(destFile, destContent)
+      if(this.output) {
+        const writeResult = await this.#writeOutput(destFile, destContent)
 
-      if(writeResult.status === "success")
-        debug("Wrote output %o (%o bytes)", 2, writeResult.file.path, destContent.length)
-      else
-        debug("Error writing output for: `%s`", 2, file.path)
+        if(writeResult.status === "success")
+          debug("Wrote output %o (%o bytes)", 2, writeResult.file.path, destContent.length)
+        else
+          debug("Error writing output for: `%s`", 2, file.path)
 
-      return writeResult
+        return writeResult
+      }
+
+
+      return {status: "success"}
+
     } catch(error) {
       return {status: "error", file, error}
     }
