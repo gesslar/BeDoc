@@ -6,6 +6,9 @@ on:
 
 jobs:
   rebase_base_branch:
+    permissions:
+      contents: write  # Allows pushing changes
+      pull-requests: write  # Allows modifying PRs
     runs-on: ubuntu-latest
     steps:
       - name: Determine base branch
