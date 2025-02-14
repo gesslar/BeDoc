@@ -91,14 +91,18 @@ export default class Core {
 
     // Adding to instance
     instance.actions = {}
+    const {variables} = validConfig
     const managers = {print: PrintManager, parse: ParseManager}
-    for(const [, value] of Object.entries(finalActions)) {
-      const {action: actionType} = value.action.meta
+    for(const [, actionDefinition] of Object.entries(finalActions)) {
+      const {action: actionType} = actionDefinition.action.meta
 
       debug("Attaching %o action to instance", 2, actionType)
-      instance.actions[actionType] = new managers[actionType](
-        value, instance.logger
-      )
+      instance.actions[actionType] =
+        new managers[actionType] ({
+          actionDefinition,
+          logger: instance.logger,
+          variables
+        })
 
       if(validConfig.hooks) {
         const hookManager = await HookManager.new({
