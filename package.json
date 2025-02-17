@@ -1,6 +1,6 @@
 {
   "name": "@gesslar/bedoc",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "description": "Pluggable documentation engine for any language and format",
   "publisher": "gesslar",
   "author": "gesslar",
@@ -37,6 +37,7 @@
     "lint:fix": "npx eslint . --fix"
   },
   "dependencies": {
+    "ajv": "^8.17.1",
     "commander": "^13.0.0",
     "dotenv": "^16.4.7",
     "error-stack-parser": "^2.1.4",

@@ -6,16 +6,13 @@ import BeDoc, {Environment} from "../../src/core/Core.js"
 const watchDirectory = "./source/"
 
 // BeDoc configuration
-// const bedocOptions = {
-//   output: "../output/wikitext/",
-//   language: "lpc",
-//   format: "wikitext",
-//   hooks: "./hooks/lpc-wikitext-hooks.js",
-//   maxConcurrent: 5
-// }
-
-// Initialize BeDoc Core instance
-const bedoc = await BeDoc.new({source: Environment.NPM})
+const bedocOptions = {
+  output: "../output/wikitext/",
+  language: "lpc",
+  format: "wikitext",
+  hooks: "./hooks/lpc-wikitext-hooks.js",
+  maxConcurrent: 5
+}
 
 // Initialize file watcher
 const watcher = chokidar.watch(watchDirectory, {
@@ -30,6 +27,14 @@ const processFile = async(filePath, event) => {
   console.log(`File ${event}: ${filePath}`)
 
   try {
+    // Initialize BeDoc Core instance
+    const options = Object.assign({},
+      bedocOptions,
+      {input: [filePath]}
+    )
+    const bedoc = await BeDoc.new({
+      options, source: Environment.NPM
+    })
     const result = await bedoc.processFiles(filePath)
 
     for(const {_, output} of result.succeeded)

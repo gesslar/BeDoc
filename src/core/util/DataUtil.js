@@ -383,6 +383,9 @@ function deepFreezeObject(obj) {
 /**
  * Validates that a schema matches the expected structure.
  *
+ * TODO get rid of this and all of its uses. We have a new
+ *      contract system now.
+ *
  * @param {object} schema - The schema to validate.
  * @param {object} definition - The expected structure.
  * @param {Array} stack - The stack trace for nested validation.
@@ -452,6 +455,60 @@ function schemaCompare(schema, definition, stack = [], logger = new Logger()) {
   return {status: errors.length === 0 ? "success" : "error", errors}
 }
 
+/**
+ * Determine the Levenshtein distance between two string values
+ *
+ * @param {string} a The first value for comparison.
+ * @param {string} b The second value for comparison.
+ * @returns {number} The Levenshtein distance
+ */
+function levenshteinDistance(a, b) {
+  const matrix = Array.from({length: a.length + 1}, (_, i) =>
+    Array.from({length: b.length + 1}, (_, j) =>
+      (i === 0 ? j : j === 0 ? i : 0)
+    )
+  )
+
+  for(let i = 1; i <= a.length; i++) {
+    for(let j = 1; j <= b.length; j++) {
+      matrix[i][j] =
+                a[i - 1] === b[j - 1]
+                  ? matrix[i - 1][j - 1]
+                  : 1 + Math.min(
+                    matrix[i - 1][j], matrix[i][j - 1],
+                    matrix[i - 1][j - 1]
+                  )
+    }
+  }
+
+  return matrix[a.length][b.length]
+}
+
+/**
+ * Determine the closest match between a string and allowed values
+ * from the Levenshtein distance.
+ *
+ * @param {string} input The input string to resolve
+ * @param {Array<string>} allowedValues The values which are permitted
+ * @returns {string} Suggested, probable match.
+ */
+function findClosestMatch(input, allowedValues) {
+  const threshold = 2 // Max edit distance for a "close match"
+  let closestMatch = null
+  let closestDistance = Infinity
+
+  for(const value of allowedValues) {
+    const distance = levenshteinDistance(input, value)
+    if(distance < closestDistance && distance <= threshold) {
+      closestMatch = value
+      closestDistance = distance
+    }
+  }
+
+  return closestMatch
+}
+
+
 export {
   // Classes
   TypeSpec,
@@ -465,6 +522,7 @@ export {
   arrayPad,
   cloneObject,
   deepFreezeObject,
+  findClosestMatch,
   isArrayUniform,
   isArrayUnique,
   isBaseType,
@@ -473,6 +531,7 @@ export {
   isObjectEmpty,
   isType,
   isValidType,
+  levenshteinDistance,
   mapObject,
   newTypeSpec,
   prependString,

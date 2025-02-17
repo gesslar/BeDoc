@@ -5,12 +5,14 @@
       "name": "CLI - LPCDocs to Markdown (Lang, Format)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
         "--debug",
         "--debugLevel",
-        "1",
+        "2",
         "--input",
         "examples/source/lpc/**/*.c",
         "--output",
@@ -20,13 +22,15 @@
         "--printer",
         "examples/node_modules_test/bedoc-markdown-printer/bedoc-markdown-printer.js",
       ],
-      "console" : "integratedTerminal"
+      "console": "integratedTerminal"
     },
     {
       "name": "CLI - LPCDocs to Markdown (Specific, Hooks)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
         "--debug",
@@ -43,13 +47,15 @@
         "--hooks",
         "examples/hooks/lpc-markdown-hooks.js"
       ],
-      "console" : "integratedTerminal"
+      "console": "integratedTerminal"
     },
     {
       "name": "CLI - LPCDocs to Wikitext (Lang, Format, Hooks)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
         "--debug",
@@ -68,13 +74,15 @@
         "--maxConcurrent",
         "50"
       ],
-      "console" : "integratedTerminal"
+      "console": "integratedTerminal"
     },
     {
       "name": "CLI - LPCDocs to Wikitext (Specific, Hooks)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
         "--debug",
@@ -91,13 +99,15 @@
         "--hooks",
         "examples/hooks/lpc-wikitext-hooks.js"
       ],
-      "console" : "integratedTerminal"
+      "console": "integratedTerminal"
     },
     {
       "name": "CLI - LPCDocs to Wikitext (Specific, Hooks, Upload)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
         "--debug",
@@ -114,13 +124,15 @@
         "--hooks",
         "examples/hooks/lpc-wikitext-hooks-with-upload.js"
       ],
-      "console" : "integratedTerminal"
+      "console": "integratedTerminal"
     },
     {
       "name": "CLI - LuaDocs to Markdown (Lang, Format, Hooks)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
         "--debug",
@@ -137,13 +149,15 @@
         "--hooks",
         "examples/hooks/lua-markdown-hooks.js"
       ],
-      "console" : "integratedTerminal",
+      "console": "integratedTerminal",
     },
     {
       "name": "CLI - LuaDocs to Wikitext (Lang, Format, Hooks)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
         "--debug",
@@ -160,26 +174,30 @@
         "--hooks",
         "examples/hooks/lua-wikitext-hooks.js",
       ],
-      "console" : "integratedTerminal",
+      "console": "integratedTerminal",
     },
     {
       "name": "Chokidar - LPCDocs to Wikitext (Lang, Format, Hooks, Upload)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/examples/chokidar-as-cli/index.js",
       "cwd": "${workspaceFolder}/examples/chokidar-as-cli",
       "args": [],
-      "console" : "integratedTerminal",
+      "console": "integratedTerminal",
     },
     {
       "name": "Chokidar - LPCDocs to Wikitext (NPM)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/examples/chokidar-as-npm/index.js",
       "cwd": "${workspaceFolder}/examples/chokidar-as-npm",
-      "console" : "integratedTerminal",
+      "console": "integratedTerminal",
     },
   ]
 }
