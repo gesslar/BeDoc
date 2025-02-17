@@ -107,6 +107,9 @@ export default class Conveyor {
         return {status: "warning", file, warning: mess}
       }
 
+      parse.contract.validate(parseResult)
+      print.contract.validate(parseResult)
+
       // Step 3: Print file
       const printResult = await print.runAction({
         file,
