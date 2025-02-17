@@ -42,7 +42,7 @@ export default class Core {
     const instance = new Core({...validConfig, name: "BeDoc"})
     const debug = instance.logger.newDebug()
 
-    debug("Creating new BeDoc instance with options: `%o`", 2, validConfig)
+    debug("Creating new BeDoc instance with options: `%o`", 3, validConfig)
 
     const discovery = new Discovery(instance)
     const actionDefs = await discovery.discoverActions({
@@ -52,7 +52,7 @@ export default class Core {
 
     const validCrit = discovery.satisfyCriteria(actionDefs, validConfig)
 
-    debug("Actions that met criteria: `%o`", 2, validCrit)
+    debug("Actions that met criteria: `%o`", 3, validCrit)
 
     if(Object.values(validCrit).some(arr => arr.length === 0))
       throw new Error("No found matching parser and printer")
@@ -63,6 +63,7 @@ export default class Core {
       const printer = validCrit.print[printers]
       const printerSchema = printer.contract
       const satisfied = []
+
       for(const parser of validCrit.parse) {
         const parserSchema = parser.contract
         const result = schemaCompare(parserSchema, printerSchema)

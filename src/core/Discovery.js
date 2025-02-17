@@ -1,12 +1,13 @@
-// import {process} from "node:process"
-import yaml from "yaml"
 import {execSync} from "child_process"
+import path from "node:path"
 
+import ContractManager from "./ContractManager.js"
 import * as FDUtil from "./util/FDUtil.js"
 import * as ActionUtil from "./util/ActionUtil.js"
 import * as DataUtil from "./util/DataUtil.js"
-import {composeDirectory,directoryExists} from "./util/FDUtil.js"
 
+const {composeDirectory,directoryExists,resolveDirectory} = FDUtil
+const {newContract,parse} = ContractManager
 const {ls,fileExists,composeFilename,getFiles} = FDUtil
 const {actionTypes, actionMetaRequirements, loadJson} = ActionUtil
 const {isType} = DataUtil
@@ -34,15 +35,16 @@ export default class Discovery {
 
     debug("Discovering actions", 2)
 
-    debug("Specific modules provided: %o", 2, specific)
+    debug("Specific modules provided: %o", 2, Object.values(specific).filter(Boolean).length)
+    debug("Specific modules provided: %o", 3, specific)
 
-    const bucket = []
+    const files = []
     const options = this.core.options ?? {}
 
     if(options?.mockPath) {
       debug("Discovering mock actions in `%s`", 2, options.mockPath)
 
-      bucket.push(
+      files.push(
         ...(await getFiles([
           `${options.mockPath}/bedoc-*-printer.js`,
           `${options.mockPath}/bedoc-*-parser.js`,
@@ -52,22 +54,20 @@ export default class Discovery {
       debug("Mock path not set, discovering actions in node_modules", 2)
 
       debug("Looking for actions in project's package.json", 2)
+      if(this.core.packageJson) {
+        const exported = (this.core.packageJson.modules || [])
+          .map(m => composeFilename(options.basePath, m))
+          .flat()
 
-      if(this.core.packageJson?.modules) {
-        const actions = this.core.packageJson?.modules
+        debug("Found %o modules in project's package.json", 2, exported.length)
+        debug("Found modules in project's package.json: %o", 2, exported)
 
-        debug("Found %o actions in package.json", 3, actions)
-        debug("Actions found in package.json action in package.json: %o", 3, actions)
-
-        if(actions && typeof(actions) === "object")
-          bucket.push(...actions)
-        else
-          debug("No actions found in package.json", 3)
+        files.push(...exported)
       } else {
-        debug("No actions found in project's package.json", 2)
+        debug("No modules found in project's package.json", 2)
       }
 
-      debug("Looking for actions in node_modules (global and locally installed)", 2)
+      debug("Looking for modules in node_modules (global and locally installed)", 2)
       const directories = [
         execSync("npm root").toString().trim(),
         execSync("npm root -g").toString().trim(),
@@ -96,58 +96,52 @@ export default class Discovery {
           const {directories: scopedPackages} = await ls(scopedDir.absolutePath)
 
           debug("Found %o directories under scoped package %o", 2, directories.length, scopedDir.name)
+          debug("Found directories under scoped package %o\n%o", 2, scopedDir.absolutePath, scopedPackages.map(d => d.absolutePath))
 
           dirsToSearch.push(...scopedPackages)
         }
 
-        debug("Found %o directories to search for actions", 2, dirsToSearch.length)
+        debug("1 Found %o directories to search for actions", 2, dirsToSearch.length)
+        debug("2 Found directories to search for actions: %o", 3, dirsToSearch)
 
-        const exports = dirsToSearch
-          .filter(d => !d.name.startsWith("."))
-          .map(d => this.#getModuleExports(d))
+        const visibleDirs = dirsToSearch.filter(d => !d.name.startsWith("."))
 
-        debug("Found %o module exports under %o", 2, exports.length, nodeModulesDir.absolutePath)
+        for(const dir of visibleDirs) {
+          const packageJsonFile = composeFilename(dir, "package.json")
 
-        bucket.push(...exports.flat())
+          if(!fileExists(packageJsonFile))
+            continue
+
+          const packageJson = loadJson(packageJsonFile)
+          if(!packageJson.bedoc)
+            continue
+
+          const {modules} = packageJson.bedoc ?? null
+          if(!modules || !Array.isArray(modules))
+            continue
+
+          const moduleFiles = modules
+            .map(f => composeFilename(dir, f))
+            .filter(f => fileExists(f))
+
+          debug("Discovered %d modules from package.json file: %o", 2,
+            modules.length,
+            packageJsonFile.absolutePath
+          )
+          debug("Discovered from package.json files: %o", 3, modules)
+
+          files.push(...moduleFiles)
+        }
       }
     }
 
-    debug("Discovered %d actions", 2, bucket.length)
+    debug("Discovered %d modules", 2, files.length)
+    debug("Discovered modules", 2, files.map(f => f.path))
+    debug("Discovered modules %o", 3, files)
 
-    return await this.#loadActionsAndContracts(bucket, specific)
-  }
+    // const available = files.map(f => this.#getModuleExports(f))
 
-  /**
-   * Get the exports from a module's package.json file, resolved to file paths
-   *
-   * @param {object} dirMap The directory map object
-   * @returns {object[]} The discovered module exports
-   */
-  #getModuleExports(dirMap) {
-    const debug = this.#debug
-    debug("Getting module exports from %o", 3, dirMap.absolutePath)
-
-    const packageJsonFile = composeFilename(dirMap, "package.json")
-    if(!fileExists(packageJsonFile))
-      return []
-
-    debug("Loading package.json from %o", 3, packageJsonFile.absolutePath)
-
-    const packageJson = loadJson(packageJsonFile)
-    debug("Loaded package.json from %o", 3, packageJsonFile.absolutePath)
-
-    const bedocPackageJsonModules = packageJson.bedoc?.modules ?? []
-
-    debug("Discovered %o published modules", 2, bedocPackageJsonModules.length)
-    debug("Published modules %o", 3, bedocPackageJsonModules)
-
-    const bedocModuleFiles = bedocPackageJsonModules
-      .map(m => composeFilename(dirMap, m))
-      .filter(m => fileExists(m))
-
-    debug("Composed modules %o", 3, bedocModuleFiles)
-
-    return bedocModuleFiles
+    return await this.#loadActionsAndContracts(files, specific)
   }
 
   /**
@@ -163,7 +157,7 @@ export default class Discovery {
 
     debug("Loading actions and contracts", 2)
     debug("Loading %d module files", 2, moduleFiles.length)
-    debug("Specific modules to load: %o", 2, specificModules)
+    debug("Specific modules to load: %o", 3, specificModules)
 
     const resultActions = {}
     actionTypes.forEach(actionType => (resultActions[actionType] = []))
@@ -190,12 +184,19 @@ export default class Discovery {
       debug("Loading module `%s`", 2, file.absoluteUri)
 
       const loading = await this.#loadModule(file)
-      const loaded = loading.actions.map((action, index) => {
-        const contract = yaml.parse(loading.contracts[index])
+      for(let index = 0; index < loading.actions.length; index++) {
+        const action = loading.actions[index]
 
-        return {file, action, contract}
-      })
-      loadedActions.push(...loaded)
+        if(!file.directory)
+          file.directory = resolveDirectory(path.dirname(file.path))
+
+        debug(`Loading %o contract from %o`, 2, action.meta.action, file.path)
+
+        const terms = parse(loading.contracts[index], file.directory)
+        const contract = await newContract(action.meta.action, terms)
+
+        loadedActions.push({file, action, contract})
+      }
     }
 
     debug("Loaded %d actions", 2, loadedActions.length)
@@ -350,7 +351,7 @@ export default class Discovery {
   async #loadModule(module) {
     const debug = this.#debug
 
-    debug("2 Loading module `%j`", 2, module)
+    debug("Loading module `%j`", 2, module)
 
     const {absoluteUri} = module
     const moduleExports = await import(absoluteUri)
