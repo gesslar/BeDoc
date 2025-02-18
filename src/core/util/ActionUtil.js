@@ -1,6 +1,7 @@
 import * as FDUtil from "./FDUtil.js"
 import process from "node:process"
 import JSON5 from "json5"
+import YAML from "yaml"
 
 const {readFile, fileExists, composeFilename} = FDUtil
 
@@ -14,16 +15,24 @@ const actionMetaRequirements = freeze({
 })
 
 /**
- * Loads a JSON file asynchronously
+ * Loads an object from JSON or YAML provided a fileMap
  *
- * @param {object} jsonFileObject - The JSON file to load
- * @returns {object} The parsed JSON content
+ * @param {object} fileMap - The FileObj file to load containing
+ *  JSON or YAML text.
+ * @returns {object} The parsed data object.
  */
-function loadJson(jsonFileObject) {
-  // Read the file
-  const jsonContent = readFile(jsonFileObject)
-  const json = JSON5.parse(jsonContent)
-  return json
+function loadDataFile(fileMap) {
+  const content = readFile(fileMap)
+
+  try {
+    return JSON5.parse(content)
+  } catch{
+    try {
+      return YAML.parse(content)
+    } catch{
+      throw new Error("Content is neither valid JSON nor valid YAML")
+    }
+  }
 }
 
 /**
@@ -48,6 +57,6 @@ export {
   actionMetaRequirements,
   actionTypes,
   // Functions
-  loadJson,
+  loadDataFile,
   loadPackageJson,
 }

@@ -9,7 +9,7 @@ import * as DataUtil from "./util/DataUtil.js"
 const {composeDirectory,directoryExists,resolveDirectory} = FDUtil
 const {newContract,parse} = ContractManager
 const {ls,fileExists,composeFilename,getFiles} = FDUtil
-const {actionTypes, actionMetaRequirements, loadJson} = ActionUtil
+const {actionTypes, actionMetaRequirements,loadDataFile} = ActionUtil
 const {isType} = DataUtil
 
 export default class Discovery {
@@ -112,7 +112,7 @@ export default class Discovery {
           if(!fileExists(packageJsonFile))
             continue
 
-          const packageJson = loadJson(packageJsonFile)
+          const packageJson = loadDataFile(packageJsonFile)
           if(!packageJson.bedoc)
             continue
 
