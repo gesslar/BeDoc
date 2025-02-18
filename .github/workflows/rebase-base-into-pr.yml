@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.ref }}
-          token: ${{ secrets.PAT_TOKEN }}  # Use a PAT for write access
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Rebase base branch into PR branch
         run: |
