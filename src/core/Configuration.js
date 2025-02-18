@@ -11,7 +11,7 @@ import * as ActionUtil from "./util/ActionUtil.js"
 import * as DataUtil from "./util/DataUtil.js"
 import * as FDUtil from "./util/FDUtil.js"
 
-const {loadJson} = ActionUtil
+const {loadDataFile} = ActionUtil
 const {isNothing, isType, mapObject} = DataUtil
 const {getFiles, composeFilename, fileExists} = FDUtil
 const {resolveDirectory, resolveFilename} = FDUtil
@@ -222,7 +222,7 @@ export default class Configuration {
     } else {
       const packageJsonFile = composeFilename(process.cwd(), "package.json")
       if(fileExists(packageJsonFile)) {
-        const packageJson = loadJson(packageJsonFile)
+        const packageJson = loadDataFile(packageJsonFile)
 
         if(packageJson.bedoc)
           allOptions.push({source: "packageJson", options: packageJson.bedoc})
@@ -246,7 +246,7 @@ export default class Configuration {
       if(!configFile)
         throw new Error("No config file specified")
 
-      const configObject = loadJson(configFile)
+      const configObject = loadDataFile(configFile)
       const subConfigName =
         entryOptions?.sub ||
         packageJson?.sub ||
