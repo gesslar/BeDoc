@@ -11,7 +11,7 @@ import {ConfigurationParameters} from "./core/ConfigurationParameters.js"
 import * as ActionUtil from "./core/util/ActionUtil.js"
 import * as FDUtil from "./core/util/FDUtil.js"
 
-const {loadJson} = ActionUtil
+const {loadDataFile} = ActionUtil
 const {resolveFilename,resolveDirectory} = FDUtil
 
 // Main entry point
@@ -20,7 +20,7 @@ const {resolveFilename,resolveDirectory} = FDUtil
     // Get package info
     const basePath = resolveDirectory(process.cwd())
     const thisPath = resolveDirectory(fileURLToPath(new URL("..", import.meta.url)))
-    const bedocPackageJson = loadJson(resolveFilename("package.json", thisPath))
+    const bedocPackageJson = loadDataFile(resolveFilename("package.json", thisPath))
 
     // Setup program
     program
