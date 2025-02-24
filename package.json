@@ -1,6 +1,6 @@
 {
   "name": "@gesslar/bedoc",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "description": "Pluggable documentation engine for any language and format",
   "publisher": "gesslar",
   "author": "gesslar",
@@ -48,7 +48,7 @@
     "yaml": "^2.7.0"
   },
   "devDependencies": {
-    "@stylistic/eslint-plugin-js": "^3.0.0",
+    "@stylistic/eslint-plugin-js": "^4.0.1",
     "@typescript-eslint/eslint-plugin": "^8.22.0",
     "@typescript-eslint/parser": "^8.22.0",
     "axios": "^1.7.9",
