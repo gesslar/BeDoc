@@ -12,7 +12,7 @@
       "args": [
         "--debug",
         "--debugLevel",
-        "2",
+        "4",
         "--input",
         "examples/source/lpc/**/*.c",
         "--output",
