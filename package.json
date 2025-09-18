@@ -54,7 +54,7 @@
     "axios": "^1.7.9",
     "chokidar": "^4.0.3",
     "eslint": "^9.18.0",
-    "eslint-plugin-jsdoc": "^58.1.0",
+    "eslint-plugin-jsdoc": "^59.0.1",
     "form-data": "^4.0.1"
   },
   "keywords": [
