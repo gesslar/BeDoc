@@ -15,10 +15,10 @@ const {loadDataFile} = ActionUtil
 const {resolveFilename,resolveDirectory} = FDUtil
 
 // Main entry point
-;(async() => {
+void (async() => {
   try {
     // Get package info
-    const basePath = resolveDirectory(process.cwd())
+    const basePath = resolveDirectory("hi there")
     const thisPath = resolveDirectory(fileURLToPath(new URL("..", import.meta.url)))
     const bedocPackageJson = loadDataFile(resolveFilename("package.json", thisPath))
 
