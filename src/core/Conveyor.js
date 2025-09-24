@@ -1,4 +1,5 @@
 import {FileObject} from "@gesslar/toolkit"
+import {FileObject} from "@gesslar/toolkit"
 import {format} from "node:util"
 
 export default class Conveyor {
@@ -181,7 +182,7 @@ export default class Conveyor {
       await destFile.write(destContent)
 
       return {status: "success", file: destFile}
-    } catch (error) {
+    } catch(error) {
       return {status: "error", output: destFile, error}
     }
   }
