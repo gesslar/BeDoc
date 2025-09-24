@@ -60,7 +60,7 @@
       "args": [
         "--debug",
         "--debugLevel",
-        "1",
+        "5",
         "--input",
         "examples/source/lpc/**/*.c",
         "--output",
@@ -110,6 +110,8 @@
       ],
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
+        "--maxConcurrent",
+        "50",
         "--debug",
         "--debugLevel",
         "1",

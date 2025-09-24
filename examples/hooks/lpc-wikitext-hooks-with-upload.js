@@ -10,7 +10,6 @@ export const Hooks = {
   print: {
     /**
      * Setup the current hooks and set some initial values.
-     *
      * @async
      * @function
      * @param {object} options Passed in options object
@@ -53,7 +52,6 @@ export const Hooks = {
      * markdown to wikitext.
      *
      * Additionally, uploads the data to a MediaWiki site.
-     *
      * @async
      * @function
      * @param {object} module Options object.
@@ -119,7 +117,7 @@ export const Hooks = {
 
         // console.log(editResult)
         // console.log(editResult.result)
-        const {title, oldrevid, _newrevid} = editResult.result
+        const {title, oldrevid} = editResult.result
         const sanitizedUrl =
           `${BASE_URL}/index.php?title=${encodeURIComponent(title)}`
         if(oldrevid !== undefined) {

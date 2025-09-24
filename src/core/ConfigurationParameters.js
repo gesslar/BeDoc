@@ -1,13 +1,11 @@
-import * as DataUtil from "./util/DataUtil.js"
-
-const {newTypeSpec} = DataUtil
+import {Data} from "@gesslar/toolkit"
 
 const ConfigurationParameters = Object.freeze({
   input: {
     short: "i",
     param: "file",
     description: "Comma-separated glob patterns to match files",
-    type: newTypeSpec("string|string[]"),
+    type: Data.newTypeSpec("string|string[]"),
     required: true,
     path: {
       type: "file",
@@ -18,21 +16,21 @@ const ConfigurationParameters = Object.freeze({
     short: "x",
     param: "file",
     description: "Comma-separated glob patterns to exclude files",
-    type: newTypeSpec("string|string[]"),
+    type: Data.newTypeSpec("string|string[]"),
     required: false,
   },
   language: {
     short: "l",
     param: "lang",
     description: "Language parser to use",
-    type: newTypeSpec("string"),
+    type: Data.newTypeSpec("string"),
     required: false,
     exclusiveOf: "parser",
   },
   format: {
     short: "f",
     description: "Output format",
-    type: newTypeSpec("string"),
+    type: Data.newTypeSpec("string"),
     required: false,
     exclusiveOf: "printer",
   },
@@ -40,7 +38,7 @@ const ConfigurationParameters = Object.freeze({
     short: "C",
     param: "num",
     description: "Maximum number of concurrent tasks",
-    type: newTypeSpec("number"),
+    type: Data.newTypeSpec("number"),
     required: false,
     default: 10,
   },
@@ -48,7 +46,7 @@ const ConfigurationParameters = Object.freeze({
     short: "k",
     param: "file",
     description: "Custom hooks JS file",
-    type: newTypeSpec("string"),
+    type: Data.newTypeSpec("string"),
     required: false,
     path: {
       type: "file",
@@ -59,7 +57,7 @@ const ConfigurationParameters = Object.freeze({
     short: "o",
     param: "dir",
     description: "Output directory",
-    type: newTypeSpec("string"),
+    type: Data.newTypeSpec("string"),
     required: false,
     path: {
       type: "directory",
@@ -70,7 +68,7 @@ const ConfigurationParameters = Object.freeze({
     short: "p",
     param: "file",
     description: "Custom parser JS file",
-    type: newTypeSpec("string"),
+    type: Data.newTypeSpec("string"),
     required: false,
     exclusiveOf: "language",
     path: {
@@ -82,7 +80,7 @@ const ConfigurationParameters = Object.freeze({
     short: "P",
     param: "file",
     description: "Custom printer JS file",
-    type: newTypeSpec("string"),
+    type: Data.newTypeSpec("string"),
     required: false,
     exclusiveOf: "format",
     path: {
@@ -94,7 +92,7 @@ const ConfigurationParameters = Object.freeze({
     short: "T",
     param: "ms",
     description: "Timeout in milliseconds for hook execution",
-    type: newTypeSpec("number"),
+    type: Data.newTypeSpec("number"),
     required: false,
     default: 5000,
   },
@@ -102,7 +100,7 @@ const ConfigurationParameters = Object.freeze({
     short: "m",
     param: "dir",
     description: "Path to mock parsers and printers",
-    type: newTypeSpec("string"),
+    type: Data.newTypeSpec("string"),
     required: false,
     path: {
       type: "directory",
@@ -113,7 +111,7 @@ const ConfigurationParameters = Object.freeze({
     short: "c",
     param: "file",
     description: "Use JSON config file",
-    type: newTypeSpec("string"),
+    type: Data.newTypeSpec("string"),
     required: false,
     path: {
       type: "file",
@@ -124,14 +122,14 @@ const ConfigurationParameters = Object.freeze({
     short: "s",
     param: "name",
     description: "Specify a subconfiguration",
-    type: newTypeSpec("string"),
+    type: Data.newTypeSpec("string"),
     required: false,
     dependent: "config",
   },
   debug: {
     short: "d",
     description: "Enable debug mode",
-    type: newTypeSpec("boolean"),
+    type: Data.newTypeSpec("boolean"),
     required: false,
     default: false,
   },
@@ -139,7 +137,7 @@ const ConfigurationParameters = Object.freeze({
     short: "D",
     param: "level",
     description: "Debug level",
-    type: newTypeSpec("number"),
+    type: Data.newTypeSpec("number"),
     required: false,
     default: 0,
   },

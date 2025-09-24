@@ -1,21 +1,12 @@
-import process from "node:process"
-import {Environment} from "./Core.js"
+import {Data,DirectoryObject,FileObject,FS} from "@gesslar/toolkit"
 import JSON5 from "json5"
+import process from "node:process"
 
 import {
   ConfigurationParameters,
   ConfigurationPriorityKeys,
 } from "./ConfigurationParameters.js"
-
-import * as ActionUtil from "./util/ActionUtil.js"
-import * as DataUtil from "./util/DataUtil.js"
-import * as FDUtil from "./util/FDUtil.js"
-
-const {loadDataFile} = ActionUtil
-const {isNothing, isType, mapObject} = DataUtil
-const {getFiles, composeFilename, fileExists} = FDUtil
-const {resolveDirectory, resolveFilename} = FDUtil
-const {fdType, fdTypes} = FDUtil
+import {Environment} from "./Core.js"
 
 export default class Configuration {
   async validate({options, source}) {
@@ -34,6 +25,7 @@ export default class Configuration {
     // (Edit: No, I mean the ConfigurationParameters object. It's trash. Fix it
     // if you get this error.)
     const configValidationErrors = this.#validateConfigurationParameters()
+
     if(configValidationErrors.length > 0)
       throw new AggregateError(
         configValidationErrors,
@@ -41,7 +33,7 @@ export default class Configuration {
           `${configValidationErrors.join(", ")}`,
       )
 
-    const allOptions = this.#findAllOptions(options)
+    const allOptions = await this.#findAllOptions(options)
 
     Object.assign(finalOptions, await this.#mergeOptions(allOptions))
 
@@ -52,6 +44,7 @@ export default class Configuration {
     // Find them and add them to an array; the rest will be in pushed to the
     // end of the priority array.
     const orderedSections = []
+
     ConfigurationPriorityKeys.forEach(key => {
       if(!ConfigurationParameters[key])
         throw new Error(`Invalid priority key: ${key}`)
@@ -63,6 +56,7 @@ export default class Configuration {
     const remainingSections = Object.keys(ConfigurationParameters).filter(
       key => !ConfigurationPriorityKeys.includes(key),
     )
+
     orderedSections.push(
       ...remainingSections.map(key => {
         return {key, value: finalOptions[key]}
@@ -95,7 +89,7 @@ export default class Configuration {
         continue
 
       let {value} = section
-      const nothing = isNothing(value)
+      const nothing = Data.isNothing(value)
       const param = ConfigurationParameters[key]
       const {required, path} = param
 
@@ -113,12 +107,12 @@ export default class Configuration {
         // Special for `input` and `exclude` because they can be a comma-
         // separated list of glob patterns.
         if(key === "input" || key === "exclude") {
-          if(isType(value, "array"))
-            value = await Promise.all(
-              value.map(pattern => getFiles(pattern)),
+          if(Data.isType(value, "array"))
+            value = await Promise.allSettled(
+              value.map(async pattern => await FS.getFiles(pattern)),
             )
-          else if(isType(value, "string"))
-            value = await getFiles(value)
+          else if(Data.isType(value, "string"))
+            value = await FS.getFiles(value)
           else
             throw new TypeError(
               `Option \`${key}\` must be a string or an array of strings`,
@@ -129,10 +123,9 @@ export default class Configuration {
           continue
         } else {
           if(mustExist === true) {
-            finalOptions[key] =
-              pathType === fdType.FILE
-                ? resolveFilename(value)
-                : resolveDirectory(value)
+            finalOptions[key] = pathType === FS.fdType.FILE
+              ? new FileObject(value)
+              : new DirectoryObject(value)
           }
         }
       }
@@ -156,7 +149,7 @@ export default class Configuration {
 
     // We will need to inject some options if they are not available
     const cwd = process.cwd()
-    const dir = resolveDirectory(cwd)
+    const dir = new DirectoryObject(cwd)
 
     // Inject basePath if not available
     if(!options.basePath)
@@ -196,7 +189,7 @@ export default class Configuration {
           errors.push(`Option \`${key}\` has no path type`)
 
         // Check if pathType is a valid key in FdTypes
-        if(!fdTypes.includes(pathType))
+        if(!FS.fdTypes.includes(pathType))
           errors.push(`Option \`${key}\` has invalid path type: ${pathType}`)
       }
     }
@@ -210,19 +203,22 @@ export default class Configuration {
    * @param {object} entryOptions - The command line options.
    * @returns {Promise<object[]>} All options from all sources.
    */
-  #findAllOptions(entryOptions) {
+  async #findAllOptions(entryOptions) {
     const allOptions = []
     const environmentVariables = this.#getEnvironmentVariables()
+
     if(environmentVariables)
       allOptions.push({source: "environment", options: environmentVariables})
 
     const packageJson = entryOptions?.packageJson
+
     if(packageJson) {
       allOptions.push({source: "packageJson", options: packageJson})
     } else {
-      const packageJsonFile = composeFilename(process.cwd(), "package.json")
-      if(fileExists(packageJsonFile)) {
-        const packageJson = loadDataFile(packageJsonFile)
+      const packageJsonFile = new FileObject("package.json", process.cwd())
+
+      if(await packageJsonFile.exists) {
+        const packageJson = await packageJsonFile.loadData()
 
         if(packageJson.bedoc)
           allOptions.push({source: "packageJson", options: packageJson.bedoc})
@@ -238,15 +234,15 @@ export default class Configuration {
     if(useConfig) {
       const configFile =
         packageJson?.config
-          ? resolveFilename(packageJson?.config)
+          ? new FileObject(packageJson.config)
           : entryOptions.config?.value
-            ? resolveFilename(entryOptions.config.value)
+            ? new FileObject(entryOptions.config.value)
             : null
 
       if(!configFile)
         throw new Error("No config file specified")
 
-      const configObject = loadDataFile(configFile)
+      const configObject = await File.loadDataFile(configFile)
       const subConfigName =
         entryOptions?.sub ||
         packageJson?.sub ||
@@ -328,19 +324,21 @@ export default class Configuration {
       return acc
     }, {})
 
-    const mappedOptions = await mapObject(mergedOptions, (option, value) => {
-      const {value: entryValue, source: entrySource} = entryOptions[option] ?? {
-        value: undefined,
-        source: undefined,
-      }
+    const mappedOptions = await Data.mapObject(mergedOptions,
+      (option, value) => {
+        const {value: entryValue, source: entrySource} =
+          entryOptions[option] ?? {
+            value: undefined,
+            source: undefined,
+          }
 
-      const entryDefaulted = entrySource === "default"
+        const entryDefaulted = entrySource === "default"
 
-      if(entryValue && value !== entryValue)
-        return entryDefaulted ? value : entryValue
+        if(entryValue && value !== entryValue)
+          return entryDefaulted ? value : entryValue
 
-      return value
-    })
+        return value
+      })
 
     // Last, but not least, add any defaulted options that are not in the
     // mapped options

@@ -23,15 +23,10 @@
 
 */
 
-import console from "node:console"
 import ErrorStackParser from "error-stack-parser"
+import console from "node:console"
 import {Environment} from "./Core.js"
-
-import * as FDUtil from "./util/FDUtil.js"
-import * as StringUtil from "./util/StringUtil.js"
-
-const {resolveFilename} = FDUtil
-const {capitalize} = StringUtil
+import {FileObject, Util} from "@gesslar/toolkit"
 
 export const loggerColours = {
   debug: [
@@ -75,6 +70,7 @@ export default class Logger {
       this.setOptions(options)
       if(options.env === Environment.EXTENSION) {
         const vscode = import("vscode")
+
         this.vscodeError = vscode.window.showErrorMessage
         this.vscodeWarn = vscode.window.showWarningMessage
         this.vscodeInfo = vscode.window.showInformationMessage
@@ -103,7 +99,7 @@ export default class Logger {
   }
 
   #compose(level, message, debugLevel = 0) {
-    const tag = capitalize(level)
+    const tag = Util.capitalize(level)
 
     if(level === "debug")
       return `[${this.#name}] ${loggerColours[level][debugLevel]}${tag}${loggerColours.reset}: ${message}`
@@ -113,6 +109,7 @@ export default class Logger {
 
   lastStackLine(error = new Error(), stepsRemoved = 3) {
     const stack = ErrorStackParser.parse(error)
+
     return stack[stepsRemoved]
   }
 
@@ -125,9 +122,11 @@ export default class Logger {
       columnNumber: col,
     } = frame
 
-    const {module, absoluteUri} = resolveFilename(file)
+    const tempFile = new FileObject(file)
+    const {module, uri} = tempFile
 
     let functionName = func ?? "anonymous"
+
     if(functionName.startsWith("#"))
       functionName = `${module}.${functionName}`
 
@@ -149,7 +148,7 @@ export default class Logger {
       result = `${result}:${line}:${col}`
 
     if(level >= 3)
-      result = `${absoluteUri} ${result}`
+      result = `${uri} ${result}`
 
     return result
   }

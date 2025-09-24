@@ -1,8 +1,5 @@
+import {FileObject} from "@gesslar/toolkit"
 import {format} from "node:util"
-
-import * as FDUtil from "./util/FDUtil.js"
-
-const {readFile, writeFile, composeFilename} = FDUtil
 
 export default class Conveyor {
   #succeeded = []
@@ -19,7 +16,7 @@ export default class Conveyor {
   /**
    * Processes files with a concurrency limit.
    *
-   * @param {Array} files - List of files to process.
+   * @param {Array<FileObject>} files - List of files to process.
    * @param {number} maxConcurrent - Maximum number of concurrent tasks.
    * @returns {Promise<object>} - Resolves when all files are processed.
    */
@@ -27,7 +24,7 @@ export default class Conveyor {
     const fileQueue = [...files]
     const activePromises = []
 
-    await Promise.all([
+    await Promise.allSettled([
       this.parse.setupAction(),
       this.print.setupAction()
     ])
@@ -46,6 +43,7 @@ export default class Conveyor {
         // Start next job if queue isn't empty
         if(fileQueue.length > 0) {
           const nextFile = fileQueue.shift()
+
           return processNextFile(nextFile)
         }
       })
@@ -54,13 +52,14 @@ export default class Conveyor {
     // Initial fill of the worker pool
     while(activePromises.length < maxConcurrent && fileQueue.length > 0) {
       const file = fileQueue.shift()
+
       activePromises.push(processNextFile(file))
     }
 
     // Wait for all processing to complete
-    await Promise.all(activePromises)
+    await Promise.allSettled(activePromises)
 
-    await Promise.all([
+    await Promise.allSettled([
       this.parse.cleanupAction(),
       this.print.cleanupAction()
     ])
@@ -75,7 +74,7 @@ export default class Conveyor {
   /**
    * Processes a single file.
    *
-   * @param {object} file - FileMap object representing a file.
+   * @param {FileObject} file - FileMap object representing a file.
    * @returns {Promise<object>} - Resolves when the file is processed
    */
   async #processFile(file) {
@@ -86,7 +85,8 @@ export default class Conveyor {
       debug("Processing file: %o", 2, file.path)
 
       // Step 1: Read file
-      const fileContent = readFile(file)
+      const fileContent = await file.read()
+
       debug("Read file content %o (%o bytes)", 2, file.path, fileContent.length)
 
       // Step 2: Parse file
@@ -94,6 +94,7 @@ export default class Conveyor {
         file,
         content: fileContent
       })
+
       if(parseResult.status === "error")
         return parseResult
 
@@ -104,6 +105,7 @@ export default class Conveyor {
 
       if(!parseResult.result) {
         const mess = format("No content found in %o. No file written.", file.path)
+
         return {status: "warning", file, warning: mess}
       }
 
@@ -115,6 +117,7 @@ export default class Conveyor {
         file,
         content: parseResult.result,
       })
+
       if(printResult.status === "error")
         return printResult
 
@@ -163,23 +166,23 @@ export default class Conveyor {
   /**
    * Writes the output to the destination.
    *
-   * @param {string} destFile - Destination file path.
+   * @param {string} dest - Destination file path.
    * @param {string} destContent - File content.
    * @returns {Promise<object>} - Resolves when the file is written.
    */
-  async #writeOutput(destFile, destContent) {
+  async #writeOutput(dest, destContent) {
     const debug = this.logger.newDebug()
 
-    const destFileMap = composeFilename(this.output.path, destFile)
+    const destFile = new FileObject(dest, this.output)
 
-    debug("Writing output to %o => %o", 2, destFile, destFileMap.absolutePath)
+    debug("Writing output to %o => %s", 2, dest, destFile)
 
     try {
-      writeFile(destFileMap, destContent)
+      await destFile.write(destContent)
 
-      return {status: "success", file: destFileMap}
+      return {status: "success", file: destFile}
     } catch(error) {
-      return {status: "error", output: destFileMap, error}
+      return {status: "error", output: destFile, error}
     }
   }
 }

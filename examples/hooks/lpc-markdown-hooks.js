@@ -47,7 +47,6 @@ export const Hooks = {
 
     /**
      * Fetches a dad joke from the icanhazdadjoke API.
-     *
      * @param {number} number - The number of jokes to fetch.
      * @returns {Promise<object>} The result of the fetch operation.
      */

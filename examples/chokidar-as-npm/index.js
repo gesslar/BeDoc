@@ -37,7 +37,7 @@ const processFile = async(filePath, event) => {
     })
     const result = await bedoc.processFiles(filePath)
 
-    for(const {_, output} of result.succeeded)
+    for(const {output} of result.succeeded)
       console.log("[OK] `%s`", output.path)
 
     for(const {input, error} of result.errored)

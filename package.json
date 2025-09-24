@@ -10,9 +10,6 @@
     "type": "git",
     "url": "git+https://github.com/gesslar/BeDoc.git"
   },
-  "bugs": {
-    "url": "https://github.com/gesslar/BeDoc/issues"
-  },
   "bin": {
     "bedoc": "src/cli.js"
   },
@@ -38,27 +35,21 @@
     "lint:fix": "npx eslint . --fix"
   },
   "dependencies": {
+    "@eslint/js": "^9.36.0",
     "@gesslar/colours": "^0.0.1",
-    "@gesslar/toolkit": "^0.0.8",
+    "@gesslar/toolkit": "^0.1.6",
     "ajv": "^8.17.1",
     "commander": "^14.0.1",
-    "dotenv": "^17.2.2",
     "error-stack-parser": "^2.1.4",
-    "globby": "^14.1.0",
+    "globals": "^16.4.0",
     "json5": "^2.2.3",
-    "micromatch": "^4.0.8",
     "node-fetch": "^3.3.2",
     "yaml": "^2.8.1"
   },
   "devDependencies": {
-    "@stylistic/eslint-plugin-js": "^4.4.1",
-    "@typescript-eslint/eslint-plugin": "^8.44.1",
-    "@typescript-eslint/parser": "^8.44.1",
-    "axios": "^1.12.2",
-    "chokidar": "^4.0.3",
+    "@stylistic/eslint-plugin": "^5.4.0",
     "eslint": "^9.36.0",
-    "eslint-plugin-jsdoc": "^60.2.0",
-    "form-data": "^4.0.4"
+    "eslint-plugin-jsdoc": "^60.3.1"
   },
   "keywords": [
     "documentation",

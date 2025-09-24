@@ -1,20 +1,14 @@
+import {FS, Glog} from "@gesslar/toolkit"
 import {hrtime} from "node:process"
 
+import ParseManager from "./action/ParseManager.js"
+import PrintManager from "./action/PrintManager.js"
+import Configuration from "./Configuration.js"
+import Conveyor from "./Conveyor.js"
 import Discovery from "./Discovery.js"
 import HookManager from "./HookManager.js"
 import Logger from "./Logger.js"
-import ParseManager from "./action/ParseManager.js"
-import PrintManager from "./action/PrintManager.js"
-import Conveyor from "./Conveyor.js"
-import Configuration from "./Configuration.js"
-
-import * as ActionUtil from "./util/ActionUtil.js"
-import * as DataUtil from "./util/DataUtil.js"
-import * as FDUtil from "./util/FDUtil.js"
-
-const {loadPackageJson} = ActionUtil
-const {schemaCompare} = DataUtil
-const {getFiles} = FDUtil
+import ContractUtil from "./util/ContractUtil.js"
 
 export const Environment = Object.freeze({
   EXTENSION: "extension",
@@ -27,24 +21,28 @@ export default class Core {
   constructor(options) {
     this.options = options
     const {debug: debugMode, debugLevel} = options
+
     this.logger = new Logger({name: "BeDoc", debugMode, debugLevel})
-    this.packageJson = loadPackageJson(options.basePath)?.bedoc ?? {}
     this.debugOptions = this.logger.options
+    this.packageJson = options.project
   }
 
   static async new({options, source}) {
     const config = new Configuration()
 
+    Glog(options)
+
     const validConfig = await config.validate({options, source})
+
     if(validConfig.status === "error")
       throw new AggregateError(validConfig.errors,"BeDoc configuration failed")
 
-    const instance = new Core({...validConfig, name: "BeDoc"})
-    const debug = instance.logger.newDebug()
+    const core = new Core({...validConfig, name: "BeDoc"})
+    const debug = core.logger.newDebug()
 
     debug("Creating new BeDoc instance with options: `%o`", 3, validConfig)
 
-    const discovery = new Discovery(instance)
+    const discovery = new Discovery(core)
     const actionDefs = await discovery.discoverActions({
       print: validConfig.printer,
       parse: validConfig.parser
@@ -54,11 +52,16 @@ export default class Core {
 
     debug("Actions that met criteria: `%o`", 3, validCrit)
 
-    if(Object.values(validCrit).some(arr => arr.length === 0))
-      throw new Error("No found matching parser and printer")
+    if(Object.values(validCrit).some(arr => arr.length === 0)) {
+      return {
+        status: "fail",
+        message: "No matching actions specified or discovered."
+      }
+    }
 
     const validSchemas = {print: [], parse: []}
     let printers = validCrit.print.length
+
     while(printers--) {
       const printer = validCrit.print[printers]
       const printerSchema = printer.contract
@@ -66,7 +69,11 @@ export default class Core {
 
       for(const parser of validCrit.parse) {
         const parserSchema = parser.contract
-        const result = schemaCompare(parserSchema, printerSchema)
+        const result = ContractUtil.schemaCompare(
+          parserSchema,
+          printerSchema
+        )
+
         if(result.status === "success")
           satisfied.push(parser)
       }
@@ -78,6 +85,7 @@ export default class Core {
     }
 
     const finalActions = {}
+
     for(const [key, value] of Object.entries(validSchemas)) {
       if(value.length === 0)
         throw new Error(`No matching ${key} found`)
@@ -91,17 +99,18 @@ export default class Core {
     debug("Contracts satisfied between parser and printer", 2)
 
     // Adding to instance
-    instance.actions = {}
+    core.actions = {}
     const {variables} = validConfig
     const managers = {print: PrintManager, parse: ParseManager}
+
     for(const [, actionDefinition] of Object.entries(finalActions)) {
       const {action: actionType} = actionDefinition.action.meta
 
       debug("Attaching %o action to instance", 2, actionType)
-      instance.actions[actionType] =
+      core.actions[actionType] =
         new managers[actionType] ({
           actionDefinition,
-          logger: instance.logger,
+          logger: core.logger,
           variables
         })
 
@@ -109,16 +118,16 @@ export default class Core {
         const hookManager = await HookManager.new({
           action: actionType,
           hooksFile: validConfig.hooks,
-          logger: new Logger(instance.debugOptions),
+          logger: new Logger(core.debugOptions),
           timeout: validConfig.hooksTimeout,
         })
 
         if(hookManager)
-          instance.actions[actionType].hookManager = hookManager
+          core.actions[actionType].hookManager = hookManager
       }
     }
 
-    return instance
+    return core
   }
 
   async processFiles(glob) {
@@ -128,7 +137,8 @@ export default class Core {
 
     const {output} = this.options
 
-    const input = await getFiles(glob)
+    const input = await FS.getFiles(glob)
+
     if(!input?.length)
       throw new Error("No input files specified")
 

@@ -1,21 +1,16 @@
-import yaml from "yaml"
 import JSON5 from "json5"
+import yaml from "yaml"
 
-import * as FDUtil from "./util/FDUtil.js"
-import * as ContractUtil from "./util/ContractUtil.js"
-import * as DataUtil from "./util/DataUtil.js"
-
-const {resolveFilename, readFile} = FDUtil
-const {loadSchema, getValidator} = ContractUtil
-const {findClosestMatch} = DataUtil
+import ContractUtil from "./util/ContractUtil.js"
+import {Data, FileObject, Glog, Util} from "@gesslar/toolkit"
 
 const refex = /^ref:\/\/(.*)$/
 
 export default class ContractManager {
   static async newContract(actionType, terms) {
     // Load and validate against the BeDoc contract schema
-    const schema = await loadSchema()
-    const validator = getValidator(schema)
+    const schema = await ContractUtil.loadSchema()
+    const validator = ContractUtil.getValidator(schema)
     const valid = validator(terms)
 
     if(!valid) {
@@ -24,7 +19,7 @@ export default class ContractManager {
       throw new Error(`Invalid contract terms:\n${error}`)
     }
 
-    const dataValidator = getValidator({
+    const dataValidator = ContractUtil.getValidator({
       "$schema": "http://json-schema.org/draft-07/schema#",
       "$id": `${actionType} Schema`,
       title: `${actionType} Schema`,
@@ -35,14 +30,34 @@ export default class ContractManager {
     return new Contract(dataValidator)
   }
 
-  static parse(contractData, directoryObject) {
-    if(typeof contractData === "string") {
+  /**
+   *
+   *if(typeof contractData === "string") {
+   *const match = refex.exec(contractData)
+   *
+   *if(match)
+   *contractData = readFile(resolveFilename(match[1], directoryObject))
+   *
+   *return yaml.parse(String(contractData))
+   *}
+   *
+   *throw new Error(`Invalid contract data: ${JSON5.stringify(contractData)}`)
+   *
+   * @param contractData
+   * @param directoryObject
+   */
+
+  static async parse(contractData, directoryObject) {
+    Glog(contractData)
+
+    if(Data.isBaseType(contractData, "string")) {
       const match = refex.exec(contractData)
 
       if(match)
-        contractData = readFile(resolveFilename(match[1], directoryObject))
+        return await (new FileObject(match[1], directoryObject))
+          .loadData()
 
-      return yaml.parse(String(contractData))
+      return yaml.parse(contractData)
     }
 
     throw new Error(`Invalid contract data: ${JSON5.stringify(contractData)}`)
@@ -59,13 +74,14 @@ export default class ContractManager {
           details.push(`  ➜ Expected type: ${error.params.type}`)
 
         if(error.params.missingProperty)
-          details.push(`  ➜ Missing required field: ${error.params.missingProperty}`)
+          details.push(`  ➜ Missing required fielisd: ${error.params.missingProperty}`)
 
         if(error.params.allowedValues) {
           details.push(`  ➜ Allowed values: "${error.params.allowedValues.join('", "')}"`)
           details.push(`  ➜ Received value: "${error.data}"`)
           const closestMatch =
-            findClosestMatch(error.data, error.params.allowedValues)
+            Util.findClosestMatch(error.data, error.params.allowedValues)
+
           if(closestMatch)
             details.push(`  ➜ Did you mean: "${closestMatch}"?`)
         }
