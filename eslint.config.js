@@ -20,16 +20,6 @@ export default [
       },
     },
   },
-  {
-    name: "gesslar/uglier/webview-env",
-    files: ["src/webview/**/*.{js,mjs,cjs}"],
-    languageOptions: {
-      globals: {
-        ...globals.browser,
-        acquireVsCodeApi: "readonly"
-      }
-    }
-  },
   // Add override for .cjs files to treat as CommonJS
   {
     name: "gesslar/uglier/cjs-override",

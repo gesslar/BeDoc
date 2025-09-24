@@ -1,15 +1,11 @@
 import {setTimeout as timeoutPromise} from "timers/promises"
-import * as DataUtil from "./util/DataUtil.js"
-import * as ValidUtil from "./util/ValidUtil.js"
-
-const {isEmpty, isType, allocateObject} = DataUtil
-const {assert} = ValidUtil
+import {Data, Valid} from "@gesslar/toolkit"
 
 const freeze = Object.freeze
-
 const hookEvents = freeze(["start", "section_load", "enter", "exit", "end"])
+
 export const HookPoints = freeze(
-  await allocateObject(
+  await Data.allocateObject(
     hookEvents.map(event => event.toUpperCase()),
     hookEvents,
   ),
@@ -65,23 +61,24 @@ export default class HookManager {
 
     const hooksFile = instance.hooksFile
 
-    debug("Loading hooks from `%s", 2, hooksFile.absoluteUri)
+    debug("Loading hooks from `%s", 2, hooksFile.uri)
 
     debug("Checking hooks file exists: %j", 2, hooksFile)
-    const hooksFileContent = await import(hooksFile.absoluteUri)
+    const hooksFileContent = await import(hooksFile.uri)
 
     debug("Hooks file loaded successfully", 2)
 
     if(!hooksFileContent)
-      throw new Error(`Hooks file is empty: ${hooksFile.absoluteUri}`)
+      throw new Error(`Hooks file is empty: ${hooksFile.uri}`)
 
     const hooks = hooksFileContent.default || hooksFileContent.Hooks
 
     if(!hooks)
-      throw new Error(`\`${hooksFile.absoluteUri}\` contains no hooks.`)
+      throw new Error(`\`${hooksFile.uri}\` contains no hooks.`)
 
     const hooksObj = hooks[instance.action]
-    if(isEmpty(hooksObj))
+
+    if(Data.isEmpty(hooksObj))
       return null
 
     debug("Hooks found for action: `%s`", 2, instance.action)
@@ -103,7 +100,7 @@ export default class HookManager {
    *
    * @param {string} event - The type of hook to trigger
    * @param {object} args - The hook arguments as an object
-   * @returns {Promise<any>} The result of the hook
+   * @returns {Promise<unknown>} The result of the hook
    */
   async on(event, args) {
     const debug = this.log.newDebug()
@@ -119,7 +116,7 @@ export default class HookManager {
     const hook = this.hooks[event]
 
     if(hook) {
-      assert(isType(hook, "function"), `Hook "${event}" is not a function`, 1)
+      Valid.type(hook, "function", `Hook "${event}" is not a function`)
 
       const hookExecution = await hook.call(this.hooks, args)
       const hookTimeout = this.timeout

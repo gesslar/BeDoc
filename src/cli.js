@@ -1,31 +1,28 @@
 #!/usr/bin/env node
 
+import {Data, DirectoryObject, FileObject, Glog, Term} from "@gesslar/toolkit"
 import {program} from "commander"
 import console from "node:console"
 import process from "node:process"
-import {fileURLToPath,URL} from "node:url"
+import url from "node:url"
 
-import BeDoc, {Environment} from "./core/Core.js"
 import {ConfigurationParameters} from "./core/ConfigurationParameters.js"
-
-import * as ActionUtil from "./core/util/ActionUtil.js"
-import * as FDUtil from "./core/util/FDUtil.js"
-
-const {loadDataFile} = ActionUtil
-const {resolveFilename,resolveDirectory} = FDUtil
+import BeDoc, {Environment} from "./core/Core.js"
 
 // Main entry point
 void (async() => {
   try {
     // Get package info
-    const basePath = resolveDirectory("hi there")
-    const thisPath = resolveDirectory(fileURLToPath(new URL("..", import.meta.url)))
-    const bedocPackageJson = loadDataFile(resolveFilename("package.json", thisPath))
+    const thisPath = new DirectoryObject(url.fileURLToPath(new url.URL("..", import.meta.url)))
+    const pkgJsonFile = new FileObject("package.json", thisPath)
+    const pkgJson = await pkgJsonFile.loadData()
+
+    Glog.setLogLevel(5).setLogPrefix("[BEDOC]")
 
     // Setup program
     program
-      .name(bedocPackageJson.name)
-      .description(bedocPackageJson.description)
+      .name(pkgJson.name)
+      .description(pkgJson.description)
 
     // Build CLI
     for(const [name, parameter] of Object.entries(ConfigurationParameters)) {
@@ -46,7 +43,7 @@ void (async() => {
 
     // Add version option last
     program.version(
-      bedocPackageJson.version,
+      pkgJson.version,
       "-v, --version",
       "Output the version number",
     )
@@ -58,25 +55,40 @@ void (async() => {
 
     const sources = program._optionValueSources
     const optionsWithSources = {}
+
     for(const [key, value] of Object.entries(options)) {
       const element = {
         value,
         source: sources[key],
       }
+
       optionsWithSources[key] = element
     }
 
     // Create core instance with validated config
+    const prjPath = new DirectoryObject(process.cwd())
+    const prjPkJsonFile = new FileObject("package.json", prjPath)
+    const prjPkjJson = await prjPkJsonFile.loadData()
+    const pkjBedoc = prjPkjJson?.bedoc ?? {}
+
     const bedoc = await BeDoc
       .new({
         options: {
           ...optionsWithSources,
-          basePath: {value: basePath, source: "cli"},
+          basePath: {value: prjPath, source: "cli"},
+          project: pkjBedoc,
         },
         source: Environment.CLI
       })
 
-    const filesToProcess = bedoc.options.input.map(f => f.absolutePath)
+    if(!(bedoc instanceof BeDoc)) {
+      if(Data.isPlainObject(bedoc)) {
+        Term.info(bedoc.message)
+        process.exit(0)
+      }
+    }
+
+    const filesToProcess = bedoc.options.input.map(f => f.path)
     const result = await bedoc.processFiles(filesToProcess)
     const errored = result.errored
     const warned = result.warned
@@ -86,6 +98,8 @@ void (async() => {
 
     if(errored.length > 0)
       throw new AggregateError(errored.map(e => e.error), "Error processing files")
+
+    process.exit(0)
   } catch(error) {
     if(error instanceof Error) {
       if(error instanceof AggregateError) {
