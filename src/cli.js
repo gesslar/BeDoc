@@ -100,7 +100,7 @@ void (async() => {
       throw new AggregateError(errored.map(e => e.error), "Error processing files")
 
     process.exit(0)
-  } catch (error) {
+  } catch(error) {
     if(error instanceof Error) {
       if(error instanceof AggregateError) {
         error.errors.forEach(e => console.error(e))
