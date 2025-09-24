@@ -40,6 +40,7 @@
     "@gesslar/toolkit": "^0.7.0",
     "ajv": "^8.17.1",
     "commander": "^14.0.1",
+    "dotenv": "^17.2.2",
     "error-stack-parser": "^2.1.4",
     "globals": "^16.4.0",
     "json5": "^2.2.3",
