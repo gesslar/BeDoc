@@ -38,6 +38,7 @@
     "lint:fix": "npx eslint . --fix"
   },
   "dependencies": {
+    "@gesslar/colours": "^0.0.1",
     "@gesslar/toolkit": "^0.0.8",
     "ajv": "^8.17.1",
     "commander": "^14.0.1",
