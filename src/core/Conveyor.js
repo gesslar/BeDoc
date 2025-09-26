@@ -182,7 +182,7 @@ export default class Conveyor {
       await destFile.write(destContent)
 
       return {status: "success", file: destFile}
-    } catch(error) {
+    } catch (error) {
       return {status: "error", output: destFile, error}
     }
   }
