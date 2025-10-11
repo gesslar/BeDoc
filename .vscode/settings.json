@@ -1,19 +1,11 @@
 {
-  "editor.formatOnSave": true,
-  "editor.formatOnPaste": true,
-  "[javascript]": {
-    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-  },
-  "eslint.format.enable": true,
-  "[xml]": {
-    "editor.defaultFormatter": "redhat.vscode-xml"
-  },
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "always"
-  },
-  "files.insertFinalNewline": true,
-  "files.trimTrailingWhitespace": true,
-  "files.trimFinalNewlines": true,
-  "files.eol": "\n",
-  "vscode-lua-format.configPath": "examples\\source\\lua\\lua.editorconfig",
+  "markdownlint.lintWorkspaceGlobs": [
+    "**/*.{md,mkd,mdwn,mdown,markdown,markdn,mdtxt,mdtext,workbook}",
+    "!**/*.code-search",
+    "!**/bower_components",
+    "!**/node_modules",
+    "!**/.git",
+    "!**/vendor",
+    "!**/examples/**"
+  ]
 }

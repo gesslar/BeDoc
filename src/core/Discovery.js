@@ -1,17 +1,15 @@
-import {Data, DirectoryObject, FileObject, FS, Glog} from "@gesslar/toolkit"
+import {Data, DirectoryObject, FileObject, FS, Sass} from "@gesslar/toolkit"
 import {execSync} from "child_process"
 
-import ContractManager from "./ContractManager.js"
-import ActionUtil from "./util/ActionUtil.js"
+import Actions from "./Actions.js"
 
 export default class Discovery {
-  #logger
   #debug
+  #core
 
-  constructor(core) {
-    this.core = core
-    this.#logger = core.logger
-    this.#debug = this.#logger.newDebug()
+  constructor(core, options, debug) {
+    this.#core = core
+    this.#debug = debug
   }
 
   /**
@@ -31,15 +29,15 @@ export default class Discovery {
     debug("Specific modules provided: %o", 3, specific)
 
     const files = []
-    const options = this.core.options ?? {}
+    const options = this.#core.options ?? {}
 
-    if(options?.mockPath) {
-      debug("Discovering mock actions in `%s`", 2, options.mockPath)
+    if(options.mock) {
+      debug("Discovering mock actions in %o", 2, options.mock.path)
 
       files.push(
         ...(await FS.getFiles([
-          `${options.mockPath}/bedoc-*-printer.js`,
-          `${options.mockPath}/bedoc-*-parser.js`,
+          `${options.mock.path}/bedoc-*-printer.js`,
+          `${options.mock.path}/bedoc-*-parser.js`,
         ])),
       )
     } else {
@@ -68,8 +66,6 @@ export default class Discovery {
         .map(d => new DirectoryObject(d))
 
       const nodeModulesDirs = await Data.asyncFilter(directories, d => d.exists)
-
-      Glog(nodeModulesDirs)
 
       debug("Found %o directories to search for actions", 2, directories.length)
 
@@ -121,7 +117,7 @@ export default class Discovery {
           const actionObjects = await Data.asyncFilter(
             moduleFileObjects, f => f.exists)
 
-          debug("Discovered %d modules from package.json file: %o", 2,
+          debug("Discovered %o modules from package.json file: %o", 2,
             actions.length,
             packageJsonFile.path
           )
@@ -133,38 +129,38 @@ export default class Discovery {
       }
     }
 
-    debug("Discovered %d modules", 2, files.length)
+    debug("Discovered %o modules", 2, files.length)
     debug("Discovered modules", 2, files.map(f => f.path))
     debug("Discovered modules %o", 3, files)
 
-    // const available = files.map(f => this.#getModuleExports(f))
+    const actionDefinitions = await this.#loadActionDefinitions(files, specific)
+    // @TODO: We also have to do contracts here
 
-    return await this.#loadActionsAndContracts(files, specific)
+    return actionDefinitions
   }
 
   /**
-   * Process the discovered file objects and return the action and their
-   * respective contracts.
+   * Process the discovered file objects and return the action.
    *
-   * @param {object[]} moduleFiles The module file objects to process
+   * @param {Array<FileObject>} moduleFiles The module file objects to process
    * @param {object} specificModules The specific modules to load
    * @returns {Promise<object>} The discovered action
    */
-  async #loadActionsAndContracts(moduleFiles, specificModules) {
+  async #loadActionDefinitions(moduleFiles, specificModules) {
     const debug = this.#debug
 
-    debug("Loading actions and contracts", 2)
-    debug("Loading %d module files", 2, moduleFiles.length)
+    debug("Loading actions", 2)
+    debug("Loading %o module files", 2, moduleFiles.length)
     debug("Specific modules to load: %o", 3, specificModules)
 
     const resultActions = {}
 
-    ActionUtil.actionTypes.forEach(actionType => resultActions[actionType] = [])
+    Actions.actionTypes.forEach(actionType => resultActions[actionType] = [])
 
     // Tag the specific actions to load, so we can filter them later
     for(const [type, file] of Object.entries(specificModules)) {
       if(file) {
-        debug("Tagging specific module `%s` as `%s`", 3, file.path, type)
+        debug("Tagging specific module %o as %o", 3, file.path, type)
         file.specificType = file.specificType || []
         file.specificType.push(type)
       }
@@ -175,51 +171,34 @@ export default class Discovery {
       ...Object.values(specificModules).filter(Boolean),
     ]
 
-    Glog(toLoad)
-
-    debug("Loading %d discovered modules", 2, toLoad.length)
+    debug("Loading %o discovered modules", 2, toLoad.length)
     debug("Modules to load: %o", 3, toLoad)
 
     const loadedActions = []
 
     for(const file of toLoad) {
-      debug("Loading module `%s`", 2, file)
+      debug("Loading module %o", 2, file)
 
-      const loading = await this.#loadModule(file)
+      const module = await this.#loadModule(file)
+      const action = module?.default
 
-      for(let index = 0; index < loading.actions.length; index++) {
-        const action = loading.actions[index]
+      if(!action)
+        throw Sass.new(`Unable to find default export in action ${module}`)
 
-        debug(`Loading %o contract from %s`, 2, action.meta.action, file)
-
-        const terms = await ContractManager.parse(
-          loading.contracts[index],
-          file.directory
-        )
-
-        const contract = await ContractManager.newContract(
-          action.meta.action,
-          terms
-        )
-
-        loadedActions.push({file, action, contract})
-      }
+      loadedActions.push({file, action})
     }
-
-    debug("Loaded %d actions", 2, loadedActions.length)
-    debug("Loaded actions", 3, loadedActions)
 
     const filteredActions = []
 
-    for(const actionType of ActionUtil.actionTypes) {
+    for(const actionType of Actions.actionTypes) {
       const module = specificModules[actionType]
       const matchingActions = []
 
       if(module) {
         debug("Filtering actions for specific: %o", 2, actionType)
-        const found = loadedActions.find(
-          e => e.file.specificType?.includes(actionType) &&
-               e.action.meta?.action === actionType
+        const found = loadedActions.find(e =>
+          e.action.meta?.action === actionType &&
+          e.file.specificType?.includes(actionType)
         )
 
         if(!found)
@@ -227,62 +206,62 @@ export default class Discovery {
 
         matchingActions.push(found)
       } else {
-        debug("No specific action required for `%s`", 2, actionType)
+        debug("No specific action required for %o", 2, actionType)
 
         const found = loadedActions.filter(
-          e => e.action.meta.action === actionType
+          e => e.action.meta.kind === actionType
         )
 
         matchingActions.push(...found)
       }
 
-      debug("Filtered %d actions for `%s`", 2,
+      debug("Filtered %o actions for %o", 2,
         matchingActions.length, actionType
       )
 
       filteredActions.push(...matchingActions)
     }
 
-    debug("Filtered %d actions", 2, filteredActions.length)
+    debug("Filtered %o actions", 2, filteredActions.length)
     debug("Filtered actions %o", 3, filteredActions)
 
     // Now check the metas for validity
     for(const filtered of filteredActions) {
-      const {action, contract, file: moduleFile} = filtered
+      const {action, file} = filtered
       const meta = action.meta
 
       if(!meta)
         throw new TypeError("Action has no meta object:\n" +
-          JSON.stringify(moduleFile, null, 2) + "\n" +
+          JSON.stringify(file, null, 2) + "\n" +
           JSON.stringify(action, null, 2))
 
-      const metaAction = meta.action
+      const metaAction = meta.kind
 
       if(!metaAction)
         throw new TypeError("Action has no meta action:\n" +
-          JSON.stringify(moduleFile, null, 2) + "\n" +
+          JSON.stringify(file, null, 2) + "\n" +
           JSON.stringify(action, null, 2))
 
       debug("Checking action %o", 2, metaAction)
 
-      const isValid = this.#validMeta(metaAction, {action, contract})
+      const isValid = this.#validMeta(metaAction, {action})
 
       debug("Meta in action %o in %o is %o", 3,
-        metaAction, moduleFile.module, isValid ? "valid" : "invalid"
+        metaAction, file.module, isValid ? "valid" : "invalid"
       )
 
       if(isValid) {
-        debug("Action is a valid `%s` action", 3, metaAction)
+        debug("Action is a valid %o action", 3, metaAction)
 
-        resultActions[metaAction].push({file: moduleFile, action, contract})
+        resultActions[metaAction].push(filtered)
       } else {
-        debug("Action is not a valid `%s` action", 3, metaAction)
+        debug("Action is not a valid %o action", 3, metaAction)
       }
 
-      debug("Processed action `%s`", 2, metaAction)
+      debug("Processed action %o", 2, metaAction)
     }
 
-    for(const actionType of ActionUtil.actionTypes) {
+    for(const actionType of Actions.actionTypes) {
       const total = resultActions[actionType].length
 
       debug("Found %o %o actions", 2, total, actionType)
@@ -292,7 +271,7 @@ export default class Discovery {
       return acc + resultActions[curr].length
     }, 0)
 
-    debug("Loaded %d action definitions from %d modules", 2,
+    debug("Loaded %o action definitions from %o modules", 2,
       total, moduleFiles.length
     )
 
@@ -312,11 +291,11 @@ export default class Discovery {
 
     debug("Satisfying criteria for actions", 2)
     for(const [actionType, search] of Object.entries(toMatch)) {
-      debug("Satisfying criteria for `%s` actions", 2, actionType)
+      debug("Satisfying criteria for %o actions", 2, actionType)
 
       const {criterion, config} = search
 
-      debug("Criterion: %s, Config: %s", 3, criterion, config)
+      debug("Criterion: %o, Config: %o", 3, criterion, config)
 
       // First let's check if we wanted something specific
       if(validatedConfig[config]) {
@@ -331,7 +310,7 @@ export default class Discovery {
           continue
         }
 
-        debug("No specific `%s` action found", 3, actionType)
+        debug("No specific %o action found", 3, actionType)
       }
 
       // Hmm! We didn't find anything specific. Let's check the criterion
@@ -341,7 +320,11 @@ export default class Discovery {
         debug("Meta criterion value: %o", 4, a.action.meta[criterion])
         debug("Config criterion value: %o", 4, validatedConfig[criterion])
 
-        return a.action.meta[criterion] === validatedConfig[criterion]
+        return !validatedConfig[criterion] ||
+          (
+            validatedConfig[criterion] &&
+            a.action.meta[criterion] === validatedConfig[criterion]
+          )
       })
 
       debug("Found %o %o actions with criterion %o", 3,
@@ -358,20 +341,17 @@ export default class Discovery {
   }
 
   /**
-   * Load a module and return its exports
+   * Load a module and return it
    *
-   * @param {object} module The module object to load
-   * @returns {Promise<object>} The module exports {actions, contracts}
+   * @param {FileObject} file The file object to load
+   * @returns {Promise<object>} The module
    */
-  async #loadModule(module) {
-    const debug = this.#debug
+  async #loadModule(file) {
+    this.#debug("Loading module `%j`", 2, file)
 
-    debug("Loading module `%j`", 2, module)
+    const module = await file.import()
 
-    const {uri} = module
-    const moduleExports = await import(uri)
-
-    return {file: module, ...moduleExports}
+    return module
   }
 
   /**
@@ -384,9 +364,9 @@ export default class Discovery {
   #validMeta(actionType, toValidate) {
     const debug = this.#debug
 
-    debug("Checking meta requirements for %o", 3, actionType)
+    debug("Checking meta requirement for %o", 3, actionType)
 
-    const requirements = ActionUtil.actionMetaRequirements[actionType]
+    const requirements = Actions.actionMetaRequirements[actionType]
 
     if(!requirements)
       throw new Error(
@@ -396,7 +376,7 @@ export default class Discovery {
     for(const requirement of requirements) {
       debug("Checking requirement %o", 4, requirement)
 
-      if(Data.isType(requirement, "object")) {
+      if(Data.isType(requirement, "Object")) {
         for(const [key, value] of Object.entries(requirement)) {
           debug("Checking object requirement %o", 4, {key, value})
 
@@ -405,13 +385,13 @@ export default class Discovery {
 
           debug("Requirement met: %o", 4, {key, value})
         }
-      } else if(Data.isType(requirement, "string")) {
-        debug("Checking string requirement: %s", 4, requirement)
+      } else if(Data.isType(requirement, "String")) {
+        debug("Checking string requirement: %o", 4, requirement)
 
         if(!toValidate.action.meta[requirement])
           return false
 
-        debug("Requirement met: %s", 4, requirement)
+        debug("Requirement met: %o", 4, requirement)
       }
     }
 

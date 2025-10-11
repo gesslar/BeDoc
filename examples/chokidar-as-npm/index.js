@@ -1,6 +1,6 @@
-import console from "node:console"
 import chokidar from "chokidar"
-import BeDoc, {Environment} from "../../src/core/Core.js"
+import console from "node:console"
+import BeDoc, { ENVIRONMENT } from "../../src/core/Core.js"
 
 // Directory to watch
 const watchDirectory = "./source/"
@@ -33,7 +33,7 @@ const processFile = async(filePath, event) => {
       {input: [filePath]}
     )
     const bedoc = await BeDoc.new({
-      options, source: Environment.NPM
+      options, source: ENVIRONMENT.NPM
     })
     const result = await bedoc.processFiles(filePath)
 

@@ -1,56 +1,53 @@
-export const Hooks = {
-  parse: {},
+export class print {
+  static meta = Object.freeze({
+    name: "lpc-markdown-hooks"
+  })
 
-  print: {
+  #jokes = []
+  #debug
 
-    name: "lpc-markdown-hooks",
-    jokes: [],
+  constructor({debug}) {
+    debug("Init hooks for: %o", 2, print.meta.name)
 
-    async setup({log}) {
-      this.log = log
-      this.debug = log.newDebug()
+    this.#debug = debug
+  }
 
-      this.log.debug("Init hooks for: %o", 2, this.name)
-    },
+  async before$prepare(context) {
+    const debug = this.#debug
+    const {moduleName,functions} = context
 
-    async start(document) {
-      const debug = this.debug
-
-      const {moduleName,moduleContent} = document
-
-      debug("Start hook for %s (%d functions)", 2,
-        moduleName, moduleContent.length
+      debug("Start hook for %o (%d functions)", 2,
+        moduleName, functions.length
       )
 
-      const result = await this.getDadJokes(moduleContent.length)
+      const result = await this.#getDadJokes(functions.length)
       const {status, jokes} = result
 
       if(status === "error")
         throw new Error(`Failed to fetch jokes: ${result.error}`)
 
-      debug("Fetched %o jokes", 2, jokes.length)
+      debug("Fetched %d jokes", 2, jokes.length)
 
-      this.jokes = jokes.map(joke => joke.joke)
-    },
+      this.#jokes = jokes.map(joke => joke.joke)
+    }
 
-    async enter(section) {
-      const {sectionName, sectionContent} = section
+    async before$render(context) {
+      const joke = this.#jokes.pop()
+      if(!joke)
+        return
 
-      if(sectionName === "description") {
-        const joke = this.jokes.pop()
+      const content = context.value.remaining.at(0).description
+      const joked = `${content}\n${joke}`
 
-        return joke
-          ? [...sectionContent, joke]
-          : sectionContent
-      }
-    },
+      context.value.remaining.at(0).description = joked
+    }
 
     /**
      * Fetches a dad joke from the icanhazdadjoke API.
      * @param {number} number - The number of jokes to fetch.
      * @returns {Promise<object>} The result of the fetch operation.
      */
-    async getDadJokes(number = 1) {
+    async #getDadJokes(number = 1) {
       const url = `https://icanhazdadjoke.com/search?limit=${number}`
 
       try {
@@ -79,5 +76,4 @@ export const Hooks = {
         }
       }
     }
-  },
 }

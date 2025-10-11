@@ -1,0 +1,10 @@
+{
+  "ignoreFiles": {
+    "files": [
+      "dist/",
+      "work/",
+      "examples/",
+      "node_modules/"
+    ]
+  }
+}

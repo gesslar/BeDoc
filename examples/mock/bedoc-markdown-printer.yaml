@@ -1,0 +1,62 @@
+# yaml-language-server: $schema=https://bedoc.gesslar.dev/schemas/v1/bedoc.action.json
+accepts:
+  type: object
+  properties:
+    accepts:
+      type: object
+      required:
+        - functions
+      properties:
+        functions:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+              - return
+            properties:
+              name:
+                type: string
+              description:
+                type: array
+                items:
+                  type: string
+              param:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - type
+                    - name
+                  properties:
+                    type:
+                      oneOf:
+                        - type: string
+                        - type: array
+                          items:
+                            type: string
+                    name:
+                      type: string
+                    content:
+                      type: array
+                      items:
+                        type: string
+              return:
+                type: object
+                required:
+                  - type
+                properties:
+                  type:
+                    oneOf:
+                      - type: string
+                      - type: array
+                        items:
+                          type: string
+                  content:
+                    type: array
+                    items:
+                      type: string
+              example:
+                type: array
+                items:
+                  type: string

@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
-import {Data, DirectoryObject, FileObject, Glog, Term} from "@gesslar/toolkit"
+import {Data, DirectoryObject, FileObject, Sass, Tantrum, Term} from "@gesslar/toolkit"
 import {program} from "commander"
-import console from "node:console"
 import process from "node:process"
 import url from "node:url"
 
-import {ConfigurationParameters} from "./core/ConfigurationParameters.js"
-import BeDoc, {Environment} from "./core/Core.js"
+import {ConfigurationParameters} from "./core/abstracted/ConfigurationParameters.js"
+import BeDoc, {ENVIRONMENT} from "./core/Core.js"
+import Glog from "./core/abstracted/Glog.js"
 
 // Main entry point
 void (async() => {
@@ -16,8 +16,6 @@ void (async() => {
     const thisPath = new DirectoryObject(url.fileURLToPath(new url.URL("..", import.meta.url)))
     const pkgJsonFile = new FileObject("package.json", thisPath)
     const pkgJson = await pkgJsonFile.loadData()
-
-    Glog.setLogLevel(5).setLogPrefix("[BEDOC]")
 
     // Setup program
     program
@@ -52,7 +50,6 @@ void (async() => {
 
     // Get options
     const options = program.opts()
-
     const sources = program._optionValueSources
     const optionsWithSources = {}
 
@@ -64,6 +61,12 @@ void (async() => {
 
       optionsWithSources[key] = element
     }
+
+    const debug = Glog.create({env: ENVIRONMENT.CLI})
+      .withLogLevel(5)
+      .withPrefix("[BEDOC]")
+      .withStackTrace(true)
+      .newDebug()
 
     // Create core instance with validated config
     const prjPath = new DirectoryObject(process.cwd())
@@ -78,38 +81,26 @@ void (async() => {
           basePath: {value: prjPath, source: "cli"},
           project: pkjBedoc,
         },
-        source: Environment.CLI
+        source: ENVIRONMENT.CLI,
+        debug
       })
 
     if(!(bedoc instanceof BeDoc)) {
       if(Data.isPlainObject(bedoc)) {
-        Term.info(bedoc.message)
+        Term[bedoc.status](bedoc.message)
         process.exit(0)
       }
     }
 
     const filesToProcess = bedoc.options.input.map(f => f.path)
-    const result = await bedoc.processFiles(filesToProcess)
-    const errored = result.errored
-    const warned = result.warned
-
-    if(warned.length > 0)
-      warned.forEach(w => bedoc.logger.warn(w.warning))
-
-    if(errored.length > 0)
-      throw new AggregateError(errored.map(e => e.error), "Error processing files")
+    await bedoc.processFiles(filesToProcess)
 
     process.exit(0)
-  } catch (error) {
-    if(error instanceof Error) {
-      if(error instanceof AggregateError) {
-        error.errors.forEach(e => console.error(e))
-      } else {
-        console.error(error.message, error.stack)
-      }
-    } else {
-      console.error("Error: %o", error)
-    }
+  } catch(error) {
+    if(error instanceof Sass || error instanceof Tantrum)
+      error.report(true)
+    else
+      Term.error(error)
 
     process.exit(1)
   }

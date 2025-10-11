@@ -40,7 +40,7 @@ export default [
   },
   {
     name: "gesslar/uglier/lints-js",
-    files: ["src/**/*.{mjs,cjs,js}"],
+    files: ["{work,src}/**/*.{mjs,cjs,js}"],
     plugins: {
       "@stylistic": stylistic,
     },
@@ -57,8 +57,8 @@ export default [
         {blankLine: "always",   prev: "for", next: "*"},
         {blankLine: "always",   prev: "switch", next: "*"},
         {blankLine: "always",   prev: "do", next: "*"},
-        {blankLine: "always",   prev: ["const", "let", "var"], next: "*"},
-        {blankLine: "any",      prev: ["const", "let", "var"], next: ["const", "let", "var"]},
+        // {blankLine: "always",   prev: ["const", "let", "var"], next: "*"},
+        // {blankLine: "any",      prev: ["const", "let", "var"], next: ["const", "let", "var"]},
         {blankLine: "always",   prev: "directive", next: "*" },
         {blankLine: "any",      prev: "directive", next: "directive" },
       ],
@@ -139,7 +139,7 @@ export default [
   },
   {
     name: "gesslar/uglier/lints-jsdoc",
-    files: ["src/**/*.{mjs,cjs,js}"],
+    files: ["{work,src}/**/*.{mjs,cjs,js}"],
     plugins: {
       jsdoc,
     },

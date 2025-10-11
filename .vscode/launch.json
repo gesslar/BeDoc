@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "CLI - LPCDocs to Markdown (Lang, Format)",
+      "name": "CLI - LPCDocs to Markdown (Hooks, Lang, Format)",
       "type": "node",
       "request": "launch",
       "skipFiles": [
@@ -12,7 +12,7 @@
       "args": [
         "--debug",
         "--debugLevel",
-        "4",
+        "5",
         "--input",
         "examples/source/lpc/**/*.c",
         "--output",
@@ -21,6 +21,54 @@
         "examples/node_modules_test/bedoc-lpc-parser/bedoc-lpc-parser.js",
         "--printer",
         "examples/node_modules_test/bedoc-markdown-printer/bedoc-markdown-printer.js",
+        "--hooks",
+        "examples/hooks/lpc-markdown-hooks.js"
+      ],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "CLI - LPCDocs to Markdown (Mock, Lang, Format)",
+      "type": "node",
+      "request": "launch",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "program": "${workspaceFolder}/src/cli.js",
+      "args": [
+        "--debug",
+        "--debugLevel",
+        "5",
+        "--input",
+        "examples/source/lpc/**/*.c",
+        "--output",
+        "examples/mock/output/markdown/",
+        "--mock",
+        "examples/mock/",
+        "--hooks",
+        "examples/hooks/lpc-markdown-hooks.js"
+      ],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "CLI - LPCDocs to Markdown (Single, Mock, Lang, Format)",
+      "type": "node",
+      "request": "launch",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "program": "${workspaceFolder}/src/cli.js",
+      "args": [
+        "--debug",
+        "--debugLevel",
+        "5",
+        "--input",
+        "examples/source/lpc/signal.c",
+        "--output",
+        "examples/mock/output/markdown/",
+        "--mock",
+        "examples/mock/",
+        "--hooks",
+        "examples/hooks/lpc-markdown-hooks.js"
       ],
       "console": "integratedTerminal"
     },
@@ -201,5 +249,15 @@
       "cwd": "${workspaceFolder}/examples/chokidar-as-npm",
       "console": "integratedTerminal",
     },
+    {
+      "name": "Test ActionBuilder",
+      "type": "node",
+      "request": "launch",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "program": "${workspaceFolder}/work/test-builder.mjs",
+      "console": "integratedTerminal"
+    }
   ]
 }

@@ -2,7 +2,7 @@ import process from "node:process"
 import {setTimeout as timeoutPromise} from "node:timers/promises"
 import "dotenv/config"
 import MediaWikiUploader from "./mediawiki-uploader.js"
-import Logger from "@gesslar/bedoc/core/Logger.js"
+import Logger from "../../dist/types/core/deprecated/Logger.js"
 
 export const Hooks = {
   parse: {},

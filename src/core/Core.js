@@ -1,16 +1,18 @@
-import {FS, Glog} from "@gesslar/toolkit"
+import {DirectoryObject, FS, Sass} from "@gesslar/toolkit"
 import {hrtime} from "node:process"
 
-import ParseManager from "./action/ParseManager.js"
-import PrintManager from "./action/PrintManager.js"
-import Configuration from "./Configuration.js"
-import Conveyor from "./Conveyor.js"
+import Hooks from "./ActionHooks.js"
+import BeDocSchema from "./BeDocSchema.js"
 import Discovery from "./Discovery.js"
-import HookManager from "./HookManager.js"
-import Logger from "./Logger.js"
-import ContractUtil from "./util/ContractUtil.js"
+import ParseAction from "./ParseAction.js"
+import Pipeline from "./Pipeline.js"
+import PrintAction from "./PrintAction.js"
+import Configuration from "./abstracted/Configuration.js"
+import Glog from "./abstracted/Glog.js"
+import Schemer from "./abstracted/Schemer.js"
+import Terms from "./abstracted/Terms.js"
 
-export const Environment = Object.freeze({
+export const ENVIRONMENT = Object.freeze({
   EXTENSION: "extension",
   NPM: "npm",
   ACTION: "action",
@@ -18,122 +20,175 @@ export const Environment = Object.freeze({
 })
 
 export default class Core {
+  #debug
+
   constructor(options) {
     this.options = options
-    const {debug: debugMode, debugLevel} = options
+    this.#debug = options?.debug || Glog.newDebug()
 
-    this.logger = new Logger({name: "BeDoc", debugMode, debugLevel})
-    this.debugOptions = this.logger.options
+    // this.logger = new Glog({name: "BeDoc", debugMode, debugLevel})
     this.packageJson = options.project
   }
 
-  static async new({options, source}) {
+  static async new({options, source, debug}) {
     const config = new Configuration()
-
-    Glog(options)
-
     const validConfig = await config.validate({options, source})
 
     if(validConfig.status === "error")
       throw new AggregateError(validConfig.errors,"BeDoc configuration failed")
 
-    const core = new Core({...validConfig, name: "BeDoc"})
-    const debug = core.logger.newDebug()
+    const core = new Core({...validConfig, name: "BeDoc", debug})
 
-    debug("Creating new BeDoc instance with options: `%o`", 3, validConfig)
+    debug("Creating new BeDoc instance with options: %o", 3, validConfig)
 
-    const discovery = new Discovery(core)
+    const discovery = new Discovery(core, options, debug)
     const actionDefs = await discovery.discoverActions({
       print: validConfig.printer,
       parse: validConfig.parser
     })
 
-    const validCrit = discovery.satisfyCriteria(actionDefs, validConfig)
+    const validatedActions = discovery.satisfyCriteria(actionDefs, validConfig)
 
-    debug("Actions that met criteria: `%o`", 3, validCrit)
+    debug("Actions that met criteria: %o", 3, validatedActions)
+    Glog(validatedActions.print.length)
+    Glog(Array.isArray(validatedActions.print))
+    Glog(validatedActions.print)
 
-    if(Object.values(validCrit).some(arr => arr.length === 0)) {
+    Glog(validatedActions.parse.length)
+    Glog(Array.isArray(validatedActions.parse))
+    Glog(validatedActions.parse)
+
+    if(Object.values(validatedActions).some(arr => arr.length === 0)) {
       return {
-        status: "fail",
+        status: "warn",
         message: "No matching actions specified or discovered."
       }
     }
 
-    const validSchemas = {print: [], parse: []}
-    let printers = validCrit.print.length
+    // Contract negotiation
+    const compatibleActions = {print: [], parse: []}
+    const actionSchema = await BeDocSchema.loadSchema(debug)
+    const termsValidator = Schemer.getValidator(actionSchema)
 
-    while(printers--) {
-      const printer = validCrit.print[printers]
-      const printerSchema = printer.contract
-      const satisfied = []
+    // Load up all of the printers' terms
+    for(const [,actionType] of Object.entries(validatedActions)) {
+      for(const action of actionType) {
+        debug("Configuring terms for %o", 2, action.file.module)
 
-      for(const parser of validCrit.parse) {
-        const parserSchema = parser.contract
-        const result = ContractUtil.schemaCompare(
-          parserSchema,
-          printerSchema
+        const actionTerms = await Core.#loadTerms(
+          action.action.meta.terms,
+          action.file.directory,
+          termsValidator,
+          debug
         )
 
-        if(result.status === "success")
+        action.terms = actionTerms
+        debug("Terms added to %o", 2, action.file.module)
+      }
+    }
+
+    // Now validate compatibility
+    for(const printer of validatedActions.print) {
+      debug("Checking %o", 3, printer.file.module)
+
+      const satisfied = []
+
+      for(const parser of validatedActions.parse) {
+        debug("Checking %o", 3, parser.file.module)
+
+        const compatibility = printer.terms.compare(parser.terms)
+
+        if(compatibility.status === "success") {
+          debug("Parser %o compatible with printer %o", 3, parser.file.module, printer.file.module)
           satisfied.push(parser)
+        } else {
+          debug("Parser %o incompatible: %o errors", 3, parser.action.file.module, compatibility.errors.length)
+          debug("Terms compatibility errors: %o", 4, compatibility.errors.map(e => e.message).join(", "))
+        }
       }
 
       if(satisfied.length > 0) {
-        validSchemas.print.push(printer)
-        validSchemas.parse.push(...satisfied)
+        compatibleActions.print.push(printer)
+        compatibleActions.parse.push(...satisfied)
+        debug("Added %o with %o compatible parsers", 2, printer.file.module, satisfied.length)
+      } else {
+        debug("Printer %o has no compatible parsers", 1, printer.file.module)
       }
     }
 
     const finalActions = {}
 
-    for(const [key, value] of Object.entries(validSchemas)) {
+    for(const [key, value] of Object.entries(compatibleActions)) {
       if(value.length === 0)
-        throw new Error(`No matching ${key} found`)
+        throw Sass.new(`No matching ${key} found`)
 
       if(value.length > 1)
-        throw new Error(`Multiple matching ${key} found`)
+        throw Sass.new(`Multiple matching ${key} found`)
 
-      finalActions[key] = validSchemas[key][0]
+      finalActions[key] = compatibleActions[key][0]
     }
-
-    debug("Contracts satisfied between parser and printer", 2)
 
     // Adding to instance
     core.actions = {}
     const {variables} = validConfig
-    const managers = {print: PrintManager, parse: ParseManager}
+    const managers = {print: PrintAction, parse: ParseAction}
 
     for(const [, actionDefinition] of Object.entries(finalActions)) {
-      const {action: actionType} = actionDefinition.action.meta
+      const {kind} = actionDefinition.action.meta
 
-      debug("Attaching %o action to instance", 2, actionType)
-      core.actions[actionType] =
-        new managers[actionType] ({
-          actionDefinition,
-          logger: core.logger,
-          variables
-        })
+      debug("Attaching %o action to instance", 2, kind)
+      core.actions[kind] = new managers[kind] ({
+        actionDefinition,
+        variables,
+        debug
+      })
 
+      debug("Setting up hooks for action %o", 2, kind)
       if(validConfig.hooks) {
-        const hookManager = await HookManager.new({
-          action: actionType,
+        const hooks = await Hooks.new({
+          actionKind: kind,
           hooksFile: validConfig.hooks,
-          logger: new Logger(core.debugOptions),
-          timeout: validConfig.hooksTimeout,
-        })
+        }, debug)
 
-        if(hookManager)
-          core.actions[actionType].hookManager = hookManager
+        if(hooks)
+          core.actions[kind].setHooks(hooks)
       }
     }
 
     return core
   }
 
-  async processFiles(glob) {
-    const debug = this.logger.newDebug()
+  /**
+   * Loads and validates terms for an action
+   *
+   * @param {object} terms - Raw terms data from action metadata
+   * @param {DirectoryObject} directory - Directory context for file resolution
+   * @param {(data: unknown) => unknown} validator - Schema validator for terms
+   * @param {import('./types.js').DebugFunction} debug - Debug function
+   * @returns {Terms} Validated Terms instance
+   */
+  static async #loadTerms(terms, directory, validator, debug) {
+    try {
+      // Parse the terms data (handles ref:// and other formats)
+      const parsedTerms = await Terms.parse(terms,directory)
 
-    debug("Starting file processing with conveyor", 1)
+      // Create Terms instance with parsed data and validation
+      const termsInstance = new Terms({
+        terms: parsedTerms,
+        validator,
+        debug
+      })
+
+      return termsInstance
+    } catch(error) {
+      throw Sass.new(`Failed to load terms`, error)
+    }
+  }
+
+  async processFiles(glob) {
+    const debug = this.#debug
+
+    debug("Starting file processing", 1)
 
     const {output} = this.options
 
@@ -142,18 +197,18 @@ export default class Core {
     if(!input?.length)
       throw new Error("No input files specified")
 
-    // Instantiate the conveyor
-    const conveyor = new Conveyor(
-      this.actions.parse,
-      this.actions.print,
-      this.logger,
+    // Instantiate the pipeline pipeline
+    const pipeline = new Pipeline({
+      parse: this.actions.parse,
+      print: this.actions.print,
       output,
-    )
+      debug
+    })
 
     const processStart = hrtime.bigint()
 
-    // Initiate the conveyor
-    const processResult = await conveyor.convey(
+    // Initiate the pipeline
+    const processResult = await pipeline.run(
       input, this.options.maxConcurrent
     )
 
@@ -163,9 +218,7 @@ export default class Core {
 
     const result = {
       totalFiles: input.length,
-      succeeded: processResult.succeeded,
-      warned: processResult.warned,
-      errored: processResult.errored,
+      process: processResult,
       duration: ((Number(processEnd - processStart)) / 1_000_000).toFixed(2)
     }
 
