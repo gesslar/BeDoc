@@ -2,43 +2,40 @@
 provides:
   type: object
   properties:
-    provides:
-      type: object
-      properties:
-        functions:
-          type: array
-          items:
+    functions:
+      type: array
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+          description:
+            type: array
+            items:
+              type: string
+          param:
+            type: array
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                name:
+                  type: string
+                content:
+                  type: array
+                  items:
+                    type: string
+          return:
             type: object
             properties:
-              name:
+              type:
                 type: string
-              description:
+              content:
                 type: array
                 items:
                   type: string
-              param:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    type:
-                      type: string
-                    name:
-                      type: string
-                    content:
-                      type: array
-                      items:
-                        type: string
-              return:
-                type: object
-                properties:
-                  type:
-                    type: string
-                  content:
-                    type: array
-                    items:
-                      type: string
-              example:
-                type: array
-                items:
-                  type: string
+          example:
+            type: array
+            items:
+              type: string

@@ -104,9 +104,9 @@ export default class Configuration {
       if(path && !nothing) {
         const {mustExist, type: pathType} = path
 
-        // Special for `input` and `exclude` because they can be a comma-
+        // Special for `include` and `exclude` because they can be a comma-
         // separated list of glob patterns.
-        if(key === "input" || key === "exclude") {
+        if(key === "include" || key === "exclude") {
           if(Data.isType(value, "array")) {
             const settled = await Util.settleAll(
               value.map(async pattern => await FS.getFiles(pattern)),

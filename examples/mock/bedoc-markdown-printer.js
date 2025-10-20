@@ -47,7 +47,7 @@ export default class {
       lines.push(`## ${next.name}`)
 
     if(next.description)
-      lines.push("", next.description.trim())
+      lines.push("", next.description.join("\n").trim())
 
     if(Array.isArray(next.param) && next.param.length > 0) {
       const paramLines = next.param.map(param => {

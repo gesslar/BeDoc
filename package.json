@@ -35,7 +35,8 @@
     "lint:fix": "npx eslint . --fix"
   },
   "dependencies": {
-    "@eslint/js": "^9.37.0",
+    "@eslint/js": "^9.38.0",
+    "@gesslar/actioneer": "^0.1.0",
     "@gesslar/colours": "^0.0.1",
     "@gesslar/toolkit": "^0.7.0",
     "commander": "^14.0.1",
@@ -46,15 +47,15 @@
     "yaml": "^2.8.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.37.0",
-    "@stylistic/eslint-plugin": "^5.4.0",
+    "@eslint/js": "^9.38.0",
+    "@stylistic/eslint-plugin": "^5.5.0",
     "@stylistic/eslint-plugin-js": "^4.4.1",
-    "@typescript-eslint/eslint-plugin": "^8.46.1",
-    "@typescript-eslint/parser": "^8.46.1",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
     "axios": "^1.12.2",
     "chokidar": "^4.0.3",
-    "eslint": "^9.37.0",
-    "eslint-plugin-jsdoc": "^61.1.2",
+    "eslint": "^9.38.0",
+    "eslint-plugin-jsdoc": "^61.1.5",
     "form-data": "^4.0.4"
   },
   "keywords": [

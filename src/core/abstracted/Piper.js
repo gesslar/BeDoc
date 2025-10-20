@@ -81,38 +81,20 @@ export default class Piper {
 
     let itemIndex = 0
     const allResults = []
-    const resultMutex = {locked: false, queue: []}
-
-    // Mutex for thread-safe result collection
-    const addResult = async result => {
-      while(resultMutex.locked)
-        await new Promise(resolve => resultMutex.queue.push(resolve))
-
-      resultMutex.locked = true
-      allResults.push(result)
-      resultMutex.locked = false
-      if(resultMutex.queue.length > 0) {
-        resultMutex.queue.shift()()
-      }
-    }
 
     const processWorker = async() => {
       while(true) {
-        // Atomically get next item index
         const currentIndex = itemIndex++
         if(currentIndex >= items.length)
           break
 
         const item = items[currentIndex]
-        let result
-
         try {
-          result = await this.#processItem(item)
+          const result = await this.#processItem(item)
+          allResults.push(result)
         } catch(error) {
           throw Sass.new("Processing pipeline item.", error)
         }
-
-        await addResult(result)
       }
     }
 
@@ -123,9 +105,8 @@ export default class Piper {
     const workers = []
     const workerCount = Math.min(maxConcurrent, items.length)
 
-    for(let i = 0; i < workerCount; i++) {
+    for(let i = 0; i < workerCount; i++)
       workers.push(processWorker())
-    }
 
     // Wait for all workers to complete
     const processResult = await Util.settleAll(workers)

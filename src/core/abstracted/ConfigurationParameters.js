@@ -1,7 +1,7 @@
 import {Data} from "@gesslar/toolkit"
 
 const ConfigurationParameters = Object.freeze({
-  input: {
+  include: {
     short: "i",
     param: "file",
     description: "Comma-separated glob patterns to match files",
@@ -150,6 +150,6 @@ const ConfigurationParameters = Object.freeze({
   },
 })
 
-const ConfigurationPriorityKeys = Object.freeze(["exclude", "input"])
+const ConfigurationPriorityKeys = Object.freeze(["exclude", "include"])
 
 export {ConfigurationParameters, ConfigurationPriorityKeys}

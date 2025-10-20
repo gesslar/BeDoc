@@ -1,6 +1,6 @@
 import {FileObject, Sass} from "@gesslar/toolkit"
 import {format} from "node:util"
-import Piper from "./abstracted/Piper.js"
+import {Piper} from "@gesslar/toolkit"
 
 export default class Pipeline {
   #pipeline
@@ -65,16 +65,20 @@ export default class Pipeline {
 
       return {file, value}
     } catch(error) {
-      return error
+      throw Sass.new(`Reading file ${file?.path}`, error)
     }
   }
 
   async #parseFile(result) {
-    const {file} = result
+    try {
+      const {file} = result
 
-    this.#debug("Parsing file %o", 2, file.path)
+      this.#debug("Parsing file %o", 2, file.path)
 
-    return await this.#parse.runAction(result)
+      return await this.#parse.runAction(result)
+    } catch(error) {
+      throw Sass.new(`Parsing file ${result?.file?.path}`, error)
+    }
   }
 
   async #validateContracts(parseResult) {
@@ -82,24 +86,24 @@ export default class Pipeline {
 
     this.#debug("Validating parse and print output for %o", 2, parseResult.file.path)
 
-    // Optional terms validation - only if terms are loaded
+    // Optional contract validation - only if contracts are loaded
     try {
-      if(this.#parse.terms) {
-        this.#parse.terms.validate(parseResult.value)
-        this.#debug("Parse terms validation passed", 3)
+      if(this.#parse.contract) {
+        this.#parse.contract.validate(parseResult.value)
+        this.#debug("Parse contract validation passed", 3)
       } else {
-        throw Sass.new("No contract terms for parser. Boo, how we supposed to know it's good?")
+        throw Sass.new("No contract for parser. Boo, how we supposed to know it's good?")
       }
     } catch(error) {
       throw Sass.new("Validating parse results with itself.", error)
     }
 
     try {
-      if(this.#print.terms) {
-        this.#print.terms.validate(parseResult.value)
-        this.#debug("Print terms validation passed", 3)
+      if(this.#print.contract) {
+        this.#print.contract.validate(parseResult.value)
+        this.#debug("Print contract validation passed", 3)
       } else {
-        throw Sass.new("No contract terms for parser. Seriously? Who's vetting this stuff?")
+        throw Sass.new("No contract for printer. Seriously? Who's vetting this stuff?")
       }
     } catch(error) {
       throw Sass.new("Validating parse results against printer expectation", error)
@@ -110,36 +114,44 @@ export default class Pipeline {
   }
 
   async #printFile({file,value}) {
-    this.#debug("Printing file %o", 2, file.path)
+    try {
+      this.#debug("Printing file %o", 2, file.path)
 
-    const printResult = await this.#print.runAction({
-      moduleName: file.module,
-      functions: value.functions,
-    })
+      const printResult = await this.#print.runAction({
+        moduleName: file.module,
+        functions: value.functions,
+      })
 
-    const {destFile, destContent} = printResult.value
-    const isNullish = value => value == null
+      const {destFile, destContent} = printResult.value
+      const isNullish = value => value == null
 
-    if(isNullish(destFile) || isNullish(destContent))
-      throw Sass.new(format("No content or destination file for %o", file.path))
+      if(isNullish(destFile) || isNullish(destContent))
+        throw Sass.new(format("No content or destination file for %o", file.path))
 
-    return {file: destFile,value: destContent}
+      return {file: destFile,value: destContent}
+    } catch(error) {
+      throw Sass.new(`Printing file ${file?.path}`, error)
+    }
   }
 
   async #writeOutput(context) {
-    if(!this.#output)
-      throw Sass.new("Output not specified. Writing skipped.")
-
-    const {file: destFile,value: destContent} = context
-    const outputFile = new FileObject(destFile, this.#output)
-    this.#debug("Writing to %o", 2, outputFile.path)
-
     try {
-      await outputFile.write(destContent)
+      if(!this.#output)
+        throw Sass.new("Output not specified. Writing skipped.")
 
-      return {file: outputFile, value: destContent.length}
+      const {file: destFile,value: destContent} = context
+      const outputFile = new FileObject(destFile, this.#output)
+      this.#debug("Writing to %o", 2, outputFile.path)
+
+      try {
+        await outputFile.write(destContent)
+
+        return {file: outputFile, value: destContent.length}
+      } catch(error) {
+        throw Sass.new(`Writing to ${outputFile.path}`, error)
+      }
     } catch(error) {
-      throw Sass.new(error)
+      throw Sass.new(`Writing output.`, error)
     }
   }
 

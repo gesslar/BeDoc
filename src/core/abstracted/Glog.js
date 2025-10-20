@@ -199,13 +199,17 @@ class Glog {
   }
 
   newDebug(tag) {
-    return function(message, level, ...arg) {
+    const debug = function(message, level, ...arg) {
       if(this.#stackTrace || Glog.stackTrace) {
         tag = this.extractFileFunction()
       }
 
       this.debug(`[${tag}] ${message}`, level, ...arg)
     }.bind(this)
+
+    debug.parent = this
+
+    return debug
   }
 
   // === LOGGING METHODS ===

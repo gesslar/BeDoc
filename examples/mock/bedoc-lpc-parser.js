@@ -307,7 +307,6 @@ export default class {
       result.description = item
         .description
         .map(d => d.groups.content)
-        .join("\n")
 
       const tags = item.tag || []
 

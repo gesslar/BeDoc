@@ -1,6 +1,5 @@
-import {Sass} from "@gesslar/toolkit"
-import Action from "./abstracted/Action.js"
-import Terms from "./abstracted/Terms.js"
+import {Contract, Sass,Terms} from "@gesslar/toolkit"
+import {Action} from "@gesslar/toolkit"
 
 // BeDoc-specific hook points
 export const HookPoints = Object.freeze({
@@ -21,34 +20,51 @@ export const HookPoints = Object.freeze({
  */
 export default class BeDocAction extends Action {
   #terms = null
+  #contract = null
 
   constructor({actionDefinition, variables, debug}) {
     super({actionDefinition, variables, debug})
 
     this.#terms = actionDefinition.terms
+    this.#contract = actionDefinition.contract
   }
 
   /**
    * Get the terms for this action
    *
-   * @returns {Terms|null} Terms instance or null if not loaded
+   * @returns {Terms?} Terms instance or null if not loaded
    */
   get terms() {
     return this.#terms
   }
 
   /**
+   * Get the contract for this action
+   *
+   * @returns {Contract?} Contract instance or null if not loaded
+   */
+  get contract() {
+    return this.#contract
+  }
+
+  /**
    * Set the terms for this action
    *
    * @param {Terms} terms - Terms instance
-   * @throws {Sass} If terms is not a Terms instance
+   * @throws {Sass} If terms is invalid
    */
   set terms(terms) {
-    if(terms && !(terms instanceof Terms)) {
-      throw Sass.new("Terms must be a Terms instance")
-    }
-
     this.#terms = terms
+  }
+
+  /**
+   * Set the contract for this action
+   *
+   * @param {Contract} contract - Contract instance
+   * @throws {Sass} If contract is invalid
+   */
+  set contract(contract) {
+    this.#contract = contract
   }
 
   /**

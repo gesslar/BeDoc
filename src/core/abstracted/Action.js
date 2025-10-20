@@ -2,7 +2,6 @@ import {Data, FileObject, Sass} from "@gesslar/toolkit"
 import ActionBuilder from "./ActionBuilder.js"
 import ActionRunner from "./ActionRunner.js"
 import Hooks from "./Hooks.js"
-import Terms from "./Terms.js"
 
 /**
  * Generic base class for managing actions with lifecycle hooks.
@@ -19,12 +18,12 @@ export default class Action {
   #debug
 
   /**
-   * Creates a new BaseActionManager instance.
+   * Creates a new Action instance.
    *
    * @param {object} config - Configuration object
    * @param {object} config.actionDefinition - Action definition containing action class and file info
    * @param {object} [config.variables] - Variables to pass to action during setup
-   * @param {import('../types.js').DebugFunction} config.debug - The logger's debug function
+   * @param {(message: string, level?: number, ...args: Array<unknown>) => void} config.debug - The logger's debug function
    */
   constructor({actionDefinition, variables, debug}) {
     this.#id = Symbol(performance.now())
@@ -122,13 +121,12 @@ export default class Action {
   /**
    * Setup the action by creating and configuring the runner.
    * This is the main public method to initialize the action for use.
-   * Calls setupHooks() an    const {action,file} = actionDefinitiond setupActionInstance() which can be overridden.
    *
    * @returns {Promise<this>} Promise of this instance.
    * @throws {Sass} If action setup fails
    */
   async setupAction() {
-    this.#debug("Setting up action for %o on %o", 2, this.#action.meta?.kind, this.id)
+    this.#debug("Setting up action for %o on %o", 2, this.#action.meta?.kind || "unknown", this.id)
 
     await this.#setupHooks()
     await this.#setupAction()
@@ -192,7 +190,7 @@ export default class Action {
    * @returns {Promise<this>} Promise of this instance.
    */
   async cleanupAction() {
-    this.#debug("Cleaning up action for %o on %o", 2, this.#action.meta?.kind, this.id)
+    this.#debug("Cleaning up action for %o on %o", 2, this.#action.meta?.kind || "unknown", this.id)
 
     await this.#cleanupHooks()
     await this.#cleanupAction()
@@ -271,12 +269,4 @@ export default class Action {
     return `${this.#file?.module || "UNDEFINED"} (${this.meta?.action || "UNDEFINED"})`
   }
 
-  /**
-   * Get contract/terms for this action (override in subclasses)
-   *
-   * @returns {Terms?} Contract terms or null if not implemented
-   */
-  get terms() {
-    return null
-  }
 }

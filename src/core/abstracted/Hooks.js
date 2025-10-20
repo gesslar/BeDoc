@@ -1,4 +1,4 @@
-import {FileObject, Sass, Valid} from "@gesslar/toolkit"
+import {FileObject, Sass, Util, Valid} from "@gesslar/toolkit"
 import {setTimeout as timeout} from "timers/promises"
 
 /**
@@ -19,15 +19,15 @@ export default class Hooks {
    * @param {object} config - Configuration object
    * @param {string} config.actionKind - Action identifier
    * @param {FileObject} config.hooksFile - File object containing hooks with uri property
-   * @param {number} [config.timeOut] - Hook execution timeout in milliseconds
+   * @param {number} [config.hookTimeout] - Hook execution timeout in milliseconds
    * @param {unknown} [config.hooks] - The hooks object
-   * @param {import('../types.js').DebugFunction} debug - Debug function from Glog.
+   * @param {(message: string, level?: number, ...args: Array<unknown>) => void} debug - Debug function from Glog.
    */
-  constructor({actionKind, hooksFile, hooks, timeOut = 1000}, debug) {
+  constructor({actionKind, hooksFile, hooks, hookTimeout = 1000}, debug) {
     this.#actionKind = actionKind
     this.#hooksFile = hooksFile
     this.#hooks = hooks
-    this.#timeout = timeOut
+    this.#timeout = hookTimeout
     this.#debug = debug
   }
 
@@ -94,7 +94,7 @@ export default class Hooks {
    * @param {string|object} config.actionKind - Action identifier or instance
    * @param {FileObject} config.hooksFile - File object containing hooks with uri property
    * @param {number} [config.timeOut] - Hook execution timeout in milliseconds
-   * @param {import('../types.js').DebugFunction} debug - The debug function.
+   * @param {(message: string, level?: number, ...args: Array<unknown>) => void} debug - The debug function.
    * @returns {Promise<Hooks|null>} Initialized hook manager or null if no hooks found
    */
   static async new(config, debug) {
@@ -123,6 +123,8 @@ export default class Hooks {
 
       const hooks = new hooksImport[actionKind]({debug})
 
+      debug(hooks.constructor.name, 4)
+
       // Attach common properties to hooks
       instance.#hooks = hooks
 
@@ -137,32 +139,52 @@ export default class Hooks {
   }
 
   async callHook(kind, activityName, context) {
-    const debug = this.#debug
-    const hooks = this.#hooks
+    try {
+      const debug = this.#debug
+      const hooks = this.#hooks
 
-    if(!hooks)
-      return
+      if(!hooks)
+        return
 
-    const hookName = `${kind}$${activityName}`
+      const hookName = `${kind}$${activityName}`
 
-    debug("Looking for hook: %o", 4, hookName)
+      debug("Looking for hook: %o", 4, hookName)
 
-    const hook = hooks[hookName]
-    if(!hook)
-      return
+      const hook = hooks[hookName]
+      if(!hook)
+        return
 
-    debug("Triggering hook: %o", 4, hookName)
-    Valid.type(hook, "Function", `Hook "${hookName}" is not a function`)
+      debug("Triggering hook: %o", 4, hookName)
+      Valid.type(hook, "Function", `Hook "${hookName}" is not a function`)
 
-    const hookExecution = await hook.call(this.#hooks, context)
-    const hookTimeout = this.timeout
+      const hookFunction = async() => {
+        debug("Hook function starting execution: %o", 4, hookName)
 
-    const expireAsync = () =>
-      timeout(
-        hookTimeout,
-        Sass.new(`Hook ${hookName} execution exceeded timeout of ${hookTimeout}ms`)
-      )
+        const duration = (await Util.time(() => hook.call(this.#hooks, context))).cost
 
-    await Promise.race([hookExecution, expireAsync()])
+        debug("Hook function completed successfully: %o, after %oms", 4, hookName, duration)
+      }
+
+      const hookTimeout = this.timeout
+      const expireAsync = (async() => {
+        await timeout(hookTimeout)
+        throw Sass.new(`Hook ${hookName} execution exceeded timeout of ${hookTimeout}ms`)
+      })()
+
+      try {
+        debug("Starting Promise race for hook: %o", 4, hookName)
+        await Util.race([
+          hookFunction(),
+          expireAsync
+        ])
+      } catch(error) {
+        throw Sass.new(`Processing hook ${kind}$${activityName}`, error)
+      }
+
+      debug("We made it throoough the wildernessss", 4)
+
+    } catch(error) {
+      throw Sass.new(`Processing hook ${kind}$${activityName}`, error)
+    }
   }
 }

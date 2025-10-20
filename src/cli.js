@@ -92,7 +92,7 @@ void (async() => {
       }
     }
 
-    const filesToProcess = bedoc.options.input.map(f => f.path)
+    const filesToProcess = bedoc.options.include.map(f => f.path)
     await bedoc.processFiles(filesToProcess)
 
     process.exit(0)
