@@ -15,9 +15,11 @@
  */
 
 import {Collection, Data, Util} from "@gesslar/toolkit"
-import {ACTIVITY} from "../../src/core/abstracted/ActionBuilder.js"
+import {ActionBuilder, ACTIVITY} from "@gesslar/actioneer"
 
-/** @typedef {import("../../src/core/abstracted/ActionBuilder.js").default} ActionBuilder */
+const {UNTIL} = ACTIVITY
+
+/** @typedef {import("@gesslar/actioneer").ActionBuilder} ActionBuilder */
 
 /**
  * LPC Parser Class - Parses LPC files to extract function documentation.
@@ -62,30 +64,27 @@ export default class {
    * @see ActionBuilder
    */
 
-  setup = builder => builder
+  setup = ab => ab
     // Get all of the blocks from the text
-    .act("functions", ACTIVITY.ONCE, this.#extractBlocks)
+    .do("Extract function blocks", this.#extractBlocks)
     // Because the previous activity results in an array, we can now run
     // all of the blocks through the extraction process in parallel!
-    .parallel(parallel => {
+    .do("Process blocks", new ActionBuilder(this)
       // Extraction methods for each block
-      parallel
-        .act("description", ACTIVITY.ONCE, this.#extractDescription,
-          {after: curr => {
-            curr.description = curr.description.map(d => {
-              d.groups.content = d.groups.content.toUpperCase()
-
-              return d
-            })
-          }}
-        )
-        .act("tag", ACTIVITY.MANY, this.#extractTag)
-        .act("return", ACTIVITY.ONCE, this.#extractReturn)
-
-      return parallel
-    })
-    // Wrap it OOP!
-    .act("finally", ACTIVITY.ONCE, this.#finally)
+      .do("Extract description", this.#extractDescription, {
+        after: curr => {
+          curr.description = curr.description.map(d => {
+            d.groups.content = d.groups.content.toUpperCase()
+            return d
+          })
+        }
+      })
+      .do("Extract tags", UNTIL, this.#noMoreTags, this.#extractTag)
+      .do("Extract return", this.#extractReturn)
+      .build()
+    )
+    // Finalize results
+    .do("Finalize", this.#finally)
 
   async #extractBlocks(curr) {
     curr.value = Data.appendString(curr.value, "\n")
@@ -171,6 +170,18 @@ export default class {
     )
 
     return true
+  }
+
+  /**
+   * Predicate to check if there are more tags to extract
+   * @param {object} curr - Current context
+   * @returns {boolean} True if more tags exist
+   * @private
+   */
+  #noMoreTags = curr => {
+    const text = curr.lines.join("\n")
+    const tagTest = this.#regexes.get("tag")
+    return tagTest.test(text)
   }
 
   /**

@@ -1,6 +1,6 @@
 import {FileObject, Sass} from "@gesslar/toolkit"
 import {format} from "node:util"
-import {Piper} from "@gesslar/toolkit"
+import {Piper} from "@gesslar/actioneer"
 
 export default class Pipeline {
   #pipeline

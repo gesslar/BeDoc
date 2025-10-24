@@ -1,4 +1,4 @@
-import {Data, DirectoryObject, FileObject, FS, Sass} from "@gesslar/toolkit"
+import {Data, DirectoryObject, FileObject, FS, Sass, Tantrum, Util} from "@gesslar/toolkit"
 import {exec as execCallback} from "child_process"
 import {promisify} from "util"
 
@@ -6,95 +6,95 @@ import Actions from "./Actions.js"
 
 const exec = promisify(execCallback)
 
+/** @typedef {import("@gesslar/actioneer").ActionBuilder} ActionBuilder */
+
 export default class Discovery {
-  #core
+  static meta = Object.freeze({
+    name: "Discovery"
+  })
+
   #debug
+  #config
+  #project
 
-  constructor(core) {
-    this.#core = core
-    this.#debug = core.debug
-  }
-
-  get core() {
-    return this.#core
+  constructor({debug, config, project}) {
+    this.#config = config
+    this.#debug = debug ?? (() => {})
+    this.#project = project
   }
 
   /**
-   * Discovers, loads, validates and groups actions from various sources
+   * Sets up the discovery pipeline using ActionBuilder
    *
-   * @param {object} [specific] - Specific action modules to load
-   * @param {FileObject} [specific.print] - Specific print action file
-   * @param {FileObject} [specific.parse] - Specific parse action file
-   * @returns {Promise<object>} Discovered actions grouped by type
+   * @param {ActionBuilder} ab - ActionBuilder instance
+   * @returns {ActionBuilder} Configured builder
    */
-  async discoverActions(specific = {}) {
-    const debug = this.#debug
+  setup = ab => ab
+    .do("Shuffle things around", this.#reorderContext)
+    .do("Discover action files", this.#discoverActionFiles)
+    .do("Load action modules", this.#loadActions)
+    .do("Find matching actions", this.#findMatchingActions)
+    .do("Validate action metadata", this.#validateActionsMetas)
+    .do("Group actions by type", this.#groupActionsByType)
 
-    debug("Discovering actions", 2)
-    debug("Specific modules provided: %o", 2,
-      Object.values(specific).filter(Boolean).length
-    )
-    debug("Specific modules provided: %o", 3, specific)
+  async #reorderContext(context) {
+    const {value} = context
 
-    // Find all action files from various sources
-    const files = await this.#discoverActionFiles()
+    // Ok, so this will be the results of the initialisation which
+    // is the validated config. It also includes the logger, which we
+    // should separate out.
+    this.#debug = value.logging.debug
+    delete value.logging
 
-    debug("Discovered %o module files", 2, files.length)
+    // Everything else is the config. Let's move that into its own
+    // within value. Just a bit of mutation. NBD.
+    Object.assign(context, {value: {config: value}})
 
-    // Load the action modules
-    const loadedActions = await this.#loadActions(files, specific)
-
-    // Filter to matching actions only
-    const matched = this.#findMatchingActions(loadedActions, specific)
-
-    // Validate action metadata
-    const validated = this.#validateActionsMetas(matched)
-
-    // Group by action type
-    const grouped = this.#groupActionsByType(validated)
-
-    return grouped
+    return context
   }
-
   /**
    * Discovers action files from mock directory, project package.json,
    * or node_modules (local and global)
    *
-   * @returns {Promise<Array<FileObject>>} Array of discovered action files
+   * @param {object} context - Current context with config and debug
+   * @returns {Promise<boolean>} True on success
    */
-  async #discoverActionFiles() {
-    const debug = this.#debug
-    const options = this.#core.options ?? {}
+  async #discoverActionFiles(context) {
+    const {config} = context.value
 
-    if(options.mock) {
-      return await this.#discoverMockActions(options.mock.path)
+    if(config.mock) {
+      context.mockFiles = await this.#discoverMockActions(config.mock)
+
+      return context
     }
 
-    debug("Mock path not set, discovering actions in node_modules", 2)
-
-    const files = []
+    this.#debug("Mock path not set, discovering actions in node_modules", 2)
 
     // Check project's package.json for exported actions
-    const projectActions = await this.#discoverProjectActions(options)
-    files.push(...projectActions)
+    const projectActions = config.packageJson
+      ? await this.#discoverProjectActions(config.basePath, config.project)
+      : []
 
     // Search node_modules (local and global)
     const nodeModulesActions = await this.#discoverNodeModulesActions()
-    files.push(...nodeModulesActions)
 
-    return files
+    const moduleActions = [...projectActions,...nodeModulesActions].flat()
+
+    this.#debug("Discovered %o module files", 2, moduleActions.length)
+
+    context.moduleActions = moduleActions
+
+    return context
   }
 
   /**
    * Discovers action files in the mock directory
    *
-   * @param {string} mockPath - Path to mock directory
+   * @param mockPath
    * @returns {Promise<Array<FileObject>>} Array of mock action files
    */
   async #discoverMockActions(mockPath) {
-    const debug = this.#debug
-
-    debug("Discovering mock actions in %o", 2, mockPath)
+    this.#debug("Discovering mock actions in %o", 2, mockPath)
 
     return await FS.getFiles([
       `${mockPath}/bedoc-*-printer.js`,
@@ -105,26 +105,22 @@ export default class Discovery {
   /**
    * Discovers actions exported in the project's package.json
    *
-   * @param {object} options - Core options
+   * @param basePath
+   * @param packageJson
    * @returns {Promise<Array<FileObject>>} Array of project action files
    */
-  async #discoverProjectActions(options) {
-    const debug = this.#debug
+  async #discoverProjectActions(basePath, packageJson) {
+    this.#debug("Looking for actions in project's package.json", 2)
 
-    debug("Looking for actions in project's package.json", 2)
-
-    if(!this.core.packageJson) {
-      debug("No modules found in project's package.json", 2)
-
-      return []
-    }
-
-    const exported = (this.core.packageJson.actions || [])
-      .map(m => new FileObject(m, options.basePath))
+    const exported = (packageJson.actions ?? [])
+      .map(action => new FileObject(action,basePath))
       .flat()
 
-    debug("Found %o modules in project's package.json", 2, exported.length)
-    debug("Found modules in project's package.json: %o", 3, exported)
+    this.#debug(
+      "Found %o modules in project's package.json", 2, exported.length
+    )
+
+    this.#debug("Found modules in project's package.json: %o", 3, exported)
 
     return exported
   }
@@ -135,36 +131,37 @@ export default class Discovery {
    * @returns {Promise<Array<FileObject>>} Array of node_modules action files
    */
   async #discoverNodeModulesActions() {
-    const debug = this.#debug
+    this.#debug("Looking for modules in node_modules (local and global)", 2)
 
-    debug("Looking for modules in node_modules (local and global)", 2)
+    const dirs = await this.#discoverNodeDirectories()
+    const settled = await Util.settleAll(dirs.map(
+      d => this.#searchNodeModulesDir(d)
+    ))
 
+    const rejected = settled.filter(r => r.state === "rejected")
+    if(rejected.length)
+      throw Tantrum.new("Searching for compatible Node nodules", rejected.map(r => r.reason))
+
+    return settled.map(s => s.value)
+  }
+
+  async #discoverNodeDirectories() {
     // Get npm root paths asynchronously
-    const [localResult, globalResult] = await Promise.all([
-      exec("npm root").catch(() => ({stdout: ""})),
-      exec("npm root -g").catch(() => ({stdout: ""}))
-    ])
+    const settled = await Util.settleAll([exec("npm root"),exec("npm root -g")])
 
-    const directories = [
-      localResult.stdout.trim(),
-      globalResult.stdout.trim()
-    ]
+    const rejected = settled.filter(r => r.state === "rejected")
+    if(rejected.length > 0)
+      throw Tantrum.new("Discovering Node.js module paths.", rejected.map(r => r.reason))
+
+    const directories = settled
+      .map(r => r.value.stdout?.trim())
       .filter(Boolean)
-      .map(d => new DirectoryObject(d))
+      .map(r => new DirectoryObject(r))
 
-    const nodeModulesDirs = await Data.asyncFilter(directories, d => d.exists)
+    this.#debug("Found %o directories to search", 2, directories.length)
+    this.#debug("Directories to search: %o", 3, directories.map(d => d.path))
 
-    debug("Found %o directories to search", 2, nodeModulesDirs.length)
-    debug("Directories to search: %o", 3, nodeModulesDirs.map(d => d.path))
-
-    const files = []
-
-    for(const nodeModulesDir of nodeModulesDirs) {
-      const discovered = await this.#searchNodeModulesDir(nodeModulesDir)
-      files.push(...discovered)
-    }
-
-    return files
+    return directories
   }
 
   /**
@@ -174,20 +171,19 @@ export default class Discovery {
    * @returns {Promise<Array<FileObject>>} Array of discovered action files
    */
   async #searchNodeModulesDir(nodeModulesDir) {
-    const debug = this.#debug
     const files = []
 
     const {directories: moduleDirs} = await nodeModulesDir.read()
 
-    debug("Found %o directories in %o", 2,
+    this.#debug("Found %o directories in %o", 2,
       moduleDirs.length, nodeModulesDir.path
     )
 
     // Build list of directories to search (including scoped packages)
     const dirsToSearch = await this.#expandScopedPackages(moduleDirs)
 
-    debug("Total directories to search: %o", 2, dirsToSearch.length)
-    debug("Directories to search: %o", 3, dirsToSearch.map(d => d.path))
+    this.#debug("Total directories to search: %o", 2, dirsToSearch.length)
+    this.#debug("Directories to search: %o", 3, dirsToSearch.map(d => d.path))
 
     // Filter out hidden directories and search for BeDoc actions
     const visibleDirs = dirsToSearch.filter(d => !d.name.startsWith("."))
@@ -207,7 +203,6 @@ export default class Discovery {
    * @returns {Promise<Array<DirectoryObject>>} Expanded directory list
    */
   async #expandScopedPackages(moduleDirs) {
-    const debug = this.#debug
     const dirsToSearch = [...moduleDirs]
 
     // Find scoped packages (directories starting with @)
@@ -217,10 +212,10 @@ export default class Discovery {
     for(const scopedDir of scopedDirs) {
       const {directories: scopedPackages} = await scopedDir.read()
 
-      debug("Found %o packages under scoped package %o", 2,
+      this.#debug("Found %o packages under scoped package %o", 2,
         scopedPackages.length, scopedDir.name
       )
-      debug("Packages under %o: %o", 3,
+      this.#debug("Packages under %o: %o", 3,
         scopedDir.path, scopedPackages.map(d => d.path)
       )
 
@@ -237,7 +232,6 @@ export default class Discovery {
    * @returns {Promise<Array<FileObject>>} Array of action files found
    */
   async #extractActionsFromPackage(dir) {
-    const debug = this.#debug
     const packageJsonFile = new FileObject("package.json", dir)
 
     if(!await packageJsonFile.exists)
@@ -258,10 +252,10 @@ export default class Discovery {
       moduleFileObjects, f => f.exists
     )
 
-    debug("Discovered %o modules from package.json: %o", 2,
+    this.#debug("Discovered %o modules from package.json: %o", 2,
       actions.length, packageJsonFile.path
     )
-    debug("Discovered action files: %o", 3, actionObjects.map(f => f.uri))
+    this.#debug("Discovered action files: %o", 3, actionObjects.map(f => f.uri))
 
     return actionObjects
   }
@@ -269,33 +263,38 @@ export default class Discovery {
   /**
    * Loads action modules from files and tags specific modules
    *
-   * @param {Array<FileObject>} moduleFiles - Module files to load
-   * @param {object} specificModules - Specific modules to tag and load
-   * @returns {Promise<Array<object>>} Array of loaded actions
+   * @param {object} context - Current context with files
+   * @returns {Promise<object>} Context with loaded actions
    */
-  async #loadActions(moduleFiles, specificModules) {
-    const debug = this.#debug
+  async #loadActions(context) {
+    const {config} = context.value
+    const {moduleActions} = context
 
-    debug("Loading actions from %o module files", 2, moduleFiles.length)
+    const specificModules = {
+      parse: config.parse,
+      print: config.print
+    }
+
+    this.#debug("Loading actions from %o module files", 2, moduleActions.length)
 
     // Tag specific modules so they can be prioritized during matching
     this.#tagSpecificModules(specificModules)
 
     // Combine all modules to load
     const toLoad = [
-      ...moduleFiles,
+      ...moduleActions,
       ...Object.values(specificModules).filter(Boolean),
     ]
 
-    debug("Total modules to load: %o", 2, toLoad.length)
-    debug("Modules to load: %o", 3, toLoad.map(f => f.uri))
+    this.#debug("Total modules to load: %o", 2, toLoad.length)
+    this.#debug("Modules to load: %o", 3, toLoad.map(f => f.uri))
 
     const loadedActions = []
 
     for(const file of toLoad) {
-      debug("Loading module %o", 2, file.uri)
+      this.#debug("Loading module %o", 2, file.uri)
 
-      const module = await this.#loadModule(file)
+      const module = await file.import()
       const action = module?.default
 
       if(!action)
@@ -306,7 +305,9 @@ export default class Discovery {
       loadedActions.push({file, action})
     }
 
-    return loadedActions
+    context.value = {loadedActions, specificModules}
+
+    return context
   }
 
   /**
@@ -316,11 +317,9 @@ export default class Discovery {
    * @returns {void}
    */
   #tagSpecificModules(specificModules) {
-    const debug = this.#debug
-
     for(const [kind, file] of Object.entries(specificModules)) {
       if(file) {
-        debug("Tagging specific module %o as %o", 3, file.path, kind)
+        this.#debug("Tagging specific module %o as %o", 3, file.path, kind)
         file.specificType = file.specificType || []
         file.specificType.push(kind)
       }
@@ -328,29 +327,16 @@ export default class Discovery {
   }
 
   /**
-   * Loads a module file and returns the imported module
-   *
-   * @param {FileObject} file - File to load
-   * @returns {Promise<object>} The imported module
-   */
-  async #loadModule(file) {
-    this.#debug("Loading module `%o`", 3, file.uri)
-
-    return await file.import()
-  }
-
-  /**
    * Finds actions matching the requested types (specific or all)
    *
-   * @param {Array<object>} loadedActions - All loaded actions
-   * @param {object} specificModules - Specific modules requested
-   * @returns {Array<object>} Matching actions
+   * @param {object} context - Current context with loadedActions and specificModules
+   * @returns {object} Context with matching actions
    */
-  #findMatchingActions(loadedActions, specificModules) {
-    const debug = this.#debug
+  #findMatchingActions(context) {
+    const {loadedActions, specificModules} = context.value
     const actions = []
 
-    debug("Determining matching actions from loaded modules", 2)
+    this.#debug("Determining matching actions from loaded modules", 2)
 
     for(const actionType of Actions.actionTypes) {
       const module = specificModules[actionType]
@@ -370,16 +356,18 @@ export default class Discovery {
         matchingActions.push(...found)
       }
 
-      debug("Total matching %o actions: %o", 2,
+      this.#debug("Total matching %o actions: %o", 2,
         actionType, matchingActions.length
       )
 
       actions.push(...matchingActions)
     }
 
-    debug("Found %o total matching actions", 2, actions.length)
+    this.#debug("Found %o total matching actions", 2, actions.length)
 
-    return actions
+    context.value = {actions}
+
+    return context
   }
 
   /**
@@ -392,9 +380,7 @@ export default class Discovery {
    * @throws {Error} If the specific action is not found
    */
   #findSpecificAction(loadedActions, actionType, module) {
-    const debug = this.#debug
-
-    debug("Filtering for specifically tagged %o actions", 2, actionType)
+    this.#debug("Filtering for specifically tagged %o actions", 2, actionType)
 
     const found = loadedActions.find(
       e =>
@@ -413,46 +399,47 @@ export default class Discovery {
   /**
    * Validates action metadata and filters invalid actions
    *
-   * @param {Array<object>} loadedActions - Actions to validate
-   * @returns {Array<object>} Valid actions only
+   * @param {object} context - Current context with actions
+   * @returns {object} Context with validated actions
    */
-  #validateActionsMetas(loadedActions) {
-    const debug = this.#debug
+  #validateActionsMetas(context) {
+    const {actions: loadedActions} = context.value
 
-    return loadedActions.filter(loadedAction => {
+    const validatedActions = loadedActions.filter(loadedAction => {
       const {action, file} = loadedAction
       const metaKind = action.meta.kind
 
-      debug("Checking validity of %o action %o", 2, metaKind, file.uri)
+      this.#debug("Checking validity of %o action %o", 2, metaKind, file.uri)
 
-      const isValid = this.#validMeta(metaKind, {action})
+      const isValid = this.#validMeta(metaKind, action)
 
-      debug("Meta in %o is %o", 3,
+      this.#debug("Meta in %o is %o", 3,
         file.module, isValid ? "valid" : "invalid"
       )
 
       if(isValid) {
-        debug("%o contains a valid %o action", 3, file.uri, metaKind)
+        this.#debug("%o contains a valid %o action", 3, file.uri, metaKind)
       } else {
-        debug("Action is not a valid %o action", 3, metaKind)
+        this.#debug("Action is not a valid %o action", 3, metaKind)
       }
 
       return isValid
     })
+
+    context.value = {validatedActions}
+
+    return context
   }
 
   /**
    * Validates action metadata against requirements
    *
    * @param {string} actionType - Type of action to validate
-   * @param {object} toValidate - Object containing action to validate
-   * @param {object} toValidate.action - The action to validate
+   * @param {object} action - The action to validate
    * @returns {boolean} True if action meets all requirements
    */
-  #validMeta(actionType, toValidate) {
-    const debug = this.#debug
-
-    debug("Checking meta requirements for %o", 3, actionType)
+  #validMeta(actionType, action) {
+    this.#debug("Checking meta requirements for %o", 3, actionType)
 
     const requirements = Actions.actionMetaRequirements[actionType]
 
@@ -465,21 +452,21 @@ export default class Discovery {
       if(Data.isType(requirement, "Object")) {
         // Requirement is key-value pair that must match
         for(const [key, value] of Object.entries(requirement)) {
-          debug("Checking object requirement %o", 4, {key, value})
+          this.#debug("Checking object requirement %o", 4, {key, value})
 
-          if(toValidate.action.meta[key] !== value)
+          if(action.meta[key] !== value)
             return false
 
-          debug("Requirement met: %o", 4, {key, value})
+          this.#debug("Requirement met: %o", 4, {key, value})
         }
       } else if(Data.isType(requirement, "String")) {
         // Requirement is a property that must exist
-        debug("Checking string requirement: %o", 4, requirement)
+        this.#debug("Checking string requirement: %o", 4, requirement)
 
-        if(!toValidate.action.meta[requirement])
+        if(!action.meta[requirement])
           return false
 
-        debug("Requirement met: %o", 4, requirement)
+        this.#debug("Requirement met: %o", 4, requirement)
       }
     }
 
@@ -489,22 +476,26 @@ export default class Discovery {
   /**
    * Groups validated actions by their type
    *
-   * @param {Array<object>} validatedActions - Validated actions to group
-   * @returns {object} Actions grouped by type (parse, print, etc.)
+   * @param {object} context - Current context with validatedActions
+   * @returns {object} Context with grouped actions
    */
-  #groupActionsByType(validatedActions) {
-    const debug = this.#debug
+  #groupActionsByType(context) {
+    const {validatedActions} = context.value
 
-    const grouped = Actions.actionTypes.reduce((acc, curr) => {
-      acc[curr] = validatedActions.filter(a => a.action.meta.kind === curr)
+    const grouped = Actions.actionTypes.reduce((acc, actionType) => {
+      acc[actionType] = validatedActions.filter(
+        a => a.action.meta.kind === actionType
+      )
 
       return acc
     }, {})
 
-    debug("Grouped actions: %o", 3,
+    this.#debug("Grouped actions: %o", 3,
       Object.entries(grouped).map(([k, v]) => `${k}: ${v.length}`)
     )
 
-    return grouped
+    context.value = grouped
+
+    return context
   }
 }

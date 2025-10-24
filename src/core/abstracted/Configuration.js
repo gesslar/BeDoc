@@ -2,11 +2,8 @@ import {Collection, Data, DirectoryObject, FileObject, FS, Tantrum, Util} from "
 import JSON5 from "json5"
 import process from "node:process"
 
-import {
-  ConfigurationParameters,
-  ConfigurationPriorityKeys,
-} from "./ConfigurationParameters.js"
-import {ENVIRONMENT} from "../Core.js"
+import ConfigParams from "../ConfigParams.js"
+import ENV from "../Env.js"
 
 export default class Configuration {
   async validate({options, source}) {
@@ -41,20 +38,21 @@ export default class Configuration {
 
     // Priority keys are those which must be processed first. They are
     // specified in order of priority.
+    //
     // Find them and add them to an array; the rest will be in pushed to the
     // end of the priority array.
     const orderedSections = []
 
-    ConfigurationPriorityKeys.forEach(key => {
-      if(!ConfigurationParameters[key])
+    ConfigParams.priority.forEach(key => {
+      if(!ConfigParams.parameters[key])
         throw new Error(`Invalid priority key: ${key}`)
 
       if(finalOptions[key])
         orderedSections.push({key, value: finalOptions[key]})
     })
 
-    const remainingSections = Object.keys(ConfigurationParameters).filter(
-      key => !ConfigurationPriorityKeys.includes(key),
+    const remainingSections = Object.keys(ConfigParams.parameters).filter(
+      key => !ConfigParams.priority.includes(key),
     )
 
     orderedSections.push(
@@ -64,7 +62,7 @@ export default class Configuration {
     )
 
     // Check exclusive options
-    for(const [key, param] of Object.entries(ConfigurationParameters)) {
+    for(const [key, param] of Object.entries(ConfigParams.parameters)) {
       if(
         param.exclusiveOf &&
         finalOptions[key] &&
@@ -76,7 +74,7 @@ export default class Configuration {
     }
 
     // Check for mandatory values
-    for(const [key, {required}] of Object.entries(ConfigurationParameters)) {
+    for(const [key, {required}] of Object.entries(ConfigParams.parameters)) {
       if(required && !orderedSections.find(s => s.key === key))
         throw new SyntaxError(`Missing mandatory key \`${key}\``)
     }
@@ -90,7 +88,7 @@ export default class Configuration {
 
       let {value} = section
       const nothing = Data.isNothing(value)
-      const param = ConfigurationParameters[key]
+      const param = ConfigParams.parameters[key]
       const {required, path} = param
 
       if(nothing) {
@@ -149,7 +147,7 @@ export default class Configuration {
 
   #mapEntryOptions({options = {}, source}) {
     // CLI already has done all the work via commander
-    if(source === ENVIRONMENT.CLI)
+    if(source === ENV.CLI)
       return options
 
     for(const [key, value] of Object.entries(options)) {
@@ -165,7 +163,7 @@ export default class Configuration {
       options.basePath = {value: dir, source}
 
     // Add defaults which are missing
-    for(const [key, param] of Object.entries(ConfigurationParameters)) {
+    for(const [key, param] of Object.entries(ConfigParams.parameters)) {
       if(options[key] === undefined && param.default !== undefined)
         options[key] = {value: param.default, source: "default"}
     }
@@ -182,7 +180,7 @@ export default class Configuration {
   #validateConfigurationParameters() {
     const errors = []
 
-    for(const [key, param] of Object.entries(ConfigurationParameters)) {
+    for(const [key, param] of Object.entries(ConfigParams.parameters)) {
       // Type
       if(!param.type) {
         errors.push(`Option \`${key}\` has no type`)
@@ -296,7 +294,7 @@ export default class Configuration {
    */
   #getEnvironmentVariables() {
     const environmentVariables = {}
-    const params = Object.keys(ConfigurationParameters).map(param => {
+    const params = Object.keys(ConfigParams.parameters).map(param => {
       return {
         param,
         env: `bedoc_${param}`.toUpperCase(),
@@ -370,17 +368,17 @@ export default class Configuration {
    * @param {object} options - The options to fix.
    */
   #fixOptionValues(options) {
-    for(const [key, param] of Object.entries(ConfigurationParameters)) {
+    for(const [key, param] of Object.entries(ConfigParams.parameters)) {
       // If the options passed includes this configuration parameter
       if(options[key]) {
-        if(typeof options[key] === "string" && param.type !== "string") {
-          switch(param.type.toString()) {
-            case "boolean":
-            case "number":
-              options[key] = JSON5.parse(options[key])
-              break
-          }
-        }
+        const option = options[key]
+        const type = Data.typeOf(option)
+        const matches = param.type.matches(option)
+
+        // Ok, since we're a string, we'll just have to infer using
+        // the magic of JSON5. Wish us luck!
+        if(!matches && type === "String")
+          options[key] = JSON5.parse(option)
       }
     }
   }

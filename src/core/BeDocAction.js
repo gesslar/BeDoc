@@ -1,5 +1,5 @@
-import {Contract, Sass,Terms} from "@gesslar/toolkit"
-import {Action} from "@gesslar/toolkit"
+import {Contract, Sass, Terms} from "@gesslar/toolkit"
+import {ActionBuilder, ActionRunner} from "@gesslar/actioneer"
 
 // BeDoc-specific hook points
 export const HookPoints = Object.freeze({
@@ -15,18 +15,104 @@ export const HookPoints = Object.freeze({
 })
 
 /**
- * BeDoc-specific action base class that extends the generic Action class.
+ * BeDoc-specific action base class that manages actions with lifecycle hooks.
  * Adds BeDoc-specific functionality like contract terms management and hook points.
  */
-export default class BeDocAction extends Action {
+export default class BeDocAction {
+  #action = null
+  #file = null
+  #variables = null
+  #runner = null
+  #id = null
+  #debug
   #terms = null
   #contract = null
 
   constructor({actionDefinition, variables, debug}) {
-    super({actionDefinition, variables, debug})
+    this.#id = Symbol(performance.now())
+    this.#variables = variables || {}
+    this.#debug = debug
 
+    const {action, file} = actionDefinition
+    this.#action = action
+    this.#file = file
     this.#terms = actionDefinition.terms
     this.#contract = actionDefinition.contract
+  }
+
+  /**
+   * Gets the unique identifier for this action manager instance.
+   *
+   * @returns {symbol} Unique symbol identifier
+   */
+  get id() {
+    return this.#id
+  }
+
+  /**
+   * Gets the action class constructor.
+   *
+   * @returns {new () => object} Action class constructor
+   */
+  get action() {
+    return this.#action
+  }
+
+  /**
+   * Sets hooks for the ActionRunner.
+   * Delegates to ActionRunner's setHooks method.
+   *
+   * @param {string} hooksPath - Path to hooks file
+   * @param {string} className - Name of the hooks class to instantiate
+   * @returns {this} This instance for chaining
+   * @throws {Sass} If runner not set up yet
+   */
+  setHooks(hooksPath, className) {
+    if(!this.#runner)
+      throw Sass.new(
+        "Cannot set hooks before action is set up. Call setupAction() first."
+      )
+
+    // Delegate to ActionRunner's setHooks method
+    this.#runner.setHooks(hooksPath, className)
+
+    return this
+  }
+
+  /**
+   * Gets the action metadata.
+   *
+   * @returns {object|undefined} Action metadata object
+   */
+  get meta() {
+    return this.#action?.meta
+  }
+
+  /**
+   * Gets the variables passed to the action.
+   *
+   * @returns {object} Variables object
+   */
+  get variables() {
+    return this.#variables
+  }
+
+  /**
+   * Gets the action runner instance.
+   *
+   * @returns {ActionRunner?} ActionRunner instance or null if not set up
+   */
+  get runner() {
+    return this.#runner
+  }
+
+  /**
+   * Gets the file information object.
+   *
+   * @returns {FileObject?} File information object
+   */
+  get file() {
+    return this.#file
   }
 
   /**
@@ -68,48 +154,88 @@ export default class BeDocAction extends Action {
   }
 
   /**
-   * Attach hooks to the action instance with BeDoc-specific hook points.
+   * Setup the action by creating the ActionRunner.
+   * This is the main public method to initialize the action for use.
    *
-   * @param {import('./abstracted/Hooks.js').default} hookManager - Hook manager instance
-   * @protected
-   * @override
+   * @returns {Promise<this>} Promise of this instance.
+   * @throws {Sass} If action setup fails
    */
-  attachHooksToAction(hookManager) {
-    // Call parent method for basic hook attachment
-    super.attachHooksToAction?.(hookManager)
+  async setupAction() {
+    this.#debug(
+      "Setting up action for %o on %o",
+      2,
+      this.#action.meta?.kind || "unknown",
+      this.id
+    )
 
-    // Add BeDoc-specific hook points
-    this.action.hook = hookManager.on?.bind(hookManager)
-    this.action.HOOKS = HookPoints
-    this.action.hooks = hookManager.hooks
+    await this.#setupAction()
+
+    return this
   }
 
   /**
-   * Setup hooks with BeDoc-specific context.
+   * Setup the action instance and create the runner.
+   * Uses ActionBuilder to build the action wrapper, then creates ActionRunner.
    *
    * @returns {Promise<void>}
-   * @protected
-   * @override
+   * @throws {Sass} If action setup method is not a function
+   * @private
    */
-  async setupHooks() {
-    const setup = this.hooks?.setup
+  async #setupAction() {
+    try {
+      // Instantiate the action class
+      const actionInstance = new this.#action()
 
-    if(!setup)
-      return
+      // Use ActionBuilder to build the action wrapper
+      // ActionBuilder.build() returns an ActionWrapper
+      const actionWrapper = new ActionBuilder(
+        actionInstance,
+        {debug: this.#debug}
+      ).build()
 
-    if(typeof setup !== "function") {
-      throw Sass.new("Hook setup must be a function.")
+      // Create ActionRunner with the wrapped action
+      // ActionRunner extends Piper and handles execution
+      this.#runner = new ActionRunner(actionWrapper, {debug: this.#debug})
+
+    } catch(error) {
+      throw Sass.new("Setting up action", error)
     }
+  }
 
-    // Call setup with BeDoc-specific context
-    await setup.call(this.hooks.hooks, {
-      action: this.action,
-      variables: this.variables,
-      actionType: this.meta?.kind,
-      actionName: this.meta?.name,
-      terms: this.#terms,
-      hookPoints: HookPoints
-    })
+  /**
+   * Run the action with the provided input.
+   * The action must be set up via setupAction() before calling this method.
+   *
+   * @param {unknown} context - Input data to pass to the action runner
+   * @returns {Promise<unknown>} Result from the action execution
+   * @throws {Sass} If action is not set up
+   */
+  async runAction(context) {
+    if(!this.#runner)
+      throw Sass.new("Action not set up. Call setupAction() first.")
+
+    return await this.#runner.run(context)
+  }
+
+  /**
+   * Cleanup the action.
+   * ActionRunner (via Piper) handles its own lifecycle through
+   * addSetup/addCleanup hooks.
+   *
+   * @returns {Promise<this>} Promise of this instance.
+   */
+  async cleanupAction() {
+    this.#debug(
+      "Cleaning up action for %o on %o",
+      2,
+      this.#action.meta?.kind || "unknown",
+      this.id
+    )
+
+    // ActionRunner's cleanup happens automatically via its Piper lifecycle
+    // Subclasses can override this for additional BeDoc-specific cleanup
+
+    return this
   }
 
   /**

@@ -1,7 +1,9 @@
-import { Data, Sass } from "@gesslar/toolkit"
-import {ACTIVITY} from "../../src/core/abstracted/ActionBuilder.js"
+import {Data, Sass} from "@gesslar/toolkit"
+import {ACTIVITY} from "@gesslar/actioneer"
 
-/** @typedef {import("../../src/core/abstracted/ActionBuilder.js").default} ActionBuilder */
+const {UNTIL} = ACTIVITY
+
+/** @typedef {import("@gesslar/actioneer").ActionBuilder} ActionBuilder */
 
 export default class {
   static meta = Object.freeze({
@@ -10,10 +12,10 @@ export default class {
     terms: "ref://./bedoc-markdown-printer.yaml"
   })
 
-  setup = builder => builder
-    .act("prepare", ACTIVITY.ONCE, this.#prepare)
-    .act("render", ACTIVITY.MANY, this.#renderFunction)
-    .act("final", ACTIVITY.ONCE, this.#finalise)
+  setup = ab => ab
+    .do("Prepare functions", this.#prepare)
+    .do("Render function", UNTIL, this.#hasMoreFunctions, this.#renderFunction)
+    .do("Finalize output", this.#finalise)
 
   async #prepare(curr) {
     const {moduleName = "module", functions = []} = curr ?? {}
@@ -35,11 +37,18 @@ export default class {
     return true
   }
 
+  /**
+   * Predicate to check if there are more functions to render
+   * @param {object} curr - Current context
+   * @returns {boolean} True if more functions remain
+   * @private
+   */
+  #hasMoreFunctions = curr => {
+    return curr.value.remaining.length > 0
+  }
+
   async #renderFunction(curr) {
     const next = curr.value.remaining.shift()
-
-    if(!next)
-      return false
 
     const lines = []
 
@@ -91,7 +100,7 @@ export default class {
 
     curr.value.rendered.push(Data.appendString(result, "\n"))
 
-    return curr.value.remaining.length > 0
+    return true
   }
 
   async #finalise(curr) {

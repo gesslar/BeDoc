@@ -38,14 +38,13 @@
         "--debug",
         "--debugLevel",
         "5",
+        "--nerd",
         "--include",
-        "examples/source/lpc/**/*.c",
+        "examples/source/lpc/signal.c",
         "--output",
         "examples/output/markdown/",
         "--mock",
-        "examples/mock/",
-        "--hooks",
-        "examples/hooks/lpc-markdown-hooks.js"
+        "examples/mock/"
       ],
       "console": "integratedTerminal"
     },
@@ -186,8 +185,9 @@
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
         "--debug",
+        "false",
         "--debugLevel",
-        "1",
+        "5",
         "--include",
         "examples/source/lua/**/*.lua",
         "--output",

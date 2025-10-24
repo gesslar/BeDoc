@@ -1,133 +1,108 @@
-import {FileObject, FS, Sass, Contract, Schemer, Terms} from "@gesslar/toolkit"
+import {ActionBuilder} from "@gesslar/actioneer"
+import {Contract, FS, Sass} from "@gesslar/toolkit"
 import {hrtime} from "node:process"
+
 import BeDocSchema from "./BeDocSchema.js"
-import Discovery from "./Discovery.js"
 import ParseAction from "./ParseAction.js"
 import Pipeline from "./Pipeline.js"
 import PrintAction from "./PrintAction.js"
-import Configuration from "./abstracted/Configuration.js"
-import {Glog} from "@gesslar/toolkit"
+import Initialise from "./Initialise.js"
+import Discovery from "./Discovery.js"
 
-export const ENVIRONMENT = Object.freeze({
-  EXTENSION: "extension",
-  NPM: "npm",
-  ACTION: "action",
-  CLI: "cli",
-})
+export default class BeDoc {
+  static meta = Object.freeze({
+    name: "BeDoc"
+  })
 
-export default class Core {
   #debug
+  #config
+  #project
+  #schemer = BeDocSchema
+  #actions
 
-  constructor(options) {
-    this.options = options
-    this.#debug = options?.debug || Glog.newDebug()
+  constructor({glog,config,project}) {
+    this.#config = config
+    this.#debug = glog?.newDebug()
+    this.#project = project
 
-    // this.logger = new Glog({name: "BeDoc", debugMode, debugLevel})
-    this.packageJson = options.project
+    const common = {glog,config,project}
+
+    this.#actions = [
+      (new ActionBuilder(new Initialise(common))).build(),
+      (new ActionBuilder(new Discovery(common))).build(),
+    ]
   }
 
-  setup({options}) {
-    this.#debug = options.debug
+  get actions() {
+    return this.#actions
   }
 
-  get debug() {
-    return this.#debug
-  }
+  // setup = ab => {
+  //   const initialise = new ActionBuilder(new Initialise({}))
+  // }
+  // static async new({options, source, glog}) {
+  //   // Load terms for all discovered actions
+  //   await BeDoc.#loadActionTerms(discovered, debug)
 
-  static async new({options, source, glog}) {
-    // Validate configuration
-    const validConfig = await Core.#validateConfiguration({options, source})
-    const debugLevel = Number(validConfig.debugLevel)
-    glog.withLogLevel(debugLevel)
+  //   // Find compatible parser/printer pairs
+  //   const compatibleActions = await BeDoc.#findCompatibleActions(
+  //     discovered, debug
+  //   )
 
-    const debug = glog.newDebug()
+  //   // Select final actions (ensure exactly one of each)
+  //   const finalActions = BeDoc.#selectFinalActions(compatibleActions)
 
-    debug("Creating new BeDoc instance with options: %o", 3, validConfig)
-    const core = new Core({...validConfig, name: "BeDoc", debug})
+  //   // Instantiate actions and set up hooks
+  //   await BeDoc.#instantiateActions(core, finalActions, validConfig, debug)
 
-    // Discover available actions
-    const discovered = await Core.#discoverActions(core, validConfig)
-
-    // Load terms for all discovered actions
-    await Core.#loadActionTerms(discovered, debug)
-
-    // Find compatible parser/printer pairs
-    const compatibleActions = await Core.#findCompatibleActions(
-      discovered, debug
-    )
-
-    // Select final actions (ensure exactly one of each)
-    const finalActions = Core.#selectFinalActions(compatibleActions)
-
-    // Instantiate actions and set up hooks
-    await Core.#instantiateActions(core, finalActions, validConfig, debug)
-
-    return core
-  }
-
-  /**
-   * Validates the configuration options
-   *
-   * @param {object} config - Configuration object
-   * @param {object} config.options - CLI or programmatic options
-   * @param {string} config.source - Configuration source
-   * @returns {Promise<object>} Validated configuration
-   * @throws {AggregateError} If configuration validation fails
-   */
-  static async #validateConfiguration({options, source}) {
-    const config = new Configuration()
-    const validConfig = await config.validate({options, source})
-
-    if(validConfig.status === "error")
-      throw new AggregateError(validConfig.errors, "BeDoc configuration failed")
-
-    return validConfig
-  }
+  //   return core
+  // }
 
   /**
    * Discovers available parse and print actions
    *
-   * @param {Core} core - Core instance
-   * @param {object} validConfig - Validated configuration
+   * @param {unknown} context
    * @returns {Promise<object>} Discovered actions object
    */
-  static async #discoverActions(core, validConfig) {
-    const discovery = new Discovery(core)
+  // async #discoverActions(context) {
+  //   const discovery = new Discovery(this.#config, this.#debug)
 
-    return await discovery.discoverActions({
-      print: validConfig.printer,
-      parse: validConfig.parser
-    })
-  }
+  //   context.discoveredActions = await discovery.discoverActions({
+  //     print: this.#config.printer,
+  //     parse: this.#config.parser
+  //   })
+
+  //   return context
+  // }
 
   /**
    * Loads terms for all discovered actions
    *
-   * @param {object} discovered - Discovered actions object
-   * @param {import('./types.js').DebugFunction} debug - Debug function
+   * @param {unknown} context
    * @returns {Promise<void>}
    */
-  static async #loadActionTerms(discovered, debug) {
-    const actionSchema = await BeDocSchema.load(debug)
-    const termsValidator = Schemer.getValidator(actionSchema)
+  // async #loadActionTerms(context) {
+  //   const debug = context.debug
+  //   const actionSchema = await BeDocSchema.load(debug)
+  //   const termsValidator = Schemer.getValidator(actionSchema)
 
-    for(const [_, actionDef] of Object.entries(discovered)) {
-      for(const action of actionDef) {
-        debug("Configuring terms for %o", 2, action.file.module)
+  //   for(const [_, actionDef] of Object.entries(context.discoverActions)) {
+  //     for(const action of actionDef) {
+  //       debug("Configuring terms for %o", 2, action.file.module)
 
-        const {terms, contract} = await Core.#loadTerms(
-          action.action.meta.terms,
-          action.file,
-          termsValidator,
-          debug
-        )
+  //       const {terms, contract} = await this.#loadTerms(
+  //         action.action.meta.terms,
+  //         action.file,
+  //         termsValidator,
+  //         debug
+  //       )
 
-        action.terms = terms
-        action.contract = contract
-        debug("Terms added to %o", 2, action.file.module)
-      }
-    }
-  }
+  //       action.terms = terms
+  //       action.contract = contract
+  //       debug("Terms added to %o", 2, action.file.module)
+  //     }
+  //   }
+  // }
 
   /**
    * Finds compatible parser/printer pairs based on contract compatibility
@@ -196,7 +171,7 @@ export default class Core {
   /**
    * Instantiates action managers and sets up hooks
    *
-   * @param {Core} core - Core instance to attach actions to
+   * @param {BeDoc} core - Core instance to attach actions to
    * @param {object} finalActions - Selected final actions
    * @param {object} validConfig - Validated configuration
    * @param {import('./types.js').DebugFunction} debug - Debug function
@@ -235,27 +210,6 @@ export default class Core {
    * @param {import('./types.js').DebugFunction} debug - Debug function
    * @returns {object} Object with {terms: Terms, contract: Contract}
    */
-  static async #loadTerms(terms, file, validator, debug) {
-    try {
-      // Parse the terms data (handles ref:// and other formats)
-      const parsedTerms = await Terms.parse(terms, file?.directory)
-
-      // Create Terms instance
-      const termsInstance = new Terms(parsedTerms)
-
-      // Create Contract from the parsed terms with validation
-      const contract = Contract.fromTerms(
-        file?.module ?? "Action Terms",
-        parsedTerms,
-        validator,
-        debug
-      )
-
-      return {terms: termsInstance, contract}
-    } catch(error) {
-      throw Sass.new(`Failed to load terms`, error)
-    }
-  }
 
   async processFiles(glob) {
     const debug = this.#debug
