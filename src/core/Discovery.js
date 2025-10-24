@@ -8,14 +8,23 @@ const exec = promisify(execCallback)
 
 /** @typedef {import("@gesslar/actioneer").ActionBuilder} ActionBuilder */
 
+/**
+ * Discovery class orchestrates the discovery and loading of BeDoc action modules.
+ * It provides a pipeline to find, validate, and group action modules from various sources,
+ * including mock directories, project package.json, and node_modules (local and global).
+ *
+ * @class Discovery
+ * @example
+ * const discovery = new Discovery({ debug, config, project });
+ * const builder = discovery.setup(actionBuilder);
+ */
 export default class Discovery {
   static meta = Object.freeze({
     name: "Discovery"
   })
 
-  #debug
-  #config
-  #project
+  // eslint-disable-next-line no-unused-private-class-members
+  #config; #debug; #project
 
   constructor({debug, config, project}) {
     this.#config = config
@@ -37,6 +46,13 @@ export default class Discovery {
     .do("Validate action metadata", this.#validateActionsMetas)
     .do("Group actions by type", this.#groupActionsByType)
 
+  /**
+   * Reorders context to separate logger and config.
+   *
+   * @private
+   * @param {object} context - Pipeline context object
+   * @returns {object} Mutated context with config separated
+   */
   async #reorderContext(context) {
     const {value} = context
 
@@ -52,12 +68,13 @@ export default class Discovery {
 
     return context
   }
+
   /**
-   * Discovers action files from mock directory, project package.json,
-   * or node_modules (local and global)
+   * Discovers action files from mock directory, project package.json, or node_modules.
    *
-   * @param {object} context - Current context with config and debug
-   * @returns {Promise<boolean>} True on success
+   * @private
+   * @param {object} context - Pipeline context with config
+   * @returns {Promise<object>} Updated context with discovered files
    */
   async #discoverActionFiles(context) {
     const {config} = context.value
@@ -88,9 +105,10 @@ export default class Discovery {
   }
 
   /**
-   * Discovers action files in the mock directory
+   * Discovers action files in the mock directory.
    *
-   * @param mockPath
+   * @private
+   * @param {string} mockPath - Path to mock directory
    * @returns {Promise<Array<FileObject>>} Array of mock action files
    */
   async #discoverMockActions(mockPath) {
@@ -103,10 +121,11 @@ export default class Discovery {
   }
 
   /**
-   * Discovers actions exported in the project's package.json
+   * Discovers actions exported in the project's package.json.
    *
-   * @param basePath
-   * @param packageJson
+   * @private
+   * @param {string} basePath - Project base path
+   * @param {object} packageJson - package.json object
    * @returns {Promise<Array<FileObject>>} Array of project action files
    */
   async #discoverProjectActions(basePath, packageJson) {
@@ -126,8 +145,9 @@ export default class Discovery {
   }
 
   /**
-   * Discovers actions in node_modules directories (local and global)
+   * Discovers actions in node_modules directories (local and global).
    *
+   * @private
    * @returns {Promise<Array<FileObject>>} Array of node_modules action files
    */
   async #discoverNodeModulesActions() {
@@ -145,6 +165,12 @@ export default class Discovery {
     return settled.map(s => s.value)
   }
 
+  /**
+   * Discovers node_modules root directories (local and global).
+   *
+   * @private
+   * @returns {Promise<Array<DirectoryObject>>} Array of DirectoryObject instances
+   */
   async #discoverNodeDirectories() {
     // Get npm root paths asynchronously
     const settled = await Util.settleAll([exec("npm root"),exec("npm root -g")])
@@ -165,9 +191,10 @@ export default class Discovery {
   }
 
   /**
-   * Searches a single node_modules directory for BeDoc actions
+   * Searches a node_modules directory for BeDoc actions.
    *
-   * @param {DirectoryObject} nodeModulesDir - node_modules directory to search
+   * @private
+   * @param {DirectoryObject} nodeModulesDir - Directory to search
    * @returns {Promise<Array<FileObject>>} Array of discovered action files
    */
   async #searchNodeModulesDir(nodeModulesDir) {
@@ -197,8 +224,9 @@ export default class Discovery {
   }
 
   /**
-   * Expands scoped packages (e.g., `@bedoc/parser`) into searchable directories
+   * Expands scoped packages (e.g., @bedoc/*) into searchable directories.
    *
+   * @private
    * @param {Array<DirectoryObject>} moduleDirs - Module directories
    * @returns {Promise<Array<DirectoryObject>>} Expanded directory list
    */
@@ -226,9 +254,10 @@ export default class Discovery {
   }
 
   /**
-   * Extracts BeDoc actions from a package directory
+   * Extracts BeDoc actions from a package directory.
    *
-   * @param {DirectoryObject} dir - Package directory to search
+   * @private
+   * @param {DirectoryObject} dir - Package directory
    * @returns {Promise<Array<FileObject>>} Array of action files found
    */
   async #extractActionsFromPackage(dir) {
@@ -261,9 +290,10 @@ export default class Discovery {
   }
 
   /**
-   * Loads action modules from files and tags specific modules
+   * Loads action modules from files and tags specific modules.
    *
-   * @param {object} context - Current context with files
+   * @private
+   * @param {object} context - Pipeline context with files
    * @returns {Promise<object>} Context with loaded actions
    */
   async #loadActions(context) {
@@ -311,8 +341,9 @@ export default class Discovery {
   }
 
   /**
-   * Tags specific modules with their action type for priority matching
+   * Tags specific modules with their action type for priority matching.
    *
+   * @private
    * @param {object} specificModules - Modules to tag
    * @returns {void}
    */
@@ -327,9 +358,10 @@ export default class Discovery {
   }
 
   /**
-   * Finds actions matching the requested types (specific or all)
+   * Finds actions matching the requested types (specific or all).
    *
-   * @param {object} context - Current context with loadedActions and specificModules
+   * @private
+   * @param {object} context - Pipeline context with loadedActions and specificModules
    * @returns {object} Context with matching actions
    */
   #findMatchingActions(context) {
@@ -371,8 +403,9 @@ export default class Discovery {
   }
 
   /**
-   * Finds a specific action by type and validates it exists
+   * Finds a specific action by type and validates it exists.
    *
+   * @private
    * @param {Array<object>} loadedActions - All loaded actions
    * @param {string} actionType - Type of action to find
    * @param {FileObject} module - Expected module file
@@ -397,9 +430,10 @@ export default class Discovery {
   }
 
   /**
-   * Validates action metadata and filters invalid actions
+   * Validates action metadata and filters invalid actions.
    *
-   * @param {object} context - Current context with actions
+   * @private
+   * @param {object} context - Pipeline context with actions
    * @returns {object} Context with validated actions
    */
   #validateActionsMetas(context) {
@@ -432,8 +466,9 @@ export default class Discovery {
   }
 
   /**
-   * Validates action metadata against requirements
+   * Validates action metadata against requirements.
    *
+   * @private
    * @param {string} actionType - Type of action to validate
    * @param {object} action - The action to validate
    * @returns {boolean} True if action meets all requirements
@@ -474,9 +509,10 @@ export default class Discovery {
   }
 
   /**
-   * Groups validated actions by their type
+   * Groups validated actions by their type.
    *
-   * @param {object} context - Current context with validatedActions
+   * @private
+   * @param {object} context - Pipeline context with validatedActions
    * @returns {object} Context with grouped actions
    */
   #groupActionsByType(context) {
