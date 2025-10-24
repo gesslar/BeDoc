@@ -224,7 +224,7 @@ export default class Discovery {
   }
 
   /**
-   * Expands scoped packages (e.g., @bedoc/*) into searchable directories.
+   * Expands scoped packages (e.g., \@bedoc/*) into searchable directories.
    *
    * @private
    * @param {Array<DirectoryObject>} moduleDirs - Module directories

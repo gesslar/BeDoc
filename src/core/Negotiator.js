@@ -1,6 +1,6 @@
 import {Sass, Schemer, Terms} from "@gesslar/toolkit"
 
-import BeDocSchema from "./BeDocSchema"
+import BeDocSchema from "./BeDocSchema.js"
 
 export default class Negotiator {
   static meta = Object.freeze({
@@ -15,6 +15,9 @@ export default class Negotiator {
     this.#debug = debug ?? (() => {})
     this.#project = project
   }
+
+  setup = ab => ab
+    .do("Load the terms for each action", this.#loadActionTerms)
 
   async #loadActionTerms(context) {
     const debug = context.debug
