@@ -8,6 +8,7 @@ import Pipeline from "./Pipeline.js"
 import PrintAction from "./PrintAction.js"
 import Initialise from "./Initialise.js"
 import Discovery from "./Discovery.js"
+import Negotiator from "./Negotiator.js"
 
 export default class BeDoc {
   static meta = Object.freeze({
@@ -30,6 +31,7 @@ export default class BeDoc {
     this.#actions = [
       (new ActionBuilder(new Initialise(common))).build(),
       (new ActionBuilder(new Discovery(common))).build(),
+      (new ActionBuilder(new Negotiator(common))).build(),
     ]
   }
 

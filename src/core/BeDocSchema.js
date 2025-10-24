@@ -1,6 +1,5 @@
 import {Data, DirectoryObject, FileObject, Sass} from "@gesslar/toolkit"
 import fetch from "node-fetch"
-import url from "node:url"
 
 const SCHEMA_URL = "https://bedoc.gesslar.dev/schemas/v1/bedoc.action.json"
 const LOCAL_CACHE_DIR = ".cache"
@@ -12,12 +11,15 @@ const cache = {schema: null}
 /**
  * BeDoc-specific schema management utilities.
  * Handles loading, fetching, and caching the BeDoc action schema.
+ *
+ * @class
  */
 export default class BeDocSchema {
   /**
-   * Gets the local schema file object
+   * Gets the local schema file object.
    *
-   * @returns {FileObject} File object for the local schema
+   * @returns {Promise<FileObject>} File object for the local schema
+   * @throws {Sass} If package.json cannot be found
    */
   static async getSchemaFile() {
     const schemaDir = await this.#findPackageCache()
@@ -27,7 +29,14 @@ export default class BeDocSchema {
     return new FileObject(LOCAL_SCHEMA_FILE, schemaDir)
   }
 
-  //* @param {import('./types.js').DebugFunction} [debug] - Optional debug function
+  /**
+   * Downloads the BeDoc schema from the remote URL and caches it locally.
+   *
+   * @private
+   * @param {import('./types.js').DebugFunction} [debug] - Optional debug function
+   * @returns {Promise<object>} The loaded schema object
+   * @throws {Sass} If fetching or writing fails
+   */
   static async #downloadSchema(debug=null) {
     try {
       debug?.("Fetching BeDoc schema from: %o", 2, SCHEMA_URL)
@@ -44,7 +53,7 @@ export default class BeDocSchema {
 
       await schemaFile.write(schema)
 
-      cache.schema(await schemaFile.loadData())
+      cache.schema = await schemaFile.loadData()
 
       return cache.schema
     } catch(error) {
@@ -52,21 +61,27 @@ export default class BeDocSchema {
     }
   }
 
-  //* @param {import('./types.js').DebugFunction} [debug] - Optional debug function
+  /**
+   * Loads the BeDoc schema, using cache if available, otherwise loads from disk or downloads.
+   *
+   * @param {import('./types.js').DebugFunction} [debug] - Optional debug function
+   * @returns {Promise<object>} The loaded schema object
+   * @throws {Sass} If loading fails
+   */
   static async load(debug=null) {
     try {
       if(cache.schema)
         return cache.schema
 
-      const schemaFile = await this.getSchemaFile(debug)
+      const schemaFile = await this.getSchemaFile()
       if(!schemaFile)
         throw Sass.new("Unable to determine schema file.")
 
       if(await schemaFile.exists)
-        cache.schema = schemaFile.loadData()
+        cache.schema = await schemaFile.loadData()
 
       else
-        cache.schema = this.#downloadSchema(debug)
+        cache.schema = await this.#downloadSchema(debug)
 
       if(!cache.schema)
         throw Sass.new("Unable to load schema")
@@ -77,9 +92,16 @@ export default class BeDocSchema {
     }
   }
 
+  /**
+   * Finds the nearest package cache directory by walking up from the given directory.
+   *
+   * @private
+   * @param {DirectoryObject} [directoryObject] - Optional starting directory
+   * @returns {Promise<DirectoryObject|undefined>} The cache directory object, or undefined if not found
+   */
   static async #findPackageCache(directoryObject) {
-    if(Data.typeOf(directoryObject) !== "DirectoryObject")
-      directoryObject = new DirectoryObject(url.fileURLToPath(new url.URL(".", import.meta.url)))
+    if(!Data.isType(directoryObject, "DirectoryObject"))
+      directoryObject = new DirectoryObject()
 
     const trail = directoryObject.walkUp
 

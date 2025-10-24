@@ -2,18 +2,17 @@ import {Sass, Schemer, Terms} from "@gesslar/toolkit"
 
 import BeDocSchema from "./BeDocSchema"
 
-export default class Contract {
+export default class Negotiator {
   static meta = Object.freeze({
     name: "Contract"
   })
 
-  #debug
-  #config
-  #project
+  // eslint-disable-next-line no-unused-private-class-members
+  #config; #debug; #project
 
   constructor({debug, config, project}) {
     this.#config = config
-    this.#debug = debug
+    this.#debug = debug ?? (() => {})
     this.#project = project
   }
 
@@ -50,7 +49,7 @@ export default class Contract {
       const termsInstance = new Terms(parsedTerms)
 
       // Create Contract from the parsed terms with validation
-      const contract = Contract.fromTerms(
+      const contract = Negotiator.fromTerms(
         file?.module ?? "Action Terms",
         parsedTerms,
         validator,
