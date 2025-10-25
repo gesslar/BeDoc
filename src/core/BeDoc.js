@@ -107,47 +107,6 @@ export default class BeDoc {
   // }
 
   /**
-   * Finds compatible parser/printer pairs based on contract compatibility
-   *
-   * @param {object} discovered - Discovered actions with terms loaded
-   * @param {import('./types.js').DebugFunction} debug - Debug function
-   * @returns {Promise<object>} Compatible actions object with print and parse arrays
-   */
-  static async #findCompatibleActions(discovered, debug) {
-    const compatibleActions = {print: [], parse: []}
-
-    for(const printer of discovered.print) {
-      debug("Checking %o", 3, printer.file.module)
-
-      const satisfied = []
-
-      for(const parser of discovered.parse) {
-        debug("Checking %o", 3, parser.file.module)
-
-        try {
-          // Try to create a contract between printer (provider) and parser (consumer)
-          new Contract(printer.terms, parser.terms, {debug})
-
-          debug("Parser %o compatible with printer %o", 3, parser.file.module, printer.file.module)
-          satisfied.push(parser)
-        } catch(error) {
-          debug("Parser %o incompatible with printer %o: %o", 3, parser.file.module, printer.file.module, error.message)
-        }
-      }
-
-      if(satisfied.length > 0) {
-        compatibleActions.print.push(printer)
-        compatibleActions.parse.push(...satisfied)
-        debug("Added %o with %o compatible parsers", 2, printer.file.module, satisfied.length)
-      } else {
-        debug("Printer %o has no compatible parsers", 1, printer.file.module)
-      }
-    }
-
-    return compatibleActions
-  }
-
-  /**
    * Selects final actions, ensuring exactly one parser and one printer
    *
    * @param {object} compatibleActions - Compatible actions object

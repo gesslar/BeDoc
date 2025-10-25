@@ -1,18 +1,10 @@
-import {Collection, DirectoryObject, FileObject, Glog, Tantrum, Util} from "@gesslar/toolkit"
+import {DirectoryObject, FileObject, Glog, Tantrum} from "@gesslar/toolkit"
 import Configuration from "./abstracted/Configuration.js"
 
 import ENV from "./Env.js"
 
 export default class Initialise {
-  #config
   #debug
-  #project
-
-  constructor({debug, config, project}) {
-    this.#config = config
-    this.#debug = debug
-    this.#project = project
-  }
 
   setup = ab => ab
     .do("Initialise project files", this.#initialiseProjectFiles)
@@ -20,27 +12,28 @@ export default class Initialise {
     .do("Set up logging", this.#setupLogging)
     .do("Debug message the configuration", this.#printConfiguration)
 
-  async #initialiseProjectFiles(context) {
-    const {value} = context
-
+  async #initialiseProjectFiles({value}) {
+    const {content} = value
     // Create core instance with validated config
     const prjPath = new DirectoryObject(process.cwd())
     const prjPkJsonFile = new FileObject("package.json", prjPath)
     const prjPkjJson = await prjPkJsonFile.loadData()
     const pkjBedoc = prjPkjJson?.bedoc ?? {}
 
-    Object.assign(value, {
+    Object.assign(content, {
       basePath: {value: prjPath, source: "cli"},
       project: pkjBedoc,
     })
 
-    return context
+    return {value}
   }
 
-  async #validateConfiguration(context) {
+  async #validateConfiguration({value}) {
+    const {content} = value
+
     const config = new Configuration()
     const validConfig = await config.validate({
-      options: context.value,
+      options: content,
       source: ENV.CLI
     })
 
@@ -52,35 +45,31 @@ export default class Initialise {
       process.exit(1)
     }
 
-    Object.assign(context, {value: validConfig})
+    Object.assign(content, validConfig)
 
-    return context
+    return {value}
   }
 
-  async #setupLogging(context) {
-    const {value} = context
+  async #setupLogging({value}) {
+    const {content} = value
 
     const glog = new Glog({env: ENV.CLI})
-      .withLogLevel(value.debugLevel ?? 0)
+      .withLogLevel(content.debugLevel ?? 0)
       .withName("BEDOC")
-      .withStackTrace(value.nerd)
+      .withStackTrace(content.nerd)
 
-    const debug = glog.newDebug()
+    value.glog = glog
 
-    Object.assign(context.value, {logging: {glog,debug}})
+    this.#debug = glog.newDebug("Initialise")
 
-    return context
+    this.#debug("Logging initialised.", 2)
+
+    return {value}
   }
 
-  async #printConfiguration(context) {
-    const sansLogging = Collection.cloneObject(context.value)
+  async #printConfiguration({value}) {
+    this.#debug("Configuration complete.", 3, value.content)
 
-    delete sansLogging.logging
-
-    const config = JSON.stringify(sansLogging)
-
-    context.value.logging.debug("Configuration complete.", 3, config)
-
-    return context
+    return {value}
   }
 }

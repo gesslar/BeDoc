@@ -23,14 +23,7 @@ export default class Discovery {
     name: "Discovery"
   })
 
-  // eslint-disable-next-line no-unused-private-class-members
-  #config; #debug; #project
-
-  constructor({debug, config, project}) {
-    this.#config = config
-    this.#debug = debug ?? (() => {})
-    this.#project = project
-  }
+  #debug
 
   /**
    * Sets up the discovery pipeline using ActionBuilder
@@ -39,7 +32,7 @@ export default class Discovery {
    * @returns {ActionBuilder} Configured builder
    */
   setup = ab => ab
-    .do("Shuffle things around", this.#reorderContext)
+    .do("Initialise Discovery", this.#init)
     .do("Discover action files", this.#discoverActionFiles)
     .do("Load action modules", this.#loadActions)
     .do("Find matching actions", this.#findMatchingActions)
@@ -47,49 +40,49 @@ export default class Discovery {
     .do("Group actions by type", this.#groupActionsByType)
 
   /**
-   * Reorders context to separate logger and config.
+   * This method initializes the Discovery pipeline by extracting the logger
+   * from the context and setting up the debug instance for internal logging.
+   * It is intended to be used as the first step in the action discovery
+   * pipeline.
    *
    * @private
-   * @param {object} context - Pipeline context object
-   * @returns {object} Mutated context with config separated
+   * @param {object} context - Pipeline context object containing runtime values.
+   * @param {object} context.value - The value object from the pipeline context.
+   * @returns {object} The same value as was passed in.
    */
-  async #reorderContext(context) {
-    const {value} = context
+  async #init({value}) {
+    const {glog} = value
 
-    // Ok, so this will be the results of the initialisation which
-    // is the validated config. It also includes the logger, which we
-    // should separate out.
-    this.#debug = value.logging.debug
-    delete value.logging
+    this.#debug = glog.newDebug(this.constructor.name)
 
-    // Everything else is the config. Let's move that into its own
-    // within value. Just a bit of mutation. NBD.
-    Object.assign(context, {value: {config: value}})
+    this.#debug(`${this.constructor.name} initialised`, 2)
 
-    return context
+    return {value}
   }
 
   /**
-   * Discovers action files from mock directory, project package.json, or node_modules.
+   * Discovers action files from mock directory, project package.json, or
+   *  node_modules.
    *
    * @private
    * @param {object} context - Pipeline context with config
+   * @param {object} context.value - Value object containing discovery context data
    * @returns {Promise<object>} Updated context with discovered files
    */
-  async #discoverActionFiles(context) {
-    const {config} = context.value
+  async #discoverActionFiles({value}) {
+    const {content} = value
 
-    if(config.mock) {
-      context.mockFiles = await this.#discoverMockActions(config.mock)
+    if(content.mock) {
+      content.mockFiles = await this.#discoverMockActions(content.mock)
 
-      return context
+      return {value}
     }
 
     this.#debug("Mock path not set, discovering actions in node_modules", 2)
 
     // Check project's package.json for exported actions
-    const projectActions = config.packageJson
-      ? await this.#discoverProjectActions(config.basePath, config.project)
+    const projectActions = content.packageJson
+      ? await this.#discoverProjectActions(content.basePath, content.project)
       : []
 
     // Search node_modules (local and global)
@@ -99,9 +92,9 @@ export default class Discovery {
 
     this.#debug("Discovered %o module files", 2, moduleActions.length)
 
-    context.moduleActions = moduleActions
+    content.moduleActions = moduleActions
 
-    return context
+    return {value}
   }
 
   /**
@@ -115,8 +108,8 @@ export default class Discovery {
     this.#debug("Discovering mock actions in %o", 2, mockPath)
 
     return await FS.getFiles([
-      `${mockPath}/bedoc-*-printer.js`,
-      `${mockPath}/bedoc-*-parser.js`,
+      `${mockPath.path}/bedoc-*-printer.js`,
+      `${mockPath.path}/bedoc-*-parser.js`,
     ])
   }
 
@@ -294,50 +287,50 @@ export default class Discovery {
    *
    * @private
    * @param {object} context - Pipeline context with files
+   * @param {object} context.value - Value object containing module and mock files
    * @returns {Promise<object>} Context with loaded actions
    */
-  async #loadActions(context) {
-    const {config} = context.value
-    const {moduleActions} = context
+  async #loadActions({value}) {
+    const {content} = value
+    const {moduleActions, mockFiles} = content
 
     const specificModules = {
-      parse: config.parse,
-      print: config.print
+      parse: content.parse,
+      print: content.print
     }
-
-    this.#debug("Loading actions from %o module files", 2, moduleActions.length)
 
     // Tag specific modules so they can be prioritized during matching
     this.#tagSpecificModules(specificModules)
 
     // Combine all modules to load
     const toLoad = [
-      ...moduleActions,
+      ...(moduleActions??[]),
+      ...(mockFiles??[]),
       ...Object.values(specificModules).filter(Boolean),
     ]
 
     this.#debug("Total modules to load: %o", 2, toLoad.length)
     this.#debug("Modules to load: %o", 3, toLoad.map(f => f.uri))
 
-    const loadedActions = []
-
-    for(const file of toLoad) {
+    const settled = await Util.settleAll(toLoad.map(async file => {
       this.#debug("Loading module %o", 2, file.uri)
 
       const module = await file.import()
       const action = module?.default
 
       if(!action)
-        throw Sass.new(
-          `Unable to find default export in action ${file.uri}`
-        )
+        throw Sass.new(`Unable to find default export in action ${file.uri}`)
 
-      loadedActions.push({file, action})
-    }
+      return {action,file}
+    }))
 
-    context.value = {loadedActions, specificModules}
+    Util.anyRejected(settled) && Util.throwRejected(settled)
 
-    return context
+    const loadedActions = Util.fulfilledValues(settled)
+
+    value.content = {loadedActions, specificModules}
+
+    return {value}
   }
 
   /**
@@ -362,10 +355,12 @@ export default class Discovery {
    *
    * @private
    * @param {object} context - Pipeline context with loadedActions and specificModules
+   * @param {object} context.value - Value object containing loaded actions and specific modules
    * @returns {object} Context with matching actions
    */
-  #findMatchingActions(context) {
-    const {loadedActions, specificModules} = context.value
+  #findMatchingActions({value}) {
+    const {content} = value
+    const {loadedActions, specificModules} = content
     const actions = []
 
     this.#debug("Determining matching actions from loaded modules", 2)
@@ -397,9 +392,9 @@ export default class Discovery {
 
     this.#debug("Found %o total matching actions", 2, actions.length)
 
-    context.value = {actions}
+    value.content = {actions}
 
-    return context
+    return {value}
   }
 
   /**
@@ -434,25 +429,25 @@ export default class Discovery {
    *
    * @private
    * @param {object} context - Pipeline context with actions
+   * @param {object} context.value - Value object containing actions to validate
    * @returns {object} Context with validated actions
    */
-  #validateActionsMetas(context) {
-    const {actions: loadedActions} = context.value
+  #validateActionsMetas({value}) {
+    const {content} = value
+    const {actions} = content
 
-    const validatedActions = loadedActions.filter(loadedAction => {
-      const {action, file} = loadedAction
-      const metaKind = action.meta.kind
+    const validatedActions = actions.filter(loadedAction => {
+      const {meta} = loadedAction.action
+      const metaKind = meta.kind
 
-      this.#debug("Checking validity of %o action %o", 2, metaKind, file.uri)
+      this.#debug("Checking validity of %o action %o", 2, metaKind, meta.name)
 
-      const isValid = this.#validMeta(metaKind, action)
+      const isValid = this.#validMeta(metaKind, loadedAction.action)
 
-      this.#debug("Meta in %o is %o", 3,
-        file.module, isValid ? "valid" : "invalid"
-      )
+      this.#debug("Meta in %o is %o", 3, meta.name, isValid ? "valid" : "invalid")
 
       if(isValid) {
-        this.#debug("%o contains a valid %o action", 3, file.uri, metaKind)
+        this.#debug("%o contains a valid %o action", 3, meta.name, metaKind)
       } else {
         this.#debug("Action is not a valid %o action", 3, metaKind)
       }
@@ -460,9 +455,9 @@ export default class Discovery {
       return isValid
     })
 
-    context.value = {validatedActions}
+    value.content = {validatedActions}
 
-    return context
+    return {value}
   }
 
   /**
@@ -513,10 +508,12 @@ export default class Discovery {
    *
    * @private
    * @param {object} context - Pipeline context with validatedActions
+   * @param {object} context.value - Value object containing validated actions
    * @returns {object} Context with grouped actions
    */
-  #groupActionsByType(context) {
-    const {validatedActions} = context.value
+  #groupActionsByType({value}) {
+    const {content} = value
+    const {validatedActions} = content
 
     const grouped = Actions.actionTypes.reduce((acc, actionType) => {
       acc[actionType] = validatedActions.filter(
@@ -530,8 +527,8 @@ export default class Discovery {
       Object.entries(grouped).map(([k, v]) => `${k}: ${v.length}`)
     )
 
-    context.value = grouped
+    value.content =  grouped
 
-    return context
+    return {value}
   }
 }

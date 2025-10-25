@@ -1,4 +1,3 @@
-
 /**
  * @file LPC Parser - A parser for extracting documentation from LPC (LPC
  * Programming Language) files.

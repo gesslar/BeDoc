@@ -74,12 +74,16 @@ void (async() => {
 
     const runners = bedoc.actions.map(action => new ActionRunner(action))
 
-    let lastResult = optionsWithSources
+    let content = optionsWithSources
+    let glog = {}
 
-    for(const runner of runners)
-      lastResult = (await runner.run(lastResult)).value
+    for(const runner of runners) {
+      const result = await runner.run({content,glog})
 
-    console.log(JSON.stringify(lastResult, null, 2))
+      void({content,glog} = result.value)
+    }
+
+    console.log(JSON.stringify(content, null, 2))
 
     process.exit(0)
 
