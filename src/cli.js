@@ -5,8 +5,7 @@ import {program} from "commander"
 import process from "node:process"
 import url from "node:url"
 
-import {ActionRunner} from "@gesslar/actioneer"
-import {ActionBuilder} from "../Actioneer/src/index.js"
+import {ActionBuilder,ActionRunner} from "@gesslar/actioneer"
 import BeDoc from "./core/BeDoc.js"
 import ConfigParams from "./core/ConfigParams.js"
 

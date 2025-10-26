@@ -87,7 +87,7 @@ export default class Discovery {
     this.#debug("Mock path not set, discovering actions in node_modules", 2)
 
     // Check project's package.json for exported actions
-    const projectActions = content.packageJson
+    const projectActions = content.project
       ? await this.#discoverProjectActions(content.basePath, content.project)
       : []
 
@@ -98,10 +98,6 @@ export default class Discovery {
     this.#debug("Discovered %o module files", 2, moduleActions.length)
 
     content.moduleActions = moduleActions
-
-    // Do we have any actions at all? If not, we might need to exit.
-    if(moduleActions.length === 0)
-      throw Sass.new("Can't find no modules nowhere.")
 
     return value
   }
@@ -286,6 +282,7 @@ export default class Discovery {
     this.#debug("Discovered %o modules from package.json: %o", 2,
       actions.length, packageJsonFile.path
     )
+
     this.#debug("Discovered action files: %o", 3, actionObjects.map(f => f.uri))
 
     return actionObjects
@@ -303,8 +300,8 @@ export default class Discovery {
     const {moduleActions, mockFiles} = content
 
     const specificModules = {
-      parse: content.parse,
-      print: content.print
+      parse: content.parser,
+      print: content.printer
     }
 
     // Tag specific modules so they can be prioritized during matching
@@ -460,6 +457,9 @@ export default class Discovery {
 
       return isValid
     })
+
+    if(validatedActions.length < 2)
+      throw Sass.new("Insufficient number of actions found. Require 1 parser and 1 printer.")
 
     value.content = {validatedActions}
 
