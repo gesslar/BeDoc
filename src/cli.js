@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 
-import {DirectoryObject, FileObject, Sass, Tantrum} from "@gesslar/toolkit"
+import {DirectoryObject, FileObject, Sass, Tantrum, Util,Term} from "@gesslar/toolkit"
 import {program} from "commander"
 import process from "node:process"
 import url from "node:url"
 
 import {ActionRunner} from "@gesslar/actioneer"
-import ConfigParams from "./core/ConfigParams.js"
-import BeDoc from "./core/BeDoc.js"
 import {ActionBuilder} from "../Actioneer/src/index.js"
+import BeDoc from "./core/BeDoc.js"
+import ConfigParams from "./core/ConfigParams.js"
 
 // Main entry point
 void (async() => {
@@ -62,78 +62,18 @@ void (async() => {
       return acc
     }, {})
 
-    // Common configuration to pass to all actions from
-    // forefromhere
-    // const common = {
-    //   config: setup.config,
-    //   glog: setup.glog,
-    //   project: setup.allOptions.project,
-    //   debug: setup.glog.newDebug()
-    // }
+    const {cost,result} = await Util.time(async() => {
+      const bedoc = new ActionBuilder(new BeDoc()).build()
+      const runner = new ActionRunner(bedoc)
 
-    // const bedoc = new BeDoc({})
-    // const runners = bedoc.actions.map(action => new ActionRunner(action))
+      return await runner.run(optionsWithSources)
+    })
 
-    const bedoc = new ActionBuilder(new BeDoc()).build()
-    const runner = new ActionRunner(bedoc)
-    const result = await runner.run(optionsWithSources)
+    const bytes = result.reduce((acc,curr) => acc + curr.bytes, 0)
 
-    // let content = optionsWithSources
-    // let glog = {}
-    // let config = {}
-
-    // for(const runner of runners) {
-    //   const result = await runner.run({content,config,glog})
-
-    //   void({content,config,glog} = result.value)
-    // }
-
-    console.log(JSON.stringify(result, null, 2))
-
-    process.exit(0)
-
-    // const runner = new ActionRunner()
-    // bedoc.actions.forEach(runner.addStep)
-    // const result = await runner.run(optionsWithSources)
-
-    // // Discovery before we do the BeDoc
-    // const disco = new ActionBuilder(new Discovery(common))
-    //   .build()
-    // const discoRunner = new ActionRunner(disco,common)
-    // const discoResult = await discoRunner.run({})
-
-    // setup.debug("%o", 1, discoResult.value)
-
-    // process.exit(0)
-
-    // const pipe = setup.config.include
-    // const bedoc = new ActionBuilder(new BeDoc(common))
-    //   .build()
-    // const bedocRunner = new ActionRunner(bedoc, common)
-    // const bedocResult = await bedocRunner.pipe(pipe)
-
-    // console.log(JSON.stringify(bedocResult, null, 2))
-
-    // const bedoc = await BeDoc
-    //   .new({
-    //     options: {
-    //       ...optionsWithSources,
-    //       basePath: {value: prjPath, source: "cli"},
-    //       project: pkjBedoc,
-    //     },
-    //     source: ENVIRONMENT.CLI,
-    //     glog
-    //   })
-
-    // if(!(bedoc instanceof BeDoc)) {
-    //   if(Data.isPlainObject(bedoc)) {
-    //     Term[bedoc.status](bedoc.message)
-    //     process.exit(0)
-    //   }
-    // }
-
-    // const filesToProcess = bedoc.options.include.map(f => f.path)
-    // await bedoc.processFiles(filesToProcess)
+    Term.status(`${result.length.toLocaleString()} files processed, `+
+    `${bytes.toLocaleString()} bytes written ` +
+    `in ${cost.toLocaleString()} ms`)
 
     process.exit(0)
   } catch(error) {

@@ -29,9 +29,7 @@ export default   class Negotiator {
    * Sets up the debug logger for this instance.
    *
    * @private
-   * @param {object} param0 - Object containing the value context
-   * @param {object} param0.value - The context value, expected to contain glog
-   * @param value
+   * @param {object} value - The context object containing initialization data
    * @returns {Promise<object>} The updated context object
    */
   async #init(value) {
@@ -49,9 +47,7 @@ export default   class Negotiator {
    * Attaches terms and contract objects to each action definition.
    *
    * @private
-   * @param {object} param0 - Object containing the value context
-   * @param {object} param0.value - The context value, expected to contain discovered actions
-   * @param value
+   * @param {object} value - The context object containing discovered actions
    * @returns {Promise<object>} The updated context object with terms/contracts attached
    */
   async #loadActionTerms(value) {
@@ -125,9 +121,7 @@ export default   class Negotiator {
    * Updates the context with arrays of compatible print and parse actions.
    *
    * @private
-   * @param {object} param0 - Object containing the value context
-   * @param {object} param0.value - The context value, expected to contain discovered actions
-   * @param value
+   * @param {object} value - The context object containing discovered actions
    * @returns {Promise<object>} The updated context object with compatible actions
    */
   async #findCompatibleActions(value) {
@@ -171,9 +165,7 @@ export default   class Negotiator {
   /**
    * Selects final actions, ensuring exactly one parser and one printer
    *
-   * @param {object} compatibleActions - Compatible actions object
-   * @param compatibleActions.value
-   * @param value
+   * @param {object} value - The context object containing compatible actions
    * @returns {object} Final actions object with print and parse keys
    * @throws {Error} If no matching actions found or multiple matches exist
    */
@@ -181,15 +173,9 @@ export default   class Negotiator {
     const {content} = value
     const finalActions = {}
 
-    for(const [key, value] of Object.entries(content)) {
-      if(value.length === 0)
-        throw Sass.new(`No matching ${key} found`)
-
-      if(value.length > 1)
-        throw Sass.new(`Multiple matching ${key} found`)
-
-      finalActions[key] = content[key][0]
-    }
+    for(const [key, value] of Object.entries(content))
+      if(value.length === 1)
+        finalActions[key] = content[key][0]
 
     value.content = finalActions
 

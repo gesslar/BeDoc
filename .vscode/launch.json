@@ -27,7 +27,7 @@
       "console": "integratedTerminal"
     },
     {
-      "name": "CLI - LPCDocs to Markdown (Mock, Lang, Format)",
+      "name": "CLI - LPCDocs to Markdown (Threshold, Hooks, Lang, Format)",
       "type": "node",
       "request": "launch",
       "skipFiles": [
@@ -38,13 +38,16 @@
         "--debug",
         "--debugLevel",
         "5",
-        "--nerd",
         "--include",
         "examples/source/lpc/**/*.c",
         "--output",
         "examples/output/markdown/",
-        "--mock",
-        "examples/mock/"
+        "--parser",
+        "examples/node_modules_test/bedoc-lpc-parser/bedoc-lpc-parser.js",
+        "--printer",
+        "examples/node_modules_test/bedoc-markdown-printer/bedoc-markdown-printer.js",
+        "--hooks",
+        "examples/hooks/lpc-markdown-hooks.js"
       ],
       "console": "integratedTerminal"
     },

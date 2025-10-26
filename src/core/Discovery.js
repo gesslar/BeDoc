@@ -19,14 +19,25 @@ const exec = promisify(execCallback)
  * const builder = discovery.setup(actionBuilder);
  */
 export default class Discovery {
+  /**
+   * Metadata for the Discovery class.
+   *
+   * @type {{name: string}}
+   */
   static meta = Object.freeze({
     name: "Discovery"
   })
 
+  /**
+   * Internal debug logger instance.
+   *
+   * @type {function(...args: Array<unknown>): void}
+   * @private
+   */
   #debug
 
   /**
-   * Sets up the discovery pipeline using ActionBuilder
+   * Sets up the discovery pipeline using ActionBuilder.
    *
    * @param {ActionBuilder} ab - ActionBuilder instance
    * @returns {ActionBuilder} Configured builder
@@ -40,15 +51,11 @@ export default class Discovery {
     .do("Group actions by type", this.#groupActionsByType)
 
   /**
-   * This method initializes the Discovery pipeline by extracting the logger
+   * Initializes the Discovery pipeline by extracting the logger
    * from the context and setting up the debug instance for internal logging.
-   * It is intended to be used as the first step in the action discovery
-   * pipeline.
    *
    * @private
-   * @param {object} context - Pipeline context object containing runtime values.
-   * @param {object} context.value - The value object from the pipeline context.
-   * @param value
+   * @param {object} value - Pipeline context object containing runtime values.
    * @returns {object} The same value as was passed in.
    */
   async #init(value) {
@@ -62,13 +69,10 @@ export default class Discovery {
   }
 
   /**
-   * Discovers action files from mock directory, project package.json, or
-   *  node_modules.
+   * Discovers action files from mock directory, project package.json, or node_modules.
    *
    * @private
-   * @param {object} context - Pipeline context with config
-   * @param {object} context.value - Value object containing discovery context data
-   * @param value
+   * @param {object} value - Pipeline context with config
    * @returns {Promise<object>} Updated context with discovered files
    */
   async #discoverActionFiles(value) {
@@ -89,14 +93,17 @@ export default class Discovery {
 
     // Search node_modules (local and global)
     const nodeModulesActions = await this.#discoverNodeModulesActions()
-
     const moduleActions = [...projectActions,...nodeModulesActions].flat()
 
     this.#debug("Discovered %o module files", 2, moduleActions.length)
 
     content.moduleActions = moduleActions
 
-    return {value}
+    // Do we have any actions at all? If not, we might need to exit.
+    if(moduleActions.length === 0)
+      throw Sass.new("Can't find no modules nowhere.")
+
+    return value
   }
 
   /**
@@ -288,9 +295,7 @@ export default class Discovery {
    * Loads action modules from files and tags specific modules.
    *
    * @private
-   * @param {object} context - Pipeline context with files
-   * @param {object} context.value - Value object containing module and mock files
-   * @param value
+   * @param {object} value - Pipeline context with files
    * @returns {Promise<object>} Context with loaded actions
    */
   async #loadActions(value) {
@@ -357,9 +362,7 @@ export default class Discovery {
    * Finds actions matching the requested types (specific or all).
    *
    * @private
-   * @param {object} context - Pipeline context with loadedActions and specificModules
-   * @param {object} context.value - Value object containing loaded actions and specific modules
-   * @param value
+   * @param {object} value - Pipeline context with loadedActions and specificModules
    * @returns {object} Context with matching actions
    */
   #findMatchingActions(value) {
@@ -432,9 +435,7 @@ export default class Discovery {
    * Validates action metadata and filters invalid actions.
    *
    * @private
-   * @param {object} context - Pipeline context with actions
-   * @param {object} context.value - Value object containing actions to validate
-   * @param value
+   * @param {object} value - Pipeline context with actions
    * @returns {object} Context with validated actions
    */
   #validateActionsMetas(value) {
@@ -512,9 +513,7 @@ export default class Discovery {
    * Groups validated actions by their type.
    *
    * @private
-   * @param {object} context - Pipeline context with validatedActions
-   * @param {object} context.value - Value object containing validated actions
-   * @param value
+   * @param {object} value - Pipeline context with validatedActions
    * @returns {object} Context with grouped actions
    */
   #groupActionsByType(value) {

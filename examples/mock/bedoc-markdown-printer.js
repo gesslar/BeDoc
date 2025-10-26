@@ -1,5 +1,5 @@
-import {Data, Sass} from "@gesslar/toolkit"
-import {ACTIVITY} from "@gesslar/actioneer"
+import { ACTIVITY } from "@gesslar/actioneer"
+import { Data, Term } from "@gesslar/toolkit"
 
 const {UNTIL} = ACTIVITY
 
@@ -45,6 +45,9 @@ export default class {
   async #renderFunction(curr) {
     const {remaining,rendered} = curr
     const next = remaining.shift()
+
+    if(!next)
+      return curr
 
     const lines = []
 
@@ -103,7 +106,7 @@ export default class {
     const {moduleName, rendered} = curr
 
     if(!rendered.length)
-      throw new Sass(`No functions to print for module: \`${moduleName}\``)
+      Term.warn(`No functions to print for module: \`${moduleName}\``)
 
     return {
       destFile: `${moduleName}.md`,

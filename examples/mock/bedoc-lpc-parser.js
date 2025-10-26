@@ -2,7 +2,7 @@
  * @file LPC Parser - A parser for extracting documentation from LPC (LPC
  * Programming Language) files.
  *
- * This parser specifically handles LPC function documentation comments and
+ * This parser specifically handles LPC function documentation and
  * extracts structured information including descriptions, parameters, return
  * types, and examples.
  *
@@ -151,9 +151,7 @@ export default class {
    * Processes comment lines to extract the main description text that appears
    * before any \@tag declarations. The description continues until it
    * encounters a line starting with an @ symbol (indicating a JSDoc tag).
-   * @param {Array<string>} curr - Array of comment lines to process
-   * @param value
-   * @param value8
+   * @param {object} value - The block object containing comment lines to process
    * @returns {Promise<Array<string> | null>} Array of description lines, or null if empty
    * @private
    * @async
@@ -181,9 +179,7 @@ export default class {
 
   /**
    * Predicate to check if there are more tags to extract
-   * @param {object} curr - Current context
-   * @param curr.value
-   * @param value
+   * @param {object} value - Current context
    * @returns {boolean} True if more tags exist
    * @private
    */
@@ -199,8 +195,7 @@ export default class {
    *
    * Uses a complex regex pattern to capture multi-line tag content and stops
    * at the next tag or end of comment block.
-   * @param {string[]} curr - Array of comment lines to process
-   * @param value
+   * @param {object} value - The block object containing comment lines to process
    * @returns {Promise<Array<string> | null>} Array of extracted tag strings, or null if none found
    * @private
    * @async
@@ -261,8 +256,7 @@ export default class {
    *
    * Supports both \@return and \@returns variations, extracting the return type
    * from curly braces and optional description text.
-   * @param {string[]} curr - Array of comment lines to process
-   * @param value
+   * @param {object} value - The block object containing comment lines to process
    * @returns {Promise<Array<object> | null>} Array of return info objects with type and content, or null if none found
    * @private
    * @async
@@ -317,15 +311,14 @@ export default class {
 
   /**
    * Final processing method called after all extraction is complete.
-   * @param {Array<Map>} curr - Map of extracted data from the parsing process
-   * @param value
+   * @param {Array<Map>} value - Map of extracted data from the parsing process
    * @returns {Promise<Array<object>>} The transformation results.
    * @private
    */
   async #finally(value) {
     const result = await Collection.asyncMap(value, async item => {
       const result = {}
-      result.name = item.function.groups.name
+      result.name = item.function?.groups?.name // TODO get rid of ?
 
       result.description = item
         .description
@@ -420,6 +413,28 @@ export default class {
   }
 
   // HERE BE DRAGONS! YOU DONE BEEN WARNED, FUGGAH!
+  /**
+   * Regular expressions used for parsing LPC documentation blocks and function signatures.
+   *
+   * This map contains patterns for:
+   * - Block start/end detection
+   * - Description and tag extraction
+   * - Function signature parsing
+   * - JSDoc tag and return type identification
+   *
+   * Keys:
+   * - "block-start": Start of a JSDoc block comment
+   * - "block-stop": End of a JSDoc block comment
+   * - "description-start": Start of a description line
+   * - "description-stop": Start of a tag line
+   * - "tag": Pattern for JSDoc tags (excluding \@returns)
+   * - "tag-except": Patterns to exclude certain tags (e.g., \@returns)
+   * - "tag-stop": Pattern to stop tag extraction
+   * - "return": Pattern for \@return/\@returns tags
+   * - "function": Pattern for LPC function signatures
+   * @type {Map<string, RegExp | RegExp[]>}
+   * @private
+   */
   #regexes = new Map([
     ["block-start", /^\s*\/\*\*.*$/],
     ["block-stop", /^\s*\*\/\s*$/],

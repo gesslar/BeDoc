@@ -7,11 +7,31 @@ import Pipeline from "./Pipeline.js"
 import PrintAction from "./PrintAction.js"
 import ParseAction from "./ParseAction.js"
 
+/**
+ * BeDoc is the main orchestrator class for the BeDoc system.
+ * It manages initialization, discovery, negotiation, instantiation, and execution of actions
+ * using a pipeline pattern. Actions are managed via Actioneer and custom managers.
+ *
+ * @class
+ */
 export default class BeDoc {
+  /**
+   * Metadata for the BeDoc class.
+   *
+   * @type {{name: string}}
+   * @readonly
+   */
   static meta = Object.freeze({
     name: "BeDoc"
   })
 
+  /**
+   * Sets up the action pipeline for BeDoc.
+   * Chains initialization, discovery, negotiation, instantiation, and execution steps.
+   *
+   * @param {ActionBuilder} ab - The action builder instance.
+   * @returns {ActionBuilder} The configured action builder.
+   */
   setup = ab => ab
     .do("Initialise BeDoc from configuration", this.#initialiseBeDoc)
     .do("Discover BeDoc actions", this.#discoverActions)
@@ -19,8 +39,20 @@ export default class BeDoc {
     .do("Instantiate the actions, eh?", this.#instantiateActions)
     .do("Run everything through Piper", this.#doItUp)
 
+  /**
+   * Executes the pipeline if both print and parse actions are present.
+   *
+   * @private
+   * @param {object} value - The context object containing config, glog, and actions.
+   * @returns {Promise<object>} The result of the pipeline run or the original value.
+   */
   async #doItUp(value) {
     const {config: options,glog,actions} = value
+    const numActions = Object.keys(actions ?? {}).length
+
+    if(numActions !== 2)
+      return value
+
     const {print,parse} = actions
     const {include: files, output, maxConcurrent} = options
     const debug = glog.newDebug("BeDoc")
@@ -29,6 +61,13 @@ export default class BeDoc {
     return await pipeline.run(files, maxConcurrent)
   }
 
+  /**
+   * Initializes BeDoc from configuration using the Initialise action.
+   *
+   * @private
+   * @param {object} value - The context object.
+   * @returns {Promise<object>} The updated context object.
+   */
   async #initialiseBeDoc(value) {
     const action = (new ActionBuilder(new Initialise())).build()
     const runner = new ActionRunner(action)
@@ -37,6 +76,13 @@ export default class BeDoc {
     return value
   }
 
+  /**
+   * Discovers available actions for BeDoc using the Discovery action.
+   *
+   * @private
+   * @param {object} value - The context object.
+   * @returns {Promise<object>} The updated context object.
+   */
   async #discoverActions(value) {
     const action = (new ActionBuilder(new Discovery())).build()
     const runner = new ActionRunner(action)
@@ -45,6 +91,13 @@ export default class BeDoc {
     return value
   }
 
+  /**
+   * Negotiates terms and conditions for BeDoc actions using the Negotiator action.
+   *
+   * @private
+   * @param {object} value - The context object.
+   * @returns {Promise<object>} The updated context object.
+   */
   async #negotiateTerms(value) {
     const action = (new ActionBuilder(new Negotiator())).build()
     const runner = new ActionRunner(action)
@@ -54,22 +107,22 @@ export default class BeDoc {
   }
 
   /**
-   * Instantiates action managers and sets up hooks
+   * Instantiates action managers (print and parse) and sets up hooks.
    *
-   * @param {BeDoc} core - Core instance to attach actions to
-   * @param {object} finalActions - Selected final actions
-   * @param {object} validConfig - Validated configuration
-   * @param {import('./types.js').DebugFunction} debug - Debug function
-   * @param value
-   * @returns {Promise<void>}
+   * @private
+   * @param {object} value - The context object containing config, content, and glog.
+   * @returns {Promise<object>} The updated context object with instantiated actions.
    */
-  // async #instantiateActions(core, finalActions, validConfig, debug) {
   async #instantiateActions(value) {
     const {config,content,glog} = value
     const {variables} = config
 
     const newActions = {}
     const actions = (({parse, print}) => ({parse, print}))(content)
+
+    if(Object.values(actions).some(action => action === undefined))
+      return value
+
     const managers = {print: PrintAction, parse: ParseAction}
 
     for(const [, actionDefinition] of Object.entries(actions)) {
@@ -94,51 +147,4 @@ export default class BeDoc {
 
     return value
   }
-
-  /**
-   * Loads and creates both terms and contract for an action
-   *
-   * @param {object} terms - Raw terms data from action metadata
-   * @param {FileObject} file - File context for resolution (contains directory and module name)
-   * @param {(data: unknown) => unknown} validator - Schema validator for terms
-   * @param {import('./types.js').DebugFunction} debug - Debug function
-   * @returns {object} Object with {terms: Terms, contract: Contract}
-   */
-
-  // async processFiles(glob) {
-  //   const debug = this.#debug
-
-  //   debug("Starting file processing", 1)
-
-  //   const {output} = this.options
-
-  //   const input = await FS.getFiles(glob)
-
-  //   if(!input?.length)
-  //     throw new Error("No input files specified")
-
-  //   // Instantiate the pipeline pipeline
-  //   const pipeline = new Pipeline({
-  //     parse: this.actions.parse,
-  //     print: this.actions.print,
-  //     output,
-  //     debug
-  //   })
-
-  //   const processStart = hrtime.bigint()
-
-  //   // Initiate the pipeline
-  //   const processResult = await pipeline.run(input, this.options.maxConcurrent)
-  //   const processEnd = hrtime.bigint()
-
-  //   const result = {
-  //     totalFiles: input.length,
-  //     process: processResult,
-  //     duration: ((Number(processEnd - processStart)) / 1_000_000).toFixed(2)
-  //   }
-
-  //   debug("File processing complete", 1)
-
-  //   return result
-  // }
 }
