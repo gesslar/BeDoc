@@ -149,7 +149,7 @@ export default class Pipeline {
       try {
         await outputFile.write(destContent)
 
-        return {file: outputFile, value: destContent.length}
+        return {file: outputFile, bytes: destContent.length}
       } catch(error) {
         throw Sass.new(`Writing to ${outputFile.path}`, error)
       }

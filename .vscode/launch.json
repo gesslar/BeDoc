@@ -5,7 +5,9 @@
       "name": "CLI - LPCDocs to Markdown (Hooks, Lang, Format)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
         "--debug",
@@ -28,7 +30,9 @@
       "name": "CLI - LPCDocs to Markdown (Mock, Lang, Format)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
         "--debug",
@@ -36,7 +40,7 @@
         "5",
         "--nerd",
         "--include",
-        "examples/source/lpc/signal.c",
+        "examples/source/lpc/**/*.c",
         "--output",
         "examples/output/markdown/",
         "--mock",
@@ -48,7 +52,9 @@
       "name": "CLI - LPCDocs to Markdown (Single, Mock, Lang, Format)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
         "--debug",
@@ -69,7 +75,9 @@
       "name": "CLI - LPCDocs to Markdown (Specific, Hooks)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
         "--debug",
@@ -92,7 +100,9 @@
       "name": "CLI - LPCDocs to Wikitext (Lang, Format, Hooks)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
         "--debug",
@@ -117,7 +127,9 @@
       "name": "CLI - LPCDocs to Wikitext (Specific, Hooks)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
         "--debug",
@@ -140,7 +152,9 @@
       "name": "CLI - LPCDocs to Wikitext (Specific, Hooks, Upload)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
         "--maxConcurrent",
@@ -165,7 +179,9 @@
       "name": "CLI - LuaDocs to Markdown (Lang, Format, Hooks)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
         "--debug",
@@ -189,7 +205,9 @@
       "name": "CLI - LuaDocs to Wikitext (Lang, Format, Hooks)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
         "--debug",
@@ -212,7 +230,9 @@
       "name": "Chokidar - LPCDocs to Wikitext (Lang, Format, Hooks, Upload)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/examples/chokidar-as-cli/index.js",
       "cwd": "${workspaceFolder}/examples/chokidar-as-cli",
       "args": [],
@@ -222,7 +242,9 @@
       "name": "Chokidar - LPCDocs to Wikitext (NPM)",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/examples/chokidar-as-npm/index.js",
       "cwd": "${workspaceFolder}/examples/chokidar-as-npm",
       "console": "integratedTerminal"
@@ -231,7 +253,9 @@
       "name": "Test ActionBuilder",
       "type": "node",
       "request": "launch",
-      "skipFiles": ["<node_internals>/**"],
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
       "program": "${workspaceFolder}/work/test-builder.mjs",
       "console": "integratedTerminal"
     }
