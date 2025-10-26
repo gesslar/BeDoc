@@ -1,30 +1,41 @@
-export const Hooks = {
-  parse: {},
+class print {
+  static meta = Object.freeze({
+    name: "lpc-wikitext.print.hooks"
+  })
 
-  print: {
-    async enter(section) {
-      const {sectionName, sectionContent} = section
+  #debug
 
-      if(sectionName === "description") {
-        // Trim leading and trailing empty lines.
-        const content = sectionContent
-        while(content.length && !content.at(0))
-          content.shift()
+  constructor({debug}) {
+    this.#debug = debug
+    this.#debug("Init hooks for: %o", 2, print.meta.name)
+  }
 
-        while(content.length && !content.at(-1))
-          content.pop()
-      }
+  async before$render(context) {
+    const {value} = context
+    const next = value.remaining[0]
 
-      return section
-    },
+    if(!next)
+      return
 
-    async end(module) {
-      const {moduleContent} = module
+    // Trim leading and trailing empty lines from description
+    if(next.description) {
+      const content = next.description
+      while(content.length && !content.at(0))
+        content.shift()
 
-      return moduleContent.replace(
-        /```c\n([\s\S]+?)```/g,
-        '<syntaxhighlight lang="c">\n$1</syntaxhighlight>\n',
-      )
-    },
-  },
+      while(content.length && !content.at(-1))
+        content.pop()
+    }
+  }
+
+  async after$finalise(context) {
+    const {destContent} = context
+
+    context.destContent = destContent.replace(
+      /```c\n([\s\S]+?)```/g,
+      '<syntaxhighlight lang="c">\n$1</syntaxhighlight>\n',
+    )
+  }
 }
+
+export {print}
