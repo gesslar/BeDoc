@@ -1,5 +1,5 @@
-import {Contract, Sass, Terms} from "@gesslar/toolkit"
 import {ActionBuilder, ActionRunner} from "@gesslar/actioneer"
+import {Contract, FileObject, Sass, Terms} from "@gesslar/toolkit"
 
 // BeDoc-specific hook points
 export const HookPoints = Object.freeze({
