@@ -1,132 +1,56 @@
-import {ActionBuilder} from "@gesslar/actioneer"
-import {Contract, FS, Sass} from "@gesslar/toolkit"
-import {hrtime} from "node:process"
+import {ActionRunner,ActionBuilder} from "@gesslar/actioneer"
 
-import BeDocSchema from "./BeDocSchema.js"
-import ParseAction from "./ParseAction.js"
-import Pipeline from "./Pipeline.js"
-import PrintAction from "./PrintAction.js"
 import Initialise from "./Initialise.js"
 import Discovery from "./Discovery.js"
 import Negotiator from "./Negotiator.js"
+import Pipeline from "./Pipeline.js"
+import PrintAction from "./PrintAction.js"
+import ParseAction from "./ParseAction.js"
 
 export default class BeDoc {
   static meta = Object.freeze({
     name: "BeDoc"
   })
 
-  #debug
-  #config
-  #project
-  #schemer = BeDocSchema
-  #actions
+  setup = ab => ab
+    .do("Initialise BeDoc from configuration", this.#initialiseBeDoc)
+    .do("Discover BeDoc actions", this.#discoverActions)
+    .do("Negotiate terms and conditions for BeDoc actions", this.#negotiateTerms)
+    .do("Instantiate the actions, eh?", this.#instantiateActions)
+    .do("Run everything through Piper", this.#doItUp)
 
-  constructor({glog,config,project}) {
-    this.#config = config
-    this.#debug = glog?.newDebug()
-    this.#project = project
+  async #doItUp(value) {
+    const {config: options,glog,actions} = value
+    const {print,parse} = actions
+    const {include: files, output, maxConcurrent} = options
+    const debug = glog.newDebug("BeDoc")
+    const pipeline = new Pipeline({parse,print,output,options,debug})
 
-    const common = {glog,config,project}
-
-    this.#actions = [
-      (new ActionBuilder(new Initialise(common))).build(),
-      (new ActionBuilder(new Discovery(common))).build(),
-      (new ActionBuilder(new Negotiator(common))).build(),
-    ]
+    return await pipeline.run(files, maxConcurrent)
   }
 
-  get actions() {
-    return this.#actions
+  async #initialiseBeDoc(value) {
+    const action = (new ActionBuilder(new Initialise())).build()
+    const runner = new ActionRunner(action)
+    value = await runner.run(value)
+
+    return value
   }
 
-  // setup = ab => {
-  //   const initialise = new ActionBuilder(new Initialise({}))
-  // }
-  // static async new({options, source, glog}) {
-  //   // Load terms for all discovered actions
-  //   await BeDoc.#loadActionTerms(discovered, debug)
+  async #discoverActions(value) {
+    const action = (new ActionBuilder(new Discovery())).build()
+    const runner = new ActionRunner(action)
+    value = await runner.run(value)
 
-  //   // Find compatible parser/printer pairs
-  //   const compatibleActions = await BeDoc.#findCompatibleActions(
-  //     discovered, debug
-  //   )
+    return value
+  }
 
-  //   // Select final actions (ensure exactly one of each)
-  //   const finalActions = BeDoc.#selectFinalActions(compatibleActions)
+  async #negotiateTerms(value) {
+    const action = (new ActionBuilder(new Negotiator())).build()
+    const runner = new ActionRunner(action)
+    value = await runner.run(value)
 
-  //   // Instantiate actions and set up hooks
-  //   await BeDoc.#instantiateActions(core, finalActions, validConfig, debug)
-
-  //   return core
-  // }
-
-  /**
-   * Discovers available parse and print actions
-   *
-   * @param {unknown} context
-   * @returns {Promise<object>} Discovered actions object
-   */
-  // async #discoverActions(context) {
-  //   const discovery = new Discovery(this.#config, this.#debug)
-
-  //   context.discoveredActions = await discovery.discoverActions({
-  //     print: this.#config.printer,
-  //     parse: this.#config.parser
-  //   })
-
-  //   return context
-  // }
-
-  /**
-   * Loads terms for all discovered actions
-   *
-   * @param {unknown} context
-   * @returns {Promise<void>}
-   */
-  // async #loadActionTerms(context) {
-  //   const debug = context.debug
-  //   const actionSchema = await BeDocSchema.load(debug)
-  //   const termsValidator = Schemer.getValidator(actionSchema)
-
-  //   for(const [_, actionDef] of Object.entries(context.discoverActions)) {
-  //     for(const action of actionDef) {
-  //       debug("Configuring terms for %o", 2, action.file.module)
-
-  //       const {terms, contract} = await this.#loadTerms(
-  //         action.action.meta.terms,
-  //         action.file,
-  //         termsValidator,
-  //         debug
-  //       )
-
-  //       action.terms = terms
-  //       action.contract = contract
-  //       debug("Terms added to %o", 2, action.file.module)
-  //     }
-  //   }
-  // }
-
-  /**
-   * Selects final actions, ensuring exactly one parser and one printer
-   *
-   * @param {object} compatibleActions - Compatible actions object
-   * @returns {object} Final actions object with print and parse keys
-   * @throws {Error} If no matching actions found or multiple matches exist
-   */
-  static #selectFinalActions(compatibleActions) {
-    const finalActions = {}
-
-    for(const [key, value] of Object.entries(compatibleActions)) {
-      if(value.length === 0)
-        throw Sass.new(`No matching ${key} found`)
-
-      if(value.length > 1)
-        throw Sass.new(`Multiple matching ${key} found`)
-
-      finalActions[key] = compatibleActions[key][0]
-    }
-
-    return finalActions
+    return value
   }
 
   /**
@@ -136,30 +60,39 @@ export default class BeDoc {
    * @param {object} finalActions - Selected final actions
    * @param {object} validConfig - Validated configuration
    * @param {import('./types.js').DebugFunction} debug - Debug function
+   * @param value
    * @returns {Promise<void>}
    */
-  static async #instantiateActions(core, finalActions, validConfig, debug) {
-    core.actions = {}
-    const {variables} = validConfig
+  // async #instantiateActions(core, finalActions, validConfig, debug) {
+  async #instantiateActions(value) {
+    const {config,content,glog} = value
+    const {variables} = config
+
+    const newActions = {}
+    const actions = (({parse, print}) => ({parse, print}))(content)
     const managers = {print: PrintAction, parse: ParseAction}
 
-    for(const [, actionDefinition] of Object.entries(finalActions)) {
+    for(const [, actionDefinition] of Object.entries(actions)) {
       const {kind} = actionDefinition.action.meta
 
-      debug("Attaching %o action to instance", 2, kind)
-      core.actions[kind] = new managers[kind]({
+      // debug("Attaching %o action to instance", 2, kind)
+      newActions[kind] = new managers[kind]({
         actionDefinition,
         variables,
-        debug
+        debug: glog.newDebug()
       })
 
-      debug("Setting up hooks for action %o", 2, kind)
-      if(validConfig.hooks) {
-        // Use actioneer's setHooks method: setHooks(filepath, className)
-        // The className matches the action kind (parse/print)
-        core.actions[kind].setHooks(validConfig.hooks.path, kind)
-      }
+      // debug("Setting up hooks for action %o", 2, kind)
+      // if(validConfig.hooks) {
+      //   // Use actioneer's setHooks method: setHooks(filepath, className)
+      //   // The className matches the action kind (parse/print)
+      //   core.actions[kind].setHooks(validConfig.hooks.path, kind)
+      // }
     }
+
+    value.actions = newActions
+
+    return value
   }
 
   /**
@@ -172,40 +105,40 @@ export default class BeDoc {
    * @returns {object} Object with {terms: Terms, contract: Contract}
    */
 
-  async processFiles(glob) {
-    const debug = this.#debug
+  // async processFiles(glob) {
+  //   const debug = this.#debug
 
-    debug("Starting file processing", 1)
+  //   debug("Starting file processing", 1)
 
-    const {output} = this.options
+  //   const {output} = this.options
 
-    const input = await FS.getFiles(glob)
+  //   const input = await FS.getFiles(glob)
 
-    if(!input?.length)
-      throw new Error("No input files specified")
+  //   if(!input?.length)
+  //     throw new Error("No input files specified")
 
-    // Instantiate the pipeline pipeline
-    const pipeline = new Pipeline({
-      parse: this.actions.parse,
-      print: this.actions.print,
-      output,
-      debug
-    })
+  //   // Instantiate the pipeline pipeline
+  //   const pipeline = new Pipeline({
+  //     parse: this.actions.parse,
+  //     print: this.actions.print,
+  //     output,
+  //     debug
+  //   })
 
-    const processStart = hrtime.bigint()
+  //   const processStart = hrtime.bigint()
 
-    // Initiate the pipeline
-    const processResult = await pipeline.run(input, this.options.maxConcurrent)
-    const processEnd = hrtime.bigint()
+  //   // Initiate the pipeline
+  //   const processResult = await pipeline.run(input, this.options.maxConcurrent)
+  //   const processEnd = hrtime.bigint()
 
-    const result = {
-      totalFiles: input.length,
-      process: processResult,
-      duration: ((Number(processEnd - processStart)) / 1_000_000).toFixed(2)
-    }
+  //   const result = {
+  //     totalFiles: input.length,
+  //     process: processResult,
+  //     duration: ((Number(processEnd - processStart)) / 1_000_000).toFixed(2)
+  //   }
 
-    debug("File processing complete", 1)
+  //   debug("File processing complete", 1)
 
-    return result
-  }
+  //   return result
+  // }
 }

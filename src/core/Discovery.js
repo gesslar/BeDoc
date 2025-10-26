@@ -48,16 +48,17 @@ export default class Discovery {
    * @private
    * @param {object} context - Pipeline context object containing runtime values.
    * @param {object} context.value - The value object from the pipeline context.
+   * @param value
    * @returns {object} The same value as was passed in.
    */
-  async #init({value}) {
+  async #init(value) {
     const {glog} = value
 
     this.#debug = glog.newDebug(this.constructor.name)
 
     this.#debug(`${this.constructor.name} initialised`, 2)
 
-    return {value}
+    return value
   }
 
   /**
@@ -67,15 +68,16 @@ export default class Discovery {
    * @private
    * @param {object} context - Pipeline context with config
    * @param {object} context.value - Value object containing discovery context data
+   * @param value
    * @returns {Promise<object>} Updated context with discovered files
    */
-  async #discoverActionFiles({value}) {
+  async #discoverActionFiles(value) {
     const {content} = value
 
     if(content.mock) {
       content.mockFiles = await this.#discoverMockActions(content.mock)
 
-      return {value}
+      return value
     }
 
     this.#debug("Mock path not set, discovering actions in node_modules", 2)
@@ -288,9 +290,10 @@ export default class Discovery {
    * @private
    * @param {object} context - Pipeline context with files
    * @param {object} context.value - Value object containing module and mock files
+   * @param value
    * @returns {Promise<object>} Context with loaded actions
    */
-  async #loadActions({value}) {
+  async #loadActions(value) {
     const {content} = value
     const {moduleActions, mockFiles} = content
 
@@ -330,7 +333,7 @@ export default class Discovery {
 
     value.content = {loadedActions, specificModules}
 
-    return {value}
+    return value
   }
 
   /**
@@ -356,9 +359,10 @@ export default class Discovery {
    * @private
    * @param {object} context - Pipeline context with loadedActions and specificModules
    * @param {object} context.value - Value object containing loaded actions and specific modules
+   * @param value
    * @returns {object} Context with matching actions
    */
-  #findMatchingActions({value}) {
+  #findMatchingActions(value) {
     const {content} = value
     const {loadedActions, specificModules} = content
     const actions = []
@@ -394,7 +398,7 @@ export default class Discovery {
 
     value.content = {actions}
 
-    return {value}
+    return value
   }
 
   /**
@@ -430,9 +434,10 @@ export default class Discovery {
    * @private
    * @param {object} context - Pipeline context with actions
    * @param {object} context.value - Value object containing actions to validate
+   * @param value
    * @returns {object} Context with validated actions
    */
-  #validateActionsMetas({value}) {
+  #validateActionsMetas(value) {
     const {content} = value
     const {actions} = content
 
@@ -457,7 +462,7 @@ export default class Discovery {
 
     value.content = {validatedActions}
 
-    return {value}
+    return value
   }
 
   /**
@@ -509,9 +514,10 @@ export default class Discovery {
    * @private
    * @param {object} context - Pipeline context with validatedActions
    * @param {object} context.value - Value object containing validated actions
+   * @param value
    * @returns {object} Context with grouped actions
    */
-  #groupActionsByType({value}) {
+  #groupActionsByType(value) {
     const {content} = value
     const {validatedActions} = content
 
@@ -529,6 +535,6 @@ export default class Discovery {
 
     value.content =  grouped
 
-    return {value}
+    return value
   }
 }

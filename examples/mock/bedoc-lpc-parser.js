@@ -13,10 +13,10 @@
  * @since 1.0.0
  */
 
-import {Collection, Data, Util} from "@gesslar/toolkit"
-import {ActionBuilder, ACTIVITY} from "@gesslar/actioneer"
+import { ActionBuilder, ActionRunner, ACTIVITY } from "@gesslar/actioneer"
+import { Collection, Data, Util } from "@gesslar/toolkit"
 
-const {UNTIL} = ACTIVITY
+const {WHILE} = ACTIVITY
 
 /** @typedef {import("@gesslar/actioneer").ActionBuilder} ActionBuilder */
 
@@ -68,28 +68,27 @@ export default class {
     .do("Extract function blocks", this.#extractBlocks)
     // Because the previous activity results in an array, we can now run
     // all of the blocks through the extraction process in parallel!
-    .do("Process blocks", new ActionBuilder(this)
-      // Extraction methods for each block
-      .do("Extract description", this.#extractDescription, {
-        after: curr => {
-          curr.description = curr.description.map(d => {
-            d.groups.content = d.groups.content.toUpperCase()
-            return d
-          })
-        }
-      })
-      .do("Extract tags", UNTIL, this.#noMoreTags, this.#extractTag)
-      .do("Extract return", this.#extractReturn)
-      .build()
-    )
+    .do("Process blocks", this.#parallelExtraction)
     // Finalize results
     .do("Finalize", this.#finally)
 
-  async #extractBlocks(curr) {
-    curr.value = Data.appendString(curr.value, "\n")
+  #parallelExtraction = async value => {
+    const builder = new ActionBuilder(this)
+      .do("Extract description", this.#extractDescription)
+      .do("Extract tags", WHILE, this.#hasMoreTags, this.#extractTag)
+      .do("Extract return", this.#extractReturn)
+      .build()
 
+    const runner = new ActionRunner(builder)
+    const result = await runner.pipe(value.blocks)
+
+    return result
+  }
+
+  async #extractBlocks(value) {
+    const {content} = value
     const result = []
-    const lines = curr.value.split("\n")
+    const lines = Data.appendString(content, "\n").split("\n")
 
     while(lines.length) {
       const block = {}
@@ -138,9 +137,12 @@ export default class {
       result.push(block)
     }
 
-    curr.value = result
+    Object.assign(value, {
+      blocks: result,
+      file: value.file
+    })
 
-    return true
+    return value
   }
 
   /**
@@ -150,6 +152,8 @@ export default class {
    * before any \@tag declarations. The description continues until it
    * encounters a line starting with an @ symbol (indicating a JSDoc tag).
    * @param {Array<string>} curr - Array of comment lines to process
+   * @param value
+   * @param value8
    * @returns {Promise<Array<string> | null>} Array of description lines, or null if empty
    * @private
    * @async
@@ -161,26 +165,33 @@ export default class {
    * //
    * // Returns: ["This is the main description", "of the function."]
    */
-  #extractDescription = async curr => {
-    curr.description = this.#matchUntil(
-      curr.lines, // Array of remaining comment lines to process
+  #extractDescription = async value => {
+    const {lines} = value
+
+    const description = this.#matchUntil(
+    lines, // Array of remaining comment lines to process
       this.#regexes.get("description-start"), // Pattern to match comment lines and extract content
       this.#regexes.get("description-stop") // Stop pattern when encountering JSDoc tags (@param, @returns, etc.)
     )
 
-    return true
+    Object.assign(value, {description})
+
+    return value
   }
 
   /**
    * Predicate to check if there are more tags to extract
    * @param {object} curr - Current context
+   * @param curr.value
+   * @param value
    * @returns {boolean} True if more tags exist
    * @private
    */
-  #noMoreTags = curr => {
-    const text = curr.lines.join("\n")
+  #hasMoreTags = async value => {
+    const text = value.lines.join("\n")
     const tagTest = this.#regexes.get("tag")
-    return tagTest.test(text)
+    const returnExcepted = this.#regexes.get("tag-except")
+    return tagTest.test(text) && !returnExcepted.some(re => re.test(text))
   }
 
   /**
@@ -189,6 +200,7 @@ export default class {
    * Uses a complex regex pattern to capture multi-line tag content and stops
    * at the next tag or end of comment block.
    * @param {string[]} curr - Array of comment lines to process
+   * @param value
    * @returns {Promise<Array<string> | null>} Array of extracted tag strings, or null if none found
    * @private
    * @async
@@ -202,43 +214,43 @@ export default class {
    * //   "@param {number} age - The user's age",
    * // ]
    */
-  #extractTag = async curr => {
+  #extractTag = async (value) => {
+    const {lines,tag=[]} = value
     const result = {}
-    const text = curr.lines.join("\n")
+    const text = lines.join("\n")
     const tagTest = this.#regexes.get("tag")
 
     if(!tagTest.test(text))
-      return false
+      return value
 
     const tagMatch = this.#matchUntil(
-      curr.lines,
+      lines,
       this.#regexes.get("tag"),
       this.#regexes.get("tag-stop"),
       this.#regexes.get("tag-except")
     )
 
-    if(!tagMatch)
-      return false
+    if(tagMatch.length === 0)
+      return value
 
     const match = tagMatch.shift()
-    const {tag,type,name,rest,content} = match.groups
+    const {tag: matchedTag,type,name,rest,content} = match?.groups ?? {}
 
-    result[tag] = {name,type,rest,content: [content]}
+    result[matchedTag] = {name,type,rest,content: [content]}
 
     // If we had more than one entry, it's because we have more than one
     // line, and the rest is just content.
     if(tagMatch.length) {
       const contents = tagMatch.map(match => match.groups.content)
 
-      result[tag].content.push(...contents)
+      result[matchedTag].content.push(...contents)
     }
 
-    if(!curr.tag)
-      curr.tag = []
+    tag.push(result)
 
-    curr.tag.push(result)
+    Object.assign(value, {tag})
 
-    return true
+    return value
   }
 
   /**
@@ -250,6 +262,7 @@ export default class {
    * Supports both \@return and \@returns variations, extracting the return type
    * from curly braces and optional description text.
    * @param {string[]} curr - Array of comment lines to process
+   * @param value
    * @returns {Promise<Array<object> | null>} Array of return info objects with type and content, or null if none found
    * @private
    * @async
@@ -263,28 +276,29 @@ export default class {
    * // }]
    * @todo Fix the regex pattern and improve multi-line return handling (marked as FIXXXX)
    */
-  #extractReturn = async curr => {
+  #extractReturn = async value => {
+    const {lines,tag=[]} = value
     const result = {}
-    const text = curr.lines.join("\n")
+    const text = lines.join("\n")
     const tagTest = this.#regexes.get("return")
 
     if(!tagTest.test(text))
-      return {result: null}
+      return value
 
     const tagMatch = this.#matchUntil(
-      curr.lines,
+      lines,
       this.#regexes.get("return"),
       this.#regexes.get("tag-stop")
     )
 
     if(!tagMatch)
-      return false
+      return value
 
     const match = tagMatch.shift()
-    const tag = "return"
+    const tagToMatch = "return"
     const {type,content} = match.groups
 
-    result[tag] = {type,content: [content]}
+    result[tagToMatch] = {type,content: [content]}
 
     // If we had more than one entry, it's because we have more than one
     // line, and the rest is just content.
@@ -294,24 +308,23 @@ export default class {
       result[tag].content.push(...contents)
     }
 
-    if(!curr.tag)
-      curr.tag = []
+    tag.push(result)
 
-    curr.tag.push(result)
+    Object.assign(value, {tag})
 
-    return true
+    return value
   }
 
   /**
    * Final processing method called after all extraction is complete.
    * @param {Array<Map>} curr - Map of extracted data from the parsing process
+   * @param value
    * @returns {Promise<Array<object>>} The transformation results.
    * @private
    */
-  async #finally(curr) {
-    const result = await Collection.asyncMap(curr.value, async item => {
+  async #finally(value) {
+    const result = await Collection.asyncMap(value, async item => {
       const result = {}
-
       result.name = item.function.groups.name
 
       result.description = item
@@ -341,10 +354,11 @@ export default class {
       return result
     })
 
-    curr.value = {functions: result}
-
-    return true
+    // Just take the file from the first one
+    return {functions: result}
   }
+
+  // #hasMoreBlocks = (value) => value.lines.length > 0
 
   /**
    * Utility method to match lines until a stop condition is met.
@@ -402,7 +416,7 @@ export default class {
     if(exceptions.length)
       lines.unshift(...exceptions)
 
-    return result.length > 0 ? result : null
+    return result
   }
 
   // HERE BE DRAGONS! YOU DONE BEEN WARNED, FUGGAH!

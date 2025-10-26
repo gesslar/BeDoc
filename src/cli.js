@@ -8,6 +8,7 @@ import url from "node:url"
 import {ActionRunner} from "@gesslar/actioneer"
 import ConfigParams from "./core/ConfigParams.js"
 import BeDoc from "./core/BeDoc.js"
+import {ActionBuilder} from "../Actioneer/src/index.js"
 
 // Main entry point
 void (async() => {
@@ -70,20 +71,24 @@ void (async() => {
     //   debug: setup.glog.newDebug()
     // }
 
-    const bedoc = new BeDoc({})
+    // const bedoc = new BeDoc({})
+    // const runners = bedoc.actions.map(action => new ActionRunner(action))
 
-    const runners = bedoc.actions.map(action => new ActionRunner(action))
+    const bedoc = new ActionBuilder(new BeDoc()).build()
+    const runner = new ActionRunner(bedoc)
+    const result = await runner.run(optionsWithSources)
 
-    let content = optionsWithSources
-    let glog = {}
+    // let content = optionsWithSources
+    // let glog = {}
+    // let config = {}
 
-    for(const runner of runners) {
-      const result = await runner.run({content,glog})
+    // for(const runner of runners) {
+    //   const result = await runner.run({content,config,glog})
 
-      void({content,glog} = result.value)
-    }
+    //   void({content,config,glog} = result.value)
+    // }
 
-    console.log(JSON.stringify(content, null, 2))
+    console.log(JSON.stringify(result, null, 2))
 
     process.exit(0)
 

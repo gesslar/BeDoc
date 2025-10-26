@@ -61,23 +61,26 @@ export default class Pipeline {
   async #readFile(file) {
     try {
       this.#debug("Reading file %o", 2, file.path)
-      const value = await file.read()
+      const content = await file.read()
 
-      return {file, value}
+      return {file, content}
     } catch(error) {
       throw Sass.new(`Reading file ${file?.path}`, error)
     }
   }
 
-  async #parseFile(result) {
+  async #parseFile(read) {
     try {
-      const {file} = result
+      const {file} = read
 
       this.#debug("Parsing file %o", 2, file.path)
 
-      return await this.#parse.runAction(result)
+      const functions = await this.#parse.runAction(read)
+      const result = {file,...functions}
+
+      return result
     } catch(error) {
-      throw Sass.new(`Parsing file ${result?.file?.path}`, error)
+      throw Sass.new(`Parsing file ${read?.file?.path}`, error)
     }
   }
 
@@ -89,7 +92,7 @@ export default class Pipeline {
     // Optional contract validation - only if contracts are loaded
     try {
       if(this.#parse.contract) {
-        this.#parse.contract.validate(parseResult.value)
+        this.#parse.contract.validate(parseResult)
         this.#debug("Parse contract validation passed", 3)
       } else {
         throw Sass.new("No contract for parser. Boo, how we supposed to know it's good?")
@@ -100,7 +103,7 @@ export default class Pipeline {
 
     try {
       if(this.#print.contract) {
-        this.#print.contract.validate(parseResult.value)
+        this.#print.contract.validate(parseResult)
         this.#debug("Print contract validation passed", 3)
       } else {
         throw Sass.new("No contract for printer. Seriously? Who's vetting this stuff?")
@@ -113,16 +116,16 @@ export default class Pipeline {
     return parseResult
   }
 
-  async #printFile({file,value}) {
+  async #printFile({file,functions}) {
     try {
       this.#debug("Printing file %o", 2, file.path)
 
       const printResult = await this.#print.runAction({
         moduleName: file.module,
-        functions: value.functions,
+        functions: functions,
       })
 
-      const {destFile, destContent} = printResult.value
+      const {destFile, destContent} = printResult
       const isNullish = value => value == null
 
       if(isNullish(destFile) || isNullish(destContent))

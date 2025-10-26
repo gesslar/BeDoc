@@ -12,23 +12,29 @@ export default class Initialise {
     .do("Set up logging", this.#setupLogging)
     .do("Debug message the configuration", this.#printConfiguration)
 
-  async #initialiseProjectFiles({value}) {
-    const {content} = value
+  async #initialiseProjectFiles(value) {
+    const config = value
+
     // Create core instance with validated config
     const prjPath = new DirectoryObject(process.cwd())
     const prjPkJsonFile = new FileObject("package.json", prjPath)
     const prjPkjJson = await prjPkJsonFile.loadData()
     const pkjBedoc = prjPkjJson?.bedoc ?? {}
 
-    Object.assign(content, {
+    // We need the config in both config AND content, because while config
+    // houses the actual config, content is what will be passed along the
+    // pipeline through Discovery, etc.
+    Object.assign(config, {
       basePath: {value: prjPath, source: "cli"},
       project: pkjBedoc,
     })
 
-    return {value}
+    value = {config, content: config}
+
+    return value
   }
 
-  async #validateConfiguration({value}) {
+  async #validateConfiguration(value) {
     const {content} = value
 
     const config = new Configuration()
@@ -47,10 +53,10 @@ export default class Initialise {
 
     Object.assign(content, validConfig)
 
-    return {value}
+    return value
   }
 
-  async #setupLogging({value}) {
+  async #setupLogging(value) {
     const {content} = value
 
     const glog = new Glog({env: ENV.CLI})
@@ -64,12 +70,12 @@ export default class Initialise {
 
     this.#debug("Logging initialised.", 2)
 
-    return {value}
+    return value
   }
 
-  async #printConfiguration({value}) {
+  async #printConfiguration(value) {
     this.#debug("Configuration complete.", 3, value.content)
 
-    return {value}
+    return value
   }
 }

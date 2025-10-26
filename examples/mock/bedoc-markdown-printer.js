@@ -17,8 +17,7 @@ export default class {
     .do("Render function", UNTIL, this.#hasMoreFunctions, this.#renderFunction)
     .do("Finalize output", this.#finalise)
 
-  async #prepare(curr) {
-    const {moduleName = "module", functions = []} = curr ?? {}
+  async #prepare({moduleName,functions}) {
     const ordered = Data.typeOf(functions) === "Array"
       ? [...functions].sort((a, b) => {
         if(!a?.name || !b?.name)
@@ -28,13 +27,11 @@ export default class {
       })
       : []
 
-    curr.value = {
+    return {
       moduleName,
       remaining: ordered,
       rendered: []
     }
-
-    return true
   }
 
   /**
@@ -43,12 +40,11 @@ export default class {
    * @returns {boolean} True if more functions remain
    * @private
    */
-  #hasMoreFunctions = curr => {
-    return curr.value.remaining.length > 0
-  }
+  #hasMoreFunctions = curr => curr.remaining.length > 0
 
   async #renderFunction(curr) {
-    const next = curr.value.remaining.shift()
+    const {remaining,rendered} = curr
+    const next = remaining.shift()
 
     const lines = []
 
@@ -98,22 +94,20 @@ export default class {
 
     const result = lines.join("\n").trim()
 
-    curr.value.rendered.push(Data.appendString(result, "\n"))
+    rendered.push(Data.appendString(result, "\n"))
 
-    return true
+    return curr
   }
 
   async #finalise(curr) {
-    const {moduleName, rendered} = curr.value
+    const {moduleName, rendered} = curr
 
     if(!rendered.length)
       throw new Sass(`No functions to print for module: \`${moduleName}\``)
 
-    curr.value = {
+    return {
       destFile: `${moduleName}.md`,
-      destContent: rendered.join("\n\n")
+      destContent: rendered.join("\n")
     }
-
-    return true
   }
 }

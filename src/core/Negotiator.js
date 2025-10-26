@@ -11,7 +11,7 @@ import BeDocSchema from "./BeDocSchema.js"
  * @class Negotiator
  * @exports
  */
-export default class Negotiator {
+export default   class Negotiator {
   static meta = Object.freeze({
     name: "Contract"
   })
@@ -22,6 +22,7 @@ export default class Negotiator {
     .do("Initialise Discovery", this.#init)
     .do("Load the terms for each action", this.#loadActionTerms)
     .do("Find compatible actions", this.#findCompatibleActions)
+    .do("Finalize the result into a single object", this.#finalizeActionObject)
 
   /**
    * Initialise the Negotiator with the provided value context.
@@ -30,16 +31,17 @@ export default class Negotiator {
    * @private
    * @param {object} param0 - Object containing the value context
    * @param {object} param0.value - The context value, expected to contain glog
+   * @param value
    * @returns {Promise<object>} The updated context object
    */
-  async #init({value}) {
+  async #init(value) {
     const {glog} = value
 
     this.#debug = glog.newDebug(this.constructor.name)
 
     this.#debug(`${this.constructor.name} initialised`, 2)
 
-    return {value}
+    return value
   }
 
   /**
@@ -49,9 +51,10 @@ export default class Negotiator {
    * @private
    * @param {object} param0 - Object containing the value context
    * @param {object} param0.value - The context value, expected to contain discovered actions
+   * @param value
    * @returns {Promise<object>} The updated context object with terms/contracts attached
    */
-  async #loadActionTerms({value}) {
+  async #loadActionTerms(value) {
     const {content} = value
 
     const actionSchema = await BeDocSchema.load(this.#debug)
@@ -79,7 +82,7 @@ export default class Negotiator {
 
     value.content = discoveredActions
 
-    return {value}
+    return value
   }
 
   /**
@@ -87,14 +90,15 @@ export default class Negotiator {
    * and constructs a contract instance.
    *
    * @private
-   * @param {object} terms - The terms definition for the action
-   * @param {object} file - The file metadata for the action
-   * @param {Function} validator - The schema validator function
+   * @param {object|undefined} terms - The terms definition for the action
+   * @param {object|undefined} file - The file metadata for the action
+   * @param {(value: unknown) => unknown} validator - The schema validator function
+   * @param {(...args: unknown[]) => void} [debug] - Optional debug function to use while loading
    * @returns {Promise<{terms: Terms, contract: Contract}>} Parsed terms and contract
    * @throws {Error} If terms parsing or contract creation fails
    */
-  async #loadTerms(terms, file, validator) {
-    const debug = this.#debug
+  async #loadTerms(terms, file, validator, debug) {
+    const dbg = debug ?? this.#debug
     try {
       // Parse the terms data (handles ref:// and other formats)
       const parsedTerms = await Terms.parse(terms, file?.directory)
@@ -107,7 +111,7 @@ export default class Negotiator {
         file?.module ?? "Action Terms",
         parsedTerms,
         validator,
-        debug
+        dbg
       )
 
       return {terms: termsInstance, contract}
@@ -123,10 +127,11 @@ export default class Negotiator {
    * @private
    * @param {object} param0 - Object containing the value context
    * @param {object} param0.value - The context value, expected to contain discovered actions
+   * @param value
    * @returns {Promise<object>} The updated context object with compatible actions
    */
-  async #findCompatibleActions({value}) {
-    const {content,glog} = value
+  async #findCompatibleActions(value) {
+    const {content, glog} = value
 
     const compatibleActions = {print: [], parse: []}
 
@@ -160,6 +165,35 @@ export default class Negotiator {
 
     value.content = compatibleActions
 
-    return {value}
+    return value
   }
+
+  /**
+   * Selects final actions, ensuring exactly one parser and one printer
+   *
+   * @param {object} compatibleActions - Compatible actions object
+   * @param compatibleActions.value
+   * @param value
+   * @returns {object} Final actions object with print and parse keys
+   * @throws {Error} If no matching actions found or multiple matches exist
+   */
+  #finalizeActionObject(value) {
+    const {content} = value
+    const finalActions = {}
+
+    for(const [key, value] of Object.entries(content)) {
+      if(value.length === 0)
+        throw Sass.new(`No matching ${key} found`)
+
+      if(value.length > 1)
+        throw Sass.new(`Multiple matching ${key} found`)
+
+      finalActions[key] = content[key][0]
+    }
+
+    value.content = finalActions
+
+    return value
+  }
+
 }
