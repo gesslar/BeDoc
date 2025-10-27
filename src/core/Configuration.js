@@ -2,8 +2,8 @@ import {Collection, Data, DirectoryObject, FileObject, FS, Tantrum, Util} from "
 import JSON5 from "json5"
 import process from "node:process"
 
-import ConfigParams from "../ConfigParams.js"
-import ENV from "../Env.js"
+import ConfigParams from "./ConfigParams.js"
+import ENV from "./Env.js"
 
 export default class Configuration {
   async validate({options, source}) {

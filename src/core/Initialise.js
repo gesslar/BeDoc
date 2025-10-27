@@ -1,5 +1,5 @@
 import {DirectoryObject, FileObject, Glog, Tantrum} from "@gesslar/toolkit"
-import Configuration from "./abstracted/Configuration.js"
+import Configuration from "./Configuration.js"
 
 import ENV from "./Env.js"
 
