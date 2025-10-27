@@ -144,9 +144,15 @@ export default class Pipeline {
 
       const {file: destFile,value: destContent} = context
       const outputFile = new FileObject(destFile, this.#output)
-      this.#debug("Writing to %o", 2, outputFile.path)
+
+      if(destContent.length < 1) {
+        this.#debug("No content to write to %o", 2, outputFile.path)
+
+        return {file: outputFile, bytes: destContent.length}
+      }
 
       try {
+        this.#debug("Writing to %o", 2, outputFile.path)
         await outputFile.write(destContent)
 
         return {file: outputFile, bytes: destContent.length}
