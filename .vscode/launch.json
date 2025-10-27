@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "CLI - LPCDocs to Markdown (Hooks, Lang, Format)",
+      "name": "CLI - LPCDocs to Markdown (Thresh, Hooks, Lang, Format)",
       "type": "node",
       "request": "launch",
       "skipFiles": [
@@ -14,7 +14,7 @@
         "--debugLevel",
         "5",
         "--include",
-        "examples/source/lpc/**/*.c",
+        "/mud/frogdice/thresh/lib/adm/simul_efun/**/*.c",
         "--output",
         "examples/output/markdown/",
         "--parser",
@@ -27,7 +27,7 @@
       "console": "integratedTerminal"
     },
     {
-      "name": "CLI - LPCDocs to Markdown (Threshold, Hooks, Lang, Format)",
+      "name": "CLI - LPCDocs to Markdown (Threshold, Single, Hooks, Lang, Format)",
       "type": "node",
       "request": "launch",
       "skipFiles": [
@@ -39,7 +39,7 @@
         "--debugLevel",
         "5",
         "--include",
-        "examples/source/lpc/**/*.c",
+        "/mud/frogdice/thresh/lib/adm/simul_efun/wizard.c",
         "--output",
         "examples/output/markdown/",
         "--parser",
@@ -51,216 +51,5 @@
       ],
       "console": "integratedTerminal"
     },
-    {
-      "name": "CLI - LPCDocs to Markdown (Single, Mock, Lang, Format)",
-      "type": "node",
-      "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "program": "${workspaceFolder}/src/cli.js",
-      "args": [
-        "--debug",
-        "--debugLevel",
-        "5",
-        "--include",
-        "/mud/frogdice/thresh/lib/adm/simul_efun/base64.c",
-        "--output",
-        "examples/output/",
-        "--parser",
-        "examples/node_modules_test/bedoc-lpc-parser/bedoc-lpc-parser.js",
-        "--printer",
-        "examples/node_modules_test/bedoc-markdown-printer/bedoc-markdown-printer.js",
-      ],
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "CLI - LPCDocs to Markdown (Specific, Hooks)",
-      "type": "node",
-      "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "program": "${workspaceFolder}/src/cli.js",
-      "args": [
-        "--debug",
-        "--debugLevel",
-        "1",
-        "--include",
-        "examples/source/lpc/**/*.c",
-        "--output",
-        "examples/output/markdown/",
-        "--parser",
-        "examples/node_modules_test/bedoc-lpc-parser/bedoc-lpc-parser.js",
-        "--printer",
-        "examples/node_modules_test/bedoc-markdown-printer/bedoc-markdown-printer.js",
-        "--hooks",
-        "examples/hooks/lpc-markdown-hooks.js"
-      ],
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "CLI - LPCDocs to Wikitext (Lang, Format, Hooks)",
-      "type": "node",
-      "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "program": "${workspaceFolder}/src/cli.js",
-      "args": [
-        "--debug",
-        "--debugLevel",
-        "5",
-        "--include",
-        "examples/source/lpc/**/*.c",
-        "--output",
-        "examples/output/wikitext/",
-        "--language",
-        "lpc",
-        "--format",
-        "wikitext",
-        "--hooks",
-        "examples/hooks/lpc-wikitext-hooks.js",
-        "--maxConcurrent",
-        "50"
-      ],
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "CLI - LPCDocs to Wikitext (Specific, Hooks)",
-      "type": "node",
-      "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "program": "${workspaceFolder}/src/cli.js",
-      "args": [
-        "--debug",
-        "--debugLevel",
-        "1",
-        "--include",
-        "examples/source/lpc/**/*.c",
-        "--output",
-        "examples/output/wikitext/",
-        "--parser",
-        "examples/node_modules_test/bedoc-lpc-parser/bedoc-lpc-parser.js",
-        "--printer",
-        "examples/node_modules_test/bedoc-wikitext-printer/bedoc-wikitext-printer.js",
-        "--hooks",
-        "examples/hooks/lpc-wikitext-hooks.js"
-      ],
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "CLI - LPCDocs to Wikitext (Specific, Hooks, Upload)",
-      "type": "node",
-      "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "program": "${workspaceFolder}/src/cli.js",
-      "args": [
-        "--maxConcurrent",
-        "50",
-        "--debug",
-        "--debugLevel",
-        "1",
-        "--include",
-        "examples/source/lpc/**/*.c",
-        "--output",
-        "examples/output/wikitext/",
-        "--parser",
-        "examples/node_modules_test/bedoc-lpc-parser/bedoc-lpc-parser.js",
-        "--printer",
-        "examples/node_modules_test/bedoc-wikitext-printer/bedoc-wikitext-printer.js",
-        "--hooks",
-        "examples/hooks/lpc-wikitext-hooks-with-upload.js"
-      ],
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "CLI - LuaDocs to Markdown (Lang, Format, Hooks)",
-      "type": "node",
-      "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "program": "${workspaceFolder}/src/cli.js",
-      "args": [
-        "--debug",
-        "false",
-        "--debugLevel",
-        "5",
-        "--include",
-        "examples/source/lua/**/*.lua",
-        "--output",
-        "examples/output/markdown/",
-        "--language",
-        "lua",
-        "--format",
-        "markdown",
-        "--hooks",
-        "examples/hooks/lua-markdown-hooks.js"
-      ],
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "CLI - LuaDocs to Wikitext (Lang, Format, Hooks)",
-      "type": "node",
-      "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "program": "${workspaceFolder}/src/cli.js",
-      "args": [
-        "--debug",
-        "--debugLevel",
-        "1",
-        "--include",
-        "examples/source/lua/**/*.lua",
-        "--output",
-        "examples/output/wikitext/",
-        "--language",
-        "lua",
-        "--format",
-        "wikitext",
-        "--hooks",
-        "examples/hooks/lua-wikitext-hooks.js"
-      ],
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "Chokidar - LPCDocs to Wikitext (Lang, Format, Hooks, Upload)",
-      "type": "node",
-      "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "program": "${workspaceFolder}/examples/chokidar-as-cli/index.js",
-      "cwd": "${workspaceFolder}/examples/chokidar-as-cli",
-      "args": [],
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "Chokidar - LPCDocs to Wikitext (NPM)",
-      "type": "node",
-      "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "program": "${workspaceFolder}/examples/chokidar-as-npm/index.js",
-      "cwd": "${workspaceFolder}/examples/chokidar-as-npm",
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "Test ActionBuilder",
-      "type": "node",
-      "request": "launch",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "program": "${workspaceFolder}/work/test-builder.mjs",
-      "console": "integratedTerminal"
-    }
   ]
 }
