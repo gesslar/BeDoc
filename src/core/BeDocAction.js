@@ -1,43 +1,32 @@
 import {ActionBuilder, ActionRunner} from "@gesslar/actioneer"
 import {Contract, FileObject, Sass, Terms} from "@gesslar/toolkit"
 
-// BeDoc-specific hook points
-export const HookPoints = Object.freeze({
-  SETUP: "setup",
-  CLEANUP: "cleanup",
-  BEFORE_PARSE: "before_parse",
-  AFTER_PARSE: "after_parse",
-  BEFORE_PRINT: "before_print",
-  AFTER_PRINT: "after_print",
-  BEFORE_WRITE: "before_write",
-  AFTER_WRITE: "after_write",
-  ERROR: "error"
-})
-
 /**
  * BeDoc-specific action base class that manages actions with lifecycle hooks.
- * Adds BeDoc-specific functionality like contract terms management and hook points.
+ *
+ * Adds BeDoc-specific functionality like contract terms management and hook
+ * points.
  */
 export default class BeDocAction {
-  #action = null
-  #file = null
-  #variables = null
-  #runner = null
-  #id = null
+  #action
+  #contract
   #debug
-  #terms = null
-  #contract = null
+  #file
+  #hookVariables
+  #id
+  #runner
+  #terms
 
-  constructor({actionDefinition, variables, debug}) {
-    this.#id = Symbol(performance.now())
-    this.#variables = variables || {}
+  constructor({actionDefinition,hookVariables,debug}) {
     this.#debug = debug
+    this.#hookVariables = hookVariables || {}
+    this.#id = Symbol(performance.now())
 
     const {action, file} = actionDefinition
     this.#action = action
+    this.#contract = actionDefinition.contract
     this.#file = file
     this.#terms = actionDefinition.terms
-    this.#contract = actionDefinition.contract
   }
 
   /**
@@ -62,19 +51,19 @@ export default class BeDocAction {
    * Sets hooks for the ActionRunner.
    * Delegates to ActionRunner's setHooks method.
    *
-   * @param {string} hooksPath - Path to hooks file
+   * @param {string} hooksFile - Path to hooks file
    * @param {string} className - Name of the hooks class to instantiate
    * @returns {this} This instance for chaining
    * @throws {Sass} If runner not set up yet
    */
-  setHooks(hooksPath, className) {
+  setHooks(hooksFile, className) {
     if(!this.#runner)
       throw Sass.new(
         "Cannot set hooks before action is set up. Call setupAction() first."
       )
 
     // Delegate to ActionRunner's setHooks method
-    this.#runner.setHooks(hooksPath, className)
+    this.#runner.setHooks(hooksFile.path, className)
 
     return this
   }
@@ -82,19 +71,19 @@ export default class BeDocAction {
   /**
    * Gets the action metadata.
    *
-   * @returns {object|undefined} Action metadata object
+   * @returns {object?} Action metadata object
    */
   get meta() {
     return this.#action?.meta
   }
 
   /**
-   * Gets the variables passed to the action.
+   * Gets the hookVariables passed to the action.
    *
-   * @returns {object} Variables object
+   * @returns {object} hookVariables object
    */
-  get variables() {
-    return this.#variables
+  get hookVariables() {
+    return this.#hookVariables
   }
 
   /**
@@ -157,10 +146,12 @@ export default class BeDocAction {
    * Setup the action by creating the ActionRunner.
    * This is the main public method to initialize the action for use.
    *
+   * @param {object} root0 - Options object
+   * @param {object} [root0.hooks] - Hooks configuration object
    * @returns {Promise<this>} Promise of this instance.
    * @throws {Sass} If action setup fails
    */
-  async setupAction() {
+  async setupAction({hooks} = {}) {
     this.#debug(
       "Setting up action for %o on %o",
       2,
@@ -168,7 +159,7 @@ export default class BeDocAction {
       this.id
     )
 
-    await this.#setupAction()
+    await this.#setupAction({hooks})
 
     return this
   }
@@ -177,11 +168,15 @@ export default class BeDocAction {
    * Setup the action instance and create the runner.
    * Uses ActionBuilder to build the action wrapper, then creates ActionRunner.
    *
+   * @param {object} root0 - Options object containing hooks configuration
+   * @param {object} [root0.hooks] - Hooks configuration object
+   * @param {string} [root0.hooks.kind] - The kind of hooks to use
+   * @param {FileObject} [root0.hooks.file] - The file object for hooks
    * @returns {Promise<void>}
    * @throws {Sass} If action setup method is not a function
    * @private
    */
-  async #setupAction() {
+  async #setupAction({hooks: {kind=null,file=null}} = {}) {
     try {
       // Instantiate the action class
       const actionInstance = new this.#action()
@@ -196,6 +191,7 @@ export default class BeDocAction {
       // Create ActionRunner with the wrapped action
       // ActionRunner extends Piper and handles execution
       this.#runner = new ActionRunner(actionWrapper, {debug: this.#debug})
+      this.setHooks(file.path,kind)
 
     } catch(error) {
       throw Sass.new("Setting up action", error)

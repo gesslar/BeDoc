@@ -115,7 +115,7 @@ export default class BeDoc {
    */
   async #instantiateActions(value) {
     const {config,content,glog} = value
-    const {variables} = config
+    const {hookVariables} = config
 
     const newActions = {}
     const actions = (({parse, print}) => ({parse, print}))(content)
@@ -131,7 +131,7 @@ export default class BeDoc {
       // debug("Attaching %o action to instance", 2, kind)
       newActions[kind] = new managers[kind]({
         actionDefinition,
-        variables,
+        hookVariables,
         debug: glog.newDebug()
       })
 

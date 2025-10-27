@@ -2,12 +2,15 @@ import BeDocAction from "./BeDocAction.js"
 
 /**
  * Parse action manager for BeDoc parse actions.
+ *
  * Manages parser action engines that extract documentation from source files.
- * Hooks are handled automatically by ActionRunner via the before$/after$ pattern.
+ *
+ * Hooks are handled automatically by ActionRunner via the before$/after$
+ * pattern.
  */
 export default class ParseAction extends BeDocAction {
-  constructor({actionDefinition, variables, debug}) {
-    super({actionDefinition, variables, debug})
+  constructor(config) {
+    super(config)
   }
 
   /**

@@ -2,12 +2,16 @@ import BeDocAction from "./BeDocAction.js"
 
 /**
  * Print action manager for BeDoc print actions.
- * Manages printer action engines that generate output from parsed documentation.
- * Hooks are handled automatically by ActionRunner via the before$/after$ pattern.
+ *
+ * Manages printer action engines that generate output from parsed
+ * documentation.
+ *
+ * Hooks are handled automatically by ActionRunner via the before$/after$
+ * pattern.
  */
 export default class PrintAction extends BeDocAction {
-  constructor({actionDefinition, variables, debug}) {
-    super({actionDefinition, variables, debug})
+  constructor(config) {
+    super(config)
   }
 
   /**

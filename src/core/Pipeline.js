@@ -8,12 +8,14 @@ export default class Pipeline {
   #print
   #output
   #debug
+  #hooks
 
   constructor({parse, print, output, options, debug}) {
     this.#parse = parse
     this.#print = print
     this.#output = output
     this.#debug = debug
+    this.#hooks = options?.hooks
 
     // Create pipeline
     this.#pipeline = new Piper({options,debug})
@@ -25,8 +27,8 @@ export default class Pipeline {
   #setupPipeline() {
     // Setup hooks
     this.#pipeline
-      .addSetup(() => this.#parse.setupAction())
-      .addSetup(() => this.#print.setupAction())
+      .addSetup(() => (this.#parse.setupAction({hooks: {file: this.#hooks,kind: "parse"}})))
+      .addSetup(() => (this.#print.setupAction({hooks: {file: this.#hooks,kind: "print"}})))
 
     // Cleanup hooks
     this.#pipeline
