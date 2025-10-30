@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import {DirectoryObject, FileObject, Sass, Tantrum, Util,Term} from "@gesslar/toolkit"
+import {Glog,DirectoryObject, FileObject, Sass, Tantrum, Util,Term} from "@gesslar/toolkit"
 import {program} from "commander"
 import process from "node:process"
 import url from "node:url"
@@ -8,10 +8,13 @@ import url from "node:url"
 import {ActionBuilder,ActionRunner} from "@gesslar/actioneer"
 import BeDoc from "./core/BeDoc.js"
 import ConfigParams from "./core/ConfigParams.js"
+import Initialise from "./core/Initialise.js"
 
 // Main entry point
 void (async() => {
   const nerd = true
+
+  let pipeResult, cost
 
   try {
     // Get package info
@@ -61,26 +64,50 @@ void (async() => {
       return acc
     }, {})
 
-    const {cost,result} = await Util.time(async() => {
-      const bedoc = new ActionBuilder(new BeDoc()).build()
+    const overallResult = await Util.time(async() => {
+      const config = await (new Initialise(optionsWithSources)).validate()
+      const bedoc = new ActionBuilder(new BeDoc())
       const runner = new ActionRunner(bedoc)
 
-      return await runner.run(optionsWithSources)
+      return await runner.run(config)
     })
 
-    const bytes = result.reduce((acc,curr) => acc + curr.bytes, 0)
+    void({cost,result: pipeResult} = overallResult)
 
-    Term.status(`${result.length.toLocaleString()} files processed, `+
-    `${bytes.toLocaleString()} bytes written ` +
-    `in ${cost.toLocaleString()} ms`)
+    Glog(JSON.stringify(Object.keys(pipeResult)))
 
-    process.exit(0)
+    // const errors = pipeResult.filter(e => !e.ok).map(e => e.error)
+
+    // if(errors.length > 0)
+    //   throw Tantrum.new("Errors in pipeline.", errors)
+
+    report()
+
+    return process.exit(0)
   } catch(error) {
     if(error instanceof Sass || error instanceof Tantrum)
       error.report(nerd)
     else
       Sass.new("Error instantiating BeDoc", error).report(nerd)
 
-    process.exit(1)
+    report()
+
+    return process.exit(1)
+  }
+
+  function report() {
+    Glog(JSON.stringify(pipeResult))
+
+    return
+    // const errors = pipeResult.filter(e => e.error)
+    // const processed = pipeResult.filter(e => e.ok)
+    // const bytes = processed.reduce((acc,curr) => acc + curr.value.bytes, 0)
+
+    // Term.status(
+    //   `\n${processed.length.toLocaleString()} files processed\n`+
+    //   `${bytes.toLocaleString()} bytes written\n`+
+    //   `${errors.length.toLocaleString()} errors encountered\n`+
+    //   `Duration ${cost.toLocaleString()} ms`
+    // )
   }
 })()

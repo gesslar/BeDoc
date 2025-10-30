@@ -1,11 +1,10 @@
-import {ActionRunner,ActionBuilder} from "@gesslar/actioneer"
+import {ActionBuilder, ActionHooks} from "@gesslar/actioneer"
 
-import Initialise from "./Initialise.js"
 import Discovery from "./Discovery.js"
 import Negotiator from "./Negotiator.js"
+import ParseAction from "./ParseAction.js"
 import Pipeline from "./Pipeline.js"
 import PrintAction from "./PrintAction.js"
-import ParseAction from "./ParseAction.js"
 
 /**
  * BeDoc is the main orchestrator class for the BeDoc system.
@@ -25,6 +24,9 @@ export default class BeDoc {
     name: "BeDoc"
   })
 
+  #glog = null
+  #debug = null
+
   /**
    * Sets up the action pipeline for BeDoc.
    * Chains initialization, discovery, negotiation, instantiation, and execution steps.
@@ -33,118 +35,153 @@ export default class BeDoc {
    * @returns {ActionBuilder} The configured action builder.
    */
   setup = ab => ab
-    .do("Initialise BeDoc from configuration", this.#initialiseBeDoc)
+    .do("Initialise some things", this.#initialiser)
     .do("Discover BeDoc actions", this.#discoverActions)
     .do("Negotiate terms and conditions for BeDoc actions", this.#negotiateTerms)
     .do("Instantiate the actions, eh?", this.#instantiateActions)
+    .do("Setup the hooks if we need to", this.#hooker)
     .do("Run everything through Piper", this.#doItUp)
 
-  /**
-   * Executes the pipeline if both print and parse actions are present.
-   *
-   * @private
-   * @param {object} value - The context object containing config, glog, and actions.
-   * @returns {Promise<object>} The result of the pipeline run or the original value.
-   */
-  async #doItUp(value) {
-    const {config: options,glog,actions} = value
-    const numActions = Object.keys(actions ?? {}).length
+  async #initialiser(context) {
+    this.#glog = context.glog
+    this.#debug = context.glog.newDebug("BeDoc")
 
-    if(numActions !== 2)
-      return value
+    this.#debug("Initialising BeDoc", 1)
 
-    const {print,parse} = actions
-    const {include: files, output, maxConcurrent} = options
-    const debug = glog.newDebug("BeDoc")
-    const pipeline = new Pipeline({parse,print,output,options,debug})
-
-    return await pipeline.run(files, maxConcurrent)
-  }
-
-  /**
-   * Initializes BeDoc from configuration using the Initialise action.
-   *
-   * @private
-   * @param {object} value - The context object.
-   * @returns {Promise<object>} The updated context object.
-   */
-  async #initialiseBeDoc(value) {
-    const action = (new ActionBuilder(new Initialise())).build()
-    const runner = new ActionRunner(action)
-    value = await runner.run(value)
-
-    return value
+    return context
   }
 
   /**
    * Discovers available actions for BeDoc using the Discovery action.
    *
    * @private
-   * @param {object} value - The context object.
-   * @returns {Promise<object>} The updated context object.
+   * @returns {ActionBuilder} ActionBuilder for Discovery action.
    */
-  async #discoverActions(value) {
-    const action = (new ActionBuilder(new Discovery())).build()
-    const runner = new ActionRunner(action)
-    value = await runner.run(value)
-
-    return value
+  #discoverActions() {
+    return new ActionBuilder(new Discovery({debug: this.#glog.newDebug("Discovery")}))
   }
 
   /**
    * Negotiates terms and conditions for BeDoc actions using the Negotiator action.
    *
    * @private
-   * @param {object} value - The context object.
-   * @returns {Promise<object>} The updated context object.
+   * @returns {ActionBuilder} ActionBuilder for Negotiator action.
    */
-  async #negotiateTerms(value) {
-    const action = (new ActionBuilder(new Negotiator())).build()
-    const runner = new ActionRunner(action)
-    value = await runner.run(value)
-
-    return value
+  #negotiateTerms() {
+    return new ActionBuilder(new Negotiator(), {
+      debug: this.#glog.newDebug
+    })
   }
 
   /**
    * Instantiates action managers (print and parse) and sets up hooks.
    *
    * @private
-   * @param {object} value - The context object containing config, content, and glog.
+   * @param {object} context - The context object containing config, content, and glog.
    * @returns {Promise<object>} The updated context object with instantiated actions.
    */
-  async #instantiateActions(value) {
-    const {config,content,glog} = value
+  async #instantiateActions(context) {
+    this.#debug("Instantiating actions", 2)
+    const {config,content} = context
     const {hookVariables} = config
 
     const newActions = {}
     const actions = (({parse, print}) => ({parse, print}))(content)
 
     if(Object.values(actions).some(action => action === undefined))
-      return value
+      return context
 
     const managers = {print: PrintAction, parse: ParseAction}
 
     for(const [, actionDefinition] of Object.entries(actions)) {
       const {kind} = actionDefinition.action.meta
 
-      // debug("Attaching %o action to instance", 2, kind)
       newActions[kind] = new managers[kind]({
         actionDefinition,
         hookVariables,
-        debug: glog.newDebug()
+        debug: this.#glog.newDebug(managers[kind].constructor.name)
       })
-
-      // debug("Setting up hooks for action %o", 2, kind)
-      // if(validConfig.hooks) {
-      //   // Use actioneer's setHooks method: setHooks(filepath, className)
-      //   // The className matches the action kind (parse/print)
-      //   core.actions[kind].setHooks(validConfig.hooks.path, kind)
-      // }
     }
 
-    value.actions = newActions
+    context.actions = newActions
 
-    return value
+    return context
+  }
+
+  async #hooker(context) {
+    this.#debug("Setting up hooks", 2)
+    const {config,actions} = context
+    const {hooks: hooksFile} = config
+
+    if(!hooksFile)
+      return context
+
+    const hooksModule = await hooksFile.import()
+
+    // If a module exports default
+    if(hooksModule.default) {
+      const {kind} = hooksModule.default.meta
+
+      if(!kind)
+        return context
+
+      const action = actions[kind]
+      if(!action)
+        return context
+
+      const hooksObject = new hooksModule.default({
+        debug: this.#glog.newDebug(hooksModule.default.constructor.name)
+      })
+      action.setHooksObject(hooksObject)
+
+      return context
+    }
+
+    // Not a default, we get to figure this one out!
+    for(const [kind,action] of Object.entries(actions)) {
+      if(hooksModule[kind]) {
+        const hooksObject = new hooksModule[kind]({
+          debug: this.#glog.newDebug(hooksModule[kind].constructor.name)
+        })
+        const actionHooks = new ActionHooks({
+          hooksObject,
+          hookTimeout: context.config.hookTimeout
+        }, this.#debug)
+
+        action.setActionHooks(actionHooks)
+      }
+    }
+
+    return context
+  }
+
+  /**
+   * Executes the pipeline if both print and parse actions are present.
+   *
+   * @private
+   * @param {object} context - The context object containing config, glog, and actions.
+   * @returns {Promise<object>} The result of the pipeline run or the original value.
+   */
+  async #doItUp(context) {
+    this.#debug("Commencing actually doing it of the up", 2)
+
+    const {config: options,actions} = context
+    const numActions = Object.keys(actions ?? {}).length
+
+    if(numActions !== 2)
+      return context
+
+    const {print,parse} = actions
+    const {include: files, output, maxConcurrent} = options
+
+    const pipeline = new Pipeline({
+      parse,
+      print,
+      output,
+      options,
+      debug: this.#glog.newDebug("Pipeline")
+    })
+
+    return await pipeline.run(files, maxConcurrent)
   }
 }

@@ -11,7 +11,7 @@ import BeDocSchema from "./BeDocSchema.js"
  * @class Negotiator
  * @exports
  */
-export default   class Negotiator {
+export default class Negotiator {
   static meta = Object.freeze({
     name: "Contract"
   })
@@ -22,24 +22,24 @@ export default   class Negotiator {
     .do("Initialise Discovery", this.#init)
     .do("Load the terms for each action", this.#loadActionTerms)
     .do("Find compatible actions", this.#findCompatibleActions)
-    .do("Finalize the result into a single object", this.#finalizeActionObject)
+    .do("Finalise the result into a single object", this.#finaliseActionObject)
 
   /**
    * Initialise the Negotiator with the provided value context.
    * Sets up the debug logger for this instance.
    *
    * @private
-   * @param {object} value - The context object containing initialization data
+   * @param {object} context - The context object containing initialization data
    * @returns {Promise<object>} The updated context object
    */
-  async #init(value) {
-    const {glog} = value
+  async #init(context) {
+    const {glog} = context
 
     this.#debug = glog.newDebug(this.constructor.name)
 
     this.#debug(`${this.constructor.name} initialised`, 2)
 
-    return value
+    return context
   }
 
   /**
@@ -47,11 +47,11 @@ export default   class Negotiator {
    * Attaches terms and contract objects to each action definition.
    *
    * @private
-   * @param {object} value - The context object containing discovered actions
+   * @param {object} context - The context object containing discovered actions
    * @returns {Promise<object>} The updated context object with terms/contracts attached
    */
-  async #loadActionTerms(value) {
-    const {content} = value
+  async #loadActionTerms(context) {
+    const {content} = context
 
     const actionSchema = await BeDocSchema.load(this.#debug)
     const termsValidator = Schemer.getValidator(actionSchema)
@@ -76,9 +76,9 @@ export default   class Negotiator {
       }
     }
 
-    value.content = discoveredActions
+    context.content = discoveredActions
 
-    return value
+    return context
   }
 
   /**
@@ -165,21 +165,22 @@ export default   class Negotiator {
   /**
    * Selects final actions, ensuring exactly one parser and one printer
    *
-   * @param {object} value - The context object containing compatible actions
+   * @param {object} context - The context object containing compatible actions
    * @returns {object} Final actions object with print and parse keys
    * @throws {Error} If no matching actions found or multiple matches exist
    */
-  #finalizeActionObject(value) {
-    const {content} = value
+  #finaliseActionObject(context) {
+    this.#debug("Finalising action negotiation and filtering out single actions for each type.", 2)
+    const {content} = context
     const finalActions = {}
 
     for(const [key, value] of Object.entries(content))
       if(value.length === 1)
         finalActions[key] = content[key][0]
 
-    value.content = finalActions
+    context.content = finalActions
 
-    return value
+    return context
   }
 
 }

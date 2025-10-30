@@ -5,7 +5,8 @@ import MediaWikiUploader from "./mediawiki-uploader.js"
 
 class print {
   static meta = Object.freeze({
-    name: "lpc-wikitext-with-upload.print.hooks"
+    name: "lpc-wikitext-with-upload.print.hooks",
+    kind: this.constructor.name,
   })
 
   #debug

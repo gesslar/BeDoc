@@ -4,16 +4,22 @@ import Configuration from "./Configuration.js"
 import ENV from "./Env.js"
 
 export default class Initialise {
-  #debug
+  #options
 
-  setup = ab => ab
-    .do("Initialise project files", this.#initialiseProjectFiles)
-    .do("Validate Configuration", this.#validateConfiguration)
-    .do("Set up logging", this.#setupLogging)
-    .do("Debug message the configuration", this.#printConfiguration)
+  constructor(options) {
+    this.#options = options
+  }
 
-  async #initialiseProjectFiles(value) {
-    const config = value
+  async validate() {
+    const projectFiles = await this.#initialiseProjectFiles(this.#options)
+    const validated = await this.#validateConfiguration(projectFiles)
+    const final = await this.#setupLogging(validated)
+
+    return final
+  }
+
+  async #initialiseProjectFiles(context) {
+    const config = context
 
     // Create core instance with validated config
     const prjPath = new DirectoryObject(process.cwd())
@@ -29,13 +35,13 @@ export default class Initialise {
       project: pkjBedoc,
     })
 
-    value = {config, content: config}
+    context = {config, content: config}
 
-    return value
+    return context
   }
 
-  async #validateConfiguration(value) {
-    const {content} = value
+  async #validateConfiguration(context) {
+    const {content} = context
 
     const config = new Configuration()
     const validConfig = await config.validate({
@@ -53,29 +59,19 @@ export default class Initialise {
 
     Object.assign(content, validConfig)
 
-    return value
+    return context
   }
 
-  async #setupLogging(value) {
-    const {content} = value
+  async #setupLogging(context) {
+    const {content} = context
 
     const glog = new Glog({env: ENV.CLI})
       .withLogLevel(content.debugLevel ?? 0)
       .withName("BEDOC")
       .withStackTrace(content.nerd)
 
-    value.glog = glog
+    context.glog = glog
 
-    this.#debug = glog.newDebug("Initialise")
-
-    this.#debug("Logging initialised.", 2)
-
-    return value
-  }
-
-  async #printConfiguration(value) {
-    this.#debug("Configuration complete.", 3, value.content)
-
-    return value
+    return context
   }
 }

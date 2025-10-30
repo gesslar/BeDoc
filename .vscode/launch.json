@@ -10,6 +10,8 @@
       ],
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
+        "--maxConcurrent",
+        "3",
         "--debug",
         "--debugLevel",
         "5",
@@ -18,16 +20,18 @@
         "--output",
         "examples/output/markdown/",
         "--parser",
-        "examples/node_modules_test/bedoc-lpc-parser/bedoc-lpc-parser.js",
+        "examples/node_modules_test/bedoc-lpcdoc-parser/bedoc-lpcdoc-parser.js",
         "--printer",
         "examples/node_modules_test/bedoc-markdown-printer/bedoc-markdown-printer.js",
         "--hooks",
-        "examples/hooks/lpc-markdown-hooks.js"
+        "examples/hooks/lpc-markdown-hooks.js",
+        "--hookTimeout",
+        "300000", // 5 minutes
       ],
       "console": "integratedTerminal"
     },
     {
-      "name": "CLI - LPCDocs to Markdown (Threshold, Single, Hooks, Lang, Format)",
+      "name": "CLI - LPCDocs to Markdown (Thresh, Single, Hooks, Lang, Format)",
       "type": "node",
       "request": "launch",
       "skipFiles": [
@@ -39,11 +43,11 @@
         "--debugLevel",
         "5",
         "--include",
-        "/mud/frogdice/thresh/lib/adm/simul_efun/wizard.c",
+        "/mud/frogdice/thresh/lib/adm/simul_efun/signal.c",
         "--output",
         "examples/output/markdown/",
         "--parser",
-        "examples/node_modules_test/bedoc-lpc-parser/bedoc-lpc-parser.js",
+        "examples/node_modules_test/bedoc-lpcdoc-parser/bedoc-lpcdoc-parser.js",
         "--printer",
         "examples/node_modules_test/bedoc-markdown-printer/bedoc-markdown-printer.js",
         "--hooks",

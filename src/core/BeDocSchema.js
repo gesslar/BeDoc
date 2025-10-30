@@ -37,9 +37,9 @@ export default class BeDocSchema {
    * @returns {Promise<object>} The loaded schema object
    * @throws {Sass} If fetching or writing fails
    */
-  static async #downloadSchema(debug=null) {
+  static async #downloadSchema(debug=(() => {})) {
     try {
-      debug?.("Fetching BeDoc schema from: %o", 2, SCHEMA_URL)
+      debug("Fetching BeDoc schema from: %o", 2, SCHEMA_URL)
 
       const response = await fetch(SCHEMA_URL)
 
@@ -68,7 +68,7 @@ export default class BeDocSchema {
    * @returns {Promise<object>} The loaded schema object
    * @throws {Sass} If loading fails
    */
-  static async load(debug=null) {
+  static async load(debug=(() => {})) {
     try {
       if(cache.schema)
         return cache.schema

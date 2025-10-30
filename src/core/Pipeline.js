@@ -1,6 +1,6 @@
 import {FileObject, Sass} from "@gesslar/toolkit"
 import {format} from "node:util"
-import {Piper} from "@gesslar/actioneer"
+import {Piper, ActionRunner} from "@gesslar/actioneer"
 
 export default class Pipeline {
   #pipeline
@@ -25,16 +25,6 @@ export default class Pipeline {
   }
 
   #setupPipeline() {
-    // Setup hooks
-    this.#pipeline
-      .addSetup(() => (this.#parse.setupAction({hooks: {file: this.#hooks,kind: "parse"}})))
-      .addSetup(() => (this.#print.setupAction({hooks: {file: this.#hooks,kind: "print"}})))
-
-    // Cleanup hooks
-    this.#pipeline
-      .addCleanup(() => this.#parse.cleanupAction())
-      .addCleanup(() => this.#print.cleanupAction())
-
     // Processing steps
     this.#pipeline
       .addStep(this.#readFile.bind(this), {
@@ -77,8 +67,10 @@ export default class Pipeline {
 
       this.#debug("Parsing file %o", 2, file.path)
 
-      const functions = await this.#parse.runAction(read)
-      const result = {file,...functions}
+      const actionBuilder = this.#parse.getActionBuilder()
+      const runner = new ActionRunner(actionBuilder, {debug: this.#debug})
+      const functions = await runner.run(read)
+      const result = {file, ...functions}
 
       return result
     } catch(error) {
@@ -118,11 +110,13 @@ export default class Pipeline {
     return parseResult
   }
 
-  async #printFile({file,functions}) {
+  async #printFile({file, functions}) {
     try {
       this.#debug("Printing file %o", 2, file.path)
 
-      const printResult = await this.#print.runAction({
+      const actionBuilder = this.#print.getActionBuilder()
+      const runner = new ActionRunner(actionBuilder, {debug: this.#debug})
+      const printResult = await runner.run({
         moduleName: file.module,
         functions: functions,
       })
@@ -133,7 +127,7 @@ export default class Pipeline {
       if(isNullish(destFile) || isNullish(destContent))
         throw Sass.new(format("No content or destination file for %o", file.path))
 
-      return {file: destFile,value: destContent}
+      return {file: destFile, value: destContent}
     } catch(error) {
       throw Sass.new(`Printing file ${file?.path}`, error)
     }

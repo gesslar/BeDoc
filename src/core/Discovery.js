@@ -55,33 +55,33 @@ export default class Discovery {
    * from the context and setting up the debug instance for internal logging.
    *
    * @private
-   * @param {object} value - Pipeline context object containing runtime values.
+   * @param {object} context - Pipeline context object containing runtime values.
    * @returns {object} The same value as was passed in.
    */
-  async #init(value) {
-    const {glog} = value
+  async #init(context) {
+    const {glog} = context
 
     this.#debug = glog.newDebug(this.constructor.name)
 
     this.#debug(`${this.constructor.name} initialised`, 2)
 
-    return value
+    return context
   }
 
   /**
    * Discovers action files from mock directory, project package.json, or node_modules.
    *
    * @private
-   * @param {object} value - Pipeline context with config
+   * @param {object} context - Pipeline context with config
    * @returns {Promise<object>} Updated context with discovered files
    */
-  async #discoverActionFiles(value) {
-    const {content} = value
+  async #discoverActionFiles(context) {
+    const {content} = context
 
     if(content.mock) {
       content.mockFiles = await this.#discoverMockActions(content.mock)
 
-      return value
+      return context
     }
 
     this.#debug("Mock path not set, discovering actions in node_modules", 2)
@@ -99,7 +99,7 @@ export default class Discovery {
 
     content.moduleActions = moduleActions
 
-    return value
+    return context
   }
 
   /**
@@ -292,11 +292,11 @@ export default class Discovery {
    * Loads action modules from files and tags specific modules.
    *
    * @private
-   * @param {object} value - Pipeline context with files
+   * @param {object} context - Pipeline context with files
    * @returns {Promise<object>} Context with loaded actions
    */
-  async #loadActions(value) {
-    const {content} = value
+  async #loadActions(context) {
+    const {content} = context
     const {moduleActions, mockFiles} = content
 
     const specificModules = {
@@ -333,9 +333,9 @@ export default class Discovery {
 
     const loadedActions = Util.fulfilledValues(settled)
 
-    value.content = {loadedActions, specificModules}
+    context.content = {loadedActions, specificModules}
 
-    return value
+    return context
   }
 
   /**
@@ -359,11 +359,11 @@ export default class Discovery {
    * Finds actions matching the requested types (specific or all).
    *
    * @private
-   * @param {object} value - Pipeline context with loadedActions and specificModules
+   * @param {object} context - Pipeline context with loadedActions and specificModules
    * @returns {object} Context with matching actions
    */
-  #findMatchingActions(value) {
-    const {content} = value
+  #findMatchingActions(context) {
+    const {content} = context
     const {loadedActions, specificModules} = content
     const actions = []
 
@@ -396,9 +396,9 @@ export default class Discovery {
 
     this.#debug("Found %o total matching actions", 2, actions.length)
 
-    value.content = {actions}
+    context.content = {actions}
 
-    return value
+    return context
   }
 
   /**
@@ -432,11 +432,11 @@ export default class Discovery {
    * Validates action metadata and filters invalid actions.
    *
    * @private
-   * @param {object} value - Pipeline context with actions
+   * @param {object} context - Pipeline context with actions
    * @returns {object} Context with validated actions
    */
-  #validateActionsMetas(value) {
-    const {content} = value
+  async #validateActionsMetas(context) {
+    const {content} = context
     const {actions} = content
 
     const validatedActions = actions.filter(loadedAction => {
@@ -461,9 +461,9 @@ export default class Discovery {
     if(validatedActions.length < 2)
       throw Sass.new("Insufficient number of actions found. Require 1 parser and 1 printer.")
 
-    value.content = {validatedActions}
+    context.content = {validatedActions}
 
-    return value
+    return context
   }
 
   /**
@@ -513,11 +513,11 @@ export default class Discovery {
    * Groups validated actions by their type.
    *
    * @private
-   * @param {object} value - Pipeline context with validatedActions
+   * @param {object} context - Pipeline context with validatedActions
    * @returns {object} Context with grouped actions
    */
-  #groupActionsByType(value) {
-    const {content} = value
+  async #groupActionsByType(context) {
+    const {content} = context
     const {validatedActions} = content
 
     const grouped = Actions.actionTypes.reduce((acc, actionType) => {
@@ -532,8 +532,8 @@ export default class Discovery {
       Object.entries(grouped).map(([k, v]) => `${k}: ${v.length}`)
     )
 
-    value.content =  grouped
+    context.content =  grouped
 
-    return value
+    return context
   }
 }
