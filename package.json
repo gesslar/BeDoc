@@ -1,15 +1,32 @@
 {
   "name": "@gesslar/bedoc",
-  "version": "1.11.0",
   "description": "Pluggable documentation engine for any language and format",
-  "publisher": "gesslar",
-  "author": "gesslar",
+  "author": {
+    "name": "gesslar",
+    "url": "https://gesslar.dev"
+  },
+  "version": "1.11.0",
   "license": "Unlicense",
-  "main": "./src/core/Core.js",
+  "homepage": "https://github.com/gesslar/lpc-mcp#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gesslar/BeDoc.git"
   },
+  "keywords": [
+    "documentation",
+    "plugin",
+    "parser",
+    "printer",
+    "generator",
+    "language",
+    "format",
+    "hooks"
+  ],
+  "packageManager": "pnpm@10.27.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "./src/core/Core.js",
   "bin": {
     "bedoc": "src/cli.js"
   },
@@ -30,40 +47,36 @@
   "type": "module",
   "types": "dist/types/index.d.ts",
   "scripts": {
-    "update": "npx npm-check-updates -u && npm install",
-    "lint:check": "npx eslint .",
-    "lint:fix": "npx eslint . --fix"
+    "types:build": "tsc -p tsconfig.types.json",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "update": "pnpm up --latest --recursive",
+    "submit": "pnpm publish --access public --//registry.npmjs.org/:_authToken=\"${NPM_ACCESS_TOKEN}\"",
+    "pr": "gt submit -p --ai",
+    "patch": "pnpm version patch",
+    "minor": "pnpm version minor",
+    "major": "pnpm version major"
   },
   "dependencies": {
     "@gesslar/colours": "^0.8.0",
-    "@gesslar/toolkit": "^3.6.3",
-    "commander": "^14.0.1",
-    "dotenv": "^17.2.2",
+    "@gesslar/toolkit": "^3.34.0",
+    "commander": "^14.0.3",
+    "dotenv": "^17.3.1",
     "error-stack-parser": "^2.1.4",
-    "globals": "^17.0.0",
-    "globby": "^16.1.0",
+    "globals": "^17.3.0",
+    "globby": "^16.1.1",
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@stylistic/eslint-plugin": "^5.4.0",
+    "@stylistic/eslint-plugin": "^5.8.0",
     "@stylistic/eslint-plugin-js": "^4.4.1",
-    "@typescript-eslint/eslint-plugin": "^8.44.1",
-    "@typescript-eslint/parser": "^8.44.1",
-    "axios": "^1.12.2",
+    "@typescript-eslint/eslint-plugin": "^8.56.0",
+    "@typescript-eslint/parser": "^8.56.0",
+    "axios": "^1.13.5",
     "chokidar": "^5.0.0",
     "eslint": "^10.0.0",
-    "eslint-plugin-jsdoc": "^62.0.0",
-    "form-data": "^4.0.4"
-  },
-  "keywords": [
-    "documentation",
-    "plugin",
-    "parser",
-    "printer",
-    "generator",
-    "language",
-    "format",
-    "hooks"
-  ]
+    "eslint-plugin-jsdoc": "^62.6.0",
+    "form-data": "^4.0.5"
+  }
 }

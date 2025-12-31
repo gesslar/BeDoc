@@ -10,7 +10,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "chokidar": "^4.0.3"
+    "chokidar": "^5.0.0"
   },
   "bedoc": {
     "output": "../output/wikitext/",
