@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@gesslar/colours": "^0.0.1",
-    "@gesslar/toolkit": "^0.4.0",
+    "@gesslar/toolkit": "^3.6.3",
     "commander": "^14.0.1",
     "dotenv": "^17.2.2",
     "error-stack-parser": "^2.1.4",
