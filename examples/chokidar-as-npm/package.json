@@ -2,8 +2,9 @@
   "name": "chokidar-as-npm",
   "version": "1.0.0",
   "description": "",
-  "license": "ISC",
-  "author": "",
+  "packageManager": "pnpm@10.27.0",
+  "license": "Unlicense",
+  "author": "you",
   "type": "module",
   "main": "index.js",
   "scripts": {

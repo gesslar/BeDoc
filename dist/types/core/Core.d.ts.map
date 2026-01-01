@@ -1,10 +1,1 @@
-{
-  "version": 3,
-  "file": "Core.d.ts",
-  "sourceRoot": "",
-  "sources": [
-    "../../../src/core/Core.js"
-  ],
-  "names": [],
-  "mappings": "AAkBA;;;;;GAKE;AAEF;IASE;;;sBAoFC;IA5FD,0BAMC;IALC,aAAsB;IAEtB,eAAgE;IAChE,iBAAiD;IACjD;;;MAAuC;IAyFzC;;;OAsDC;CACF;mBA3KkB,aAAa"
-}
+{"version":3,"file":"Core.d.ts","sourceRoot":"","sources":["../../../src/core/Core.js"],"names":[],"mappings":"AAYA;;;;;GAKE;AAEF;IAUE;;;;;;OAqGC;IA9GD,0BAOC;IANC,aAAsB;IAGtB,eAAgE;IAChE;;;MAAuC;IACvC,iBAAkC;IA0GpC;;;;;;OA0CC;CACF;mBAtKkB,aAAa"}

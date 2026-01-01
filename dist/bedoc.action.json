@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://bedoc.gesslar.dev/schemas/v1/bedoc.action.json",
+  "$id": "https://schema.gesslar.dev/v1/bedoc-action.json",
   "title": "BeDoc Action Schema",
   "type": "object",
   "properties": {

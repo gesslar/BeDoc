@@ -1,10 +1,1 @@
-{
-  "version": 3,
-  "file": "PrintManager.d.ts",
-  "sourceRoot": "",
-  "sources": [
-    "../../../../src/core/action/PrintManager.js"
-  ],
-  "names": [],
-  "mappings": "AAEA;IACE,gDAEC;CACF;0BANyB,qBAAqB"
-}
+{"version":3,"file":"PrintManager.d.ts","sourceRoot":"","sources":["../../../../src/core/action/PrintManager.js"],"names":[],"mappings":"AAEA;IACE,gDAEC;CACF;0BANyB,qBAAqB"}

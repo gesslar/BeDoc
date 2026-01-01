@@ -1,60 +1,27 @@
-import Logger from './Logger';
-import { FileMap } from './util/FDUtil';
-
-export type HookEventType = 'start' | 'section_load' | 'enter' | 'exit' | 'end';
-
-interface HookResult {
-    status?: 'success' | 'error';
-    error?: Error;
-    [key: string]: unknown;
-}
-
-interface HooksDefinition {
-    setup?: () => Promise<void>;
-    cleanup?: () => Promise<void>;
-    start?: (...args: unknown[]) => Promise<HookResult>;
-    section_load?: (...args: unknown[]) => Promise<HookResult>;
-    enter?: (...args: unknown[]) => Promise<HookResult>;
-    exit?: (...args: unknown[]) => Promise<HookResult>;
-    end?: (...args: unknown[]) => Promise<HookResult>;
-    log?: Logger;
-}
-
-interface HookManagerConstructorParams {
-    action: string;
-    hooksFile: FileMap;
-    logger: Logger;
-    timeOut: number;
-}
-
-export const HookPoints: Readonly<Record<Uppercase<HookEventType>, HookEventType>>;
-
+export const HookPoints: any;
 export default class HookManager {
-    static new(arg: HookManagerConstructorParams): Promise<HookManager | null>;
-
-    constructor({ action, hooksFile, logger, timeOut: timeout }: HookManagerConstructorParams);
-
-    get action(): string;
-    get hooksFile(): FileMap | null;
-    get hooks(): HooksDefinition | null;
-    get log(): Logger;
+    static "new"(arg: any): Promise<HookManager>;
+    constructor({ action, hooksFile, logger, timeOut: timeout }: {
+        action: any;
+        hooksFile: any;
+        logger: any;
+        timeOut: any;
+    });
+    get action(): any;
+    get hooksFile(): any;
+    get hooks(): any;
+    get log(): any;
     get timeout(): number;
-    get setup(): (() => Promise<void>) | null;
-    get cleanup(): (() => Promise<void>) | null;
-
+    get setup(): any;
+    get cleanup(): any;
     /**
      * Trigger a hook
      *
-     * @param event - The type of hook to trigger
-     * @param args - The hook arguments
-     * @returns The result of the hook
+     * @param {string} event - The type of hook to trigger
+     * @param {object} args - The hook arguments as an object
+     * @returns {Promise<unknown>} The result of the hook
      */
-    on(event: HookEventType, ...args: unknown[]): Promise<HookResult | undefined>;
-
-    #hooksFile: FileMap | null;
-    #log: Logger | null;
-    #hooks: HooksDefinition | null;
-    #action: string | null;
-    #timeout: number;
+    on(event: string, args: object): Promise<unknown>;
+    #private;
 }
 //# sourceMappingURL=HookManager.d.ts.map
