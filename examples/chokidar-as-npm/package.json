@@ -2,15 +2,16 @@
   "name": "chokidar-as-npm",
   "version": "1.0.0",
   "description": "",
-  "license": "ISC",
-  "author": "",
+  "packageManager": "pnpm@10.27.0",
+  "license": "Unlicense",
+  "author": "you",
   "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "chokidar": "^4.0.3"
+    "chokidar": "^5.0.0"
   },
   "bedoc": {
     "output": "../output/wikitext/",

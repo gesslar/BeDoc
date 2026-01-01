@@ -1,5 +1,4 @@
 import {FileObject} from "@gesslar/toolkit"
-import {FileObject} from "@gesslar/toolkit"
 import {format} from "node:util"
 
 export default class Conveyor {
@@ -159,7 +158,7 @@ export default class Conveyor {
 
       return {status: "success"}
 
-    } catch (error) {
+    } catch(error) {
       return {status: "error", file, error}
     }
   }

@@ -1,8 +1,5 @@
-import ActionManager from '../ActionManager';
-import Logger from '../Logger';
-import { ActionDefinition } from "../ActionManager";
-
 export default class ParseManager extends ActionManager {
-    constructor(actionDefinition: ActionDefinition, logger: Logger);
+    constructor(actionDefinition: any, logger: any);
 }
+import ActionManager from "../ActionManager.js";
 //# sourceMappingURL=ParseManager.d.ts.map

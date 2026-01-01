@@ -1,10 +1,1 @@
-{
-  "version": 3,
-  "file": "ActionUtil.d.ts",
-  "sourceRoot": "",
-  "sources": [
-    "../../../../src/core/util/ActionUtil.js"
-  ],
-  "names": [],
-  "mappings": "AAQA;;;;;;;GAGE;AALF,4CAA8C;AAO9C;;;;;GAKG;AACH,yCAHW,MAAM,GACJ,MAAM,CAOlB;AAED;;;;;GAKG;AACH,2CAHW,MAAM,GAAC,MAAM,GACX,MAAM,CAOlB"
-}
+{"version":3,"file":"ActionUtil.d.ts","sourceRoot":"","sources":["../../../../src/core/util/ActionUtil.js"],"names":[],"mappings":""}
