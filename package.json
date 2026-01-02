@@ -41,7 +41,7 @@
     "dotenv": "^17.2.2",
     "error-stack-parser": "^2.1.4",
     "globals": "^17.0.0",
-    "globby": "^14.1.0",
+    "globby": "^16.1.0",
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
