@@ -16,6 +16,7 @@ varargs mixed data_value(string file, string key, mixed def) {}
  * @param {string} file The file to write to.
  * @param {string} key The key to write.
  * @param {mixed} data The value(s) to write.
+ * @return {void}
  */
 varargs void data_write(string file, string key, mixed data...) {}
 

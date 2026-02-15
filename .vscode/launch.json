@@ -13,6 +13,8 @@
         "--debug",
         "--debugLevel",
         "4",
+        "-C",
+        "100",
         "--input",
         "examples/source/lpc/**/*.c",
         "--output",

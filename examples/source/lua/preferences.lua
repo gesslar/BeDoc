@@ -1,42 +1,62 @@
----@meta PreferencesClass
+local PreferencesClass = Glu.glass.register({
+  name = "preferences",
+  class_name = "PreferencesClass",
+  dependencies = { "table" },
+  setup = function(___, self)
+    --- Loads preferences from a file. If a package name is provided, it will be
+    --- used to construct the path. Otherwise, the file will be loaded from the
+    --- profile directory.
+    --- @param pkg string|nil - The package name. (Optional. Default is nil.)
+    --- @param file string - The file name.
+    --- @param defaults table - A table of default values for those which are missing.
+    --- @return table - The loaded preferences.
+    --- @example
+    --- ```lua
+    --- -- Load preferences from the "my_package" package
+    --- preferences.load_prefs("my_package", "settings.json", {
+    ---   default_value = 1,
+    ---   another_value = "hello"
+    --- })
+    --- ```
+    function self.load(pkg, file, defaults)
+      ___.v.type(pkg, "string", 1, true)
+      ___.v.type(file, "string", 2, false)
+      ___.v.type(defaults, "table", 3, false)
 
-------------------------------------------------------------------------------
--- PreferencesClass
-------------------------------------------------------------------------------
+      local path = getMudletHomeDir() .. "/" .. (pkg and pkg .. "/" or "") .. file
 
-if false then -- ensure that functions do not get defined
+      if not io.exists(path) then
+        return defaults
+      end
 
-  ---@class PreferencesClass
+      local prefs = {}
+      table.load(path, prefs)
+      prefs = table.update(defaults, prefs)
 
-  ---Loads preferences from a file. If a package name is provided, it will be
-  ---used to construct the path. Otherwise, the file will be loaded from the
-  ---profile directory.
-  ---
-  ---@example
-  ---```lua
-  ---preferences.load("my_package", "settings", { default_value = 1 })
-  ---```
-  ---
-  ---@name load
-  ---@param pkg string? - The package name. (Optional. Default is nil.)
-  ---@param file string - The file name.
-  ---@param defaults table - The default values.
-  ---@return table # The loaded preferences.
-  function preferences.load(pkg, file, defaults) end
+      return prefs or defaults
+    end
 
-  ---Saves preferences to a file. If a package name is provided, it will be
-  ---used to construct the path. Otherwise, the file will be saved to the
-  ---profile directory.
-  ---
-  ---@example
-  ---```lua
-  ---preferences.save("my_package", "settings", { default_value = 1 })
-  --- ```
-  ---
-  ---@name save
-  ---@param pkg string? - The package name. (Optional. Default is nil.)
-  ---@param file string - The file name.
-  ---@param prefs table - The preferences to save.
-  function preferences.save(pkg, file, prefs) end
+    --- Saves preferences to a file. If a package name is provided, it will be
+    --- used to construct the path. Otherwise, the file will be saved to the
+    --- profile directory.
+    --- @param pkg string|nil - The package name. (Optional. Default is nil.)
+    --- @param file string - The file name.
+    --- @param prefs table - The preferences to save.
+    --- @example
+    --- ```lua
+    --- preferences.save_prefs("my_package", "settings.json", {
+    ---   default_value = 1,
+    ---   another_value = "hello"
+    --- })
+    --- ```
+    function self.save(pkg, file, prefs)
+      ___.v.type(pkg, "string", 1, true)
+      ___.v.type(file, "string", 2, false)
+      ___.v.type(prefs, "table", 3, false)
 
-end
+      local path = getMudletHomeDir() .. "/" .. (pkg and pkg .. "/" or "") .. file
+
+      table.save(path, prefs)
+    end
+  end
+})

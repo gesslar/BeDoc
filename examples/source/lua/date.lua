@@ -1,32 +1,61 @@
----@meta DateClass
+local DateClass = Glu.glass.register({
+  class_name = "DateClass",
+  name = "date",
+  dependencies = {},
+  setup = function(___, self, opts)
+    local v = ___.v
 
-------------------------------------------------------------------------------
--- DateClass
-------------------------------------------------------------------------------
+    function self.shms(seconds, as_string)
+      v.type(seconds, "number", 1, false)
+      v.type(as_string, "boolean", 2, true)
 
-if false then -- ensure that functions do not get defined
+      local s = seconds or 0
 
-  ---@class DateClass
+      -- Handle negative seconds
+      local is_negative = s < 0
+      s = math.abs(s)
 
-  ---Converts a number of seconds into a human-readable string. By default, the
-  ---result is returned as a table of three strings. However, if the `as_string`
-  ---parameter is provided, the result is returned as a single string.
-  ---
-  ---@example
-  ---```lua
-  ---date.shms(6543)
-  -----"01"
-  -----"49"
-  -----"03"
-  ---
-  ---date.shms(6453, true)
-  ----- "1h 49m 3s"
-  ---```
-  ---
-  ---@name shms
-  ---@param seconds number - The number of seconds to convert.
-  ---@param as_string boolean? - Whether to return the result as a string.
-  ---@return string[]|string # The resulting string or table of strings.
-  function date.shms(seconds, as_string) end
+      -- Hours
+      local hh = math.floor(s / (60 * 60))
+      -- Minutes
+      local mm = math.floor((s % (60 * 60)) / 60)
+      -- Seconds
+      local ss = s % 60
 
-end
+      if is_negative then
+        -- Adjust for negative seconds
+        if ss > 0 then
+          ss = 60 - ss
+          mm = mm + 1
+        end
+
+        if mm > 0 then
+          mm = 60 - mm
+          hh = (hh == 0) and 23 or (hh - 1)
+        else
+          hh = (hh == 0) and 23 or (hh - 1)
+        end
+      end
+
+      if as_string then
+        local r = {}
+        if hh ~= 0 then
+          r[#r + 1] = hh .. "h"
+        end
+        if mm ~= 0 then
+          r[#r + 1] = mm .. "m"
+        end
+        if ss ~= 0 then
+          r[#r + 1] = ss .. "s"
+        end
+
+        return table.concat(r, " ") or "0s"
+      else
+        local result_hours = string.format("%02d", hh)
+        local result_minutes = string.format("%02d", mm)
+        local result_seconds = string.format("%02d", ss)
+        return result_hours, result_minutes, result_seconds
+      end
+    end
+  end
+})

@@ -1,23 +1,29 @@
 #!/usr/bin/env node
 
-import {Data, DirectoryObject, FileObject, Glog, Term} from "@gesslar/toolkit"
+import {Data, DirectoryObject, FileObject, Glog, Sass, Tantrum, Term} from "@gesslar/toolkit"
 import {program} from "commander"
-import console from "node:console"
 import process from "node:process"
 import url from "node:url"
 
-import {ConfigurationParameters} from "./core/ConfigurationParameters.js"
-import BeDoc, {Environment} from "./core/Core.js"
+import BeDoc from "./BeDoc.js"
+import {ConfigurationParameters} from "./ConfigurationParameters.js"
+import Environment from "./Environment.js"
+import Schema from "./Schema.js"
+import {Schemer} from "@gesslar/negotiator"
 
 // Main entry point
 void (async() => {
   try {
+    const glog = new Glog()
+      .withName("BeDoc")
+      .withStackTrace()
+      .noDisplayName()
+      .withLogLevel(3)
+
     // Get package info
     const thisPath = new DirectoryObject(url.fileURLToPath(new url.URL("..", import.meta.url)))
     const pkgJsonFile = new FileObject("package.json", thisPath)
     const pkgJson = await pkgJsonFile.loadData()
-
-    Glog.setLogLevel(5).setLogPrefix("[BEDOC]")
 
     // Setup program
     program
@@ -66,19 +72,22 @@ void (async() => {
     }
 
     // Create core instance with validated config
-    const prjPath = new DirectoryObject(process.cwd())
+    const prjPath = new DirectoryObject()
     const prjPkJsonFile = new FileObject("package.json", prjPath)
     const prjPkjJson = await prjPkJsonFile.loadData()
     const pkjBedoc = prjPkjJson?.bedoc ?? {}
+    const validateBeDocSchema = await loadSchemaValidator(prjPath)
 
     const bedoc = await BeDoc
       .new({
         options: {
           ...optionsWithSources,
-          basePath: {value: prjPath, source: "cli"},
+          basePath: prjPath,
           project: pkjBedoc,
         },
-        source: Environment.CLI
+        source: Environment.CLI,
+        glog,
+        validateBeDocSchema,
       })
 
     if(!(bedoc instanceof BeDoc)) {
@@ -88,29 +97,35 @@ void (async() => {
       }
     }
 
-    const filesToProcess = bedoc.options.input.map(f => f.path)
-    const result = await bedoc.processFiles(filesToProcess)
+    const result = await bedoc.processFiles()
     const errored = result.errored
     const warned = result.warned
 
-    if(warned.length > 0)
-      warned.forEach(w => bedoc.logger.warn(w.warning))
+    if(warned?.length > 0)
+      warned.forEach(w => glog.warn(w.warning))
 
-    if(errored.length > 0)
-      throw new AggregateError(errored.map(e => e.error), "Error processing files")
+    if(errored?.length > 0) {
+      const errors = errored.map(e => e.error)
+      Tantrum.new("Error processing files", errors).report(true)
+    }
 
     process.exit(0)
   } catch(error) {
-    if(error instanceof Error) {
-      if(error instanceof AggregateError) {
-        error.errors.forEach(e => console.error(e))
-      } else {
-        console.error(error.message, error.stack)
-      }
-    } else {
-      console.error("Error: %o", error)
-    }
+    Sass.new("Starting BeDoc", error).report(false)
 
     process.exit(1)
+  }
+
+  /**
+   * Load the BeDoc action schema and return a validator function.
+   *
+   * @returns {Promise<Function>} AJV validator function
+   */
+  async function loadSchemaValidator(prjPath) {
+    const schemaFile = new FileObject(Schema.local, prjPath)
+    if(!(await schemaFile.exists))
+      throw Sass.new(`Missing schema at ${schemaFile.path}`)
+
+    return await Schemer.fromFile(schemaFile)
   }
 })()

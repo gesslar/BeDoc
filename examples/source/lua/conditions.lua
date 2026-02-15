@@ -1,240 +1,216 @@
----@meta ConditionsClass
+local ConditionsClass = Glu.glass.register({
+  class_name = "ConditionsClass",
+  name = "conditions",
+  dependencies = {},
+  setup = function(___, self)
+    --- Checks if a condition is true or false.
+    --- @param condition boolean - The condition to check
+    --- @param message string|nil - The message to return if the condition is false
+    --- @return boolean - The condition
+    --- @return string|nil - The message
+    function self.is(condition, message)
+      assert(type(condition) == "boolean", "Expected a boolean as the first argument")
+      assert(type(message) == "string" or message == nil, "Expected a string or nil as the second argument")
 
-------------------------------------------------------------------------------
--- ConditionsClass
-------------------------------------------------------------------------------
+      raiseEvent("condition_is", condition)
+      return condition, condition and nil or message
+    end
 
-if false then -- ensure that functions do not get defined
-  ---@class ConditionsClass
+    --- Checks if a condition is true.
+    --- @param condition boolean - The condition to check
+    --- @param message string|nil - The message to return if the condition is false
+    --- @return boolean - The condition
+    --- @return string|nil - The message
+    function self.is_true(condition, message)
+      return self.is(condition, message or "Expected condition to be true")
+    end
 
-  --- Checks if a condition is true or false.
-  ---
-  ---@example
-  ---```lua
-  ---conditions.is(true)
-  ----- true, nil
-  ---conditions.is(false, "Expected condition to be false")
-  ----- false, "Expected condition to be false"
-  ---```
-  ---
-  ---@name is
-  ---@param condition boolean - The condition to check
-  ---@param message string? - The message to return if the condition is false
-  ---@return boolean, string? # The condition and message, or nil if the condition is true
-  function conditions.is(condition, message) end
+    --- Checks if a condition is false.
+    --- @param condition boolean - The condition to check
+    --- @param message string|nil - The message to return if the condition is true
+    --- @return boolean - The condition
+    --- @return string|nil - The message
+    function self.is_false(condition, message)
+      return self.is(not condition, message or "Expected condition to be false")
+    end
 
-  --- Checks if a condition is true.
-  ---
-  ---@example
-  ---```lua
-  ---conditions.is_true(true)
-  ----- true, nil
-  ---conditions.is_true(false, "Expected condition to be true")
-  ----- false, "Expected condition to be true"
-  ---```
-  ---
-  ---@name is_true
-  ---@param condition boolean - The condition to check
-  ---@param message string? - The message to return if the condition is false
-  ---@return boolean, string? # The condition and message, or nil if the condition is true
-  function conditions.is_true(condition, message) end
+    --- Checks if a value is nil.
+    --- @param value any - The value to check
+    --- @param message string|nil - The message to return if the value is not nil
+    --- @return boolean - The condition
+    --- @return string|nil - The message
+    function self.is_nil(value, message)
+      return self.is(value == nil, message or "Expected `{value}` to be nil")
+    end
 
-  --- Checks if a condition is false.
-  ---
-  ---@example
-  ---```lua
-  ---conditions.is_false(false)
-  ----- false, nil
-  ---conditions.is_false(true, "Expected condition to be false")
-  ----- true, "Expected condition to be false"
-  ---```
-  ---
-  ---@name is_false
-  ---@param condition boolean - The condition to check
-  ---@param message string? - The message to return if the condition is true
-  ---@return boolean, string? # The condition and message, or nil if the condition is true
-  function conditions.is_false(condition, message) end
+    --- Checks if a value is not nil.
+    --- @param value any - The value to check
+    --- @param message string|nil - The message to return if the value is nil
+    --- @return boolean - The condition
+    --- @return string|nil - The message
+    function self.is_not_nil(value, message)
+      return self.is(value ~= nil, message or "Expected `{value}` to not be nil")
+    end
 
-  --- Checks if a value is nil.
-  ---
-  ---@example
-  ---```lua
-  ---conditions.is_nil(nil)
-  ----- true, nil
-  ---conditions.is_nil(false, "Expected value to be nil")
-  ----- false, "Expected value to be nil"
-  ---```
-  ---
-  ---@name is_nil
-  ---@param value any - The value to check
-  ---@param message string? - The message to return if the value is nil
-  ---@return boolean, string? # The condition and message, or nil if the condition is true
-  function conditions.is_nil(value, message) end
+    --- Checks if a function throws an error.
+    --- @param func function - The function to check
+    --- @param message string|nil - The message to return if the function does not throw an error
+    --- @param check function|nil - The function to check the error message against
+    --- @return boolean - The condition
+    --- @return string|nil - The message
+    function self.is_error(func, message, check)
+      assert(type(func) == "function", "Expected a function as the first argument")
+      assert(type(message) == "string" or message == nil, "Expected a string or nil as the second argument")
+      assert(type(check) == "function" or check == nil, "Expected a function or nil as the third argument")
 
-  --- Checks if a value is not nil.
-  ---
-  ---@example
-  ---```lua
-  ---conditions.is_not_nil(false)
-  ----- false, nil
-  ---conditions.is_not_nil(nil, "Expected value to not be nil")
-  ----- true, "Expected value to not be nil"
-  ---```
-  ---
-  ---@name is_not_nil
-  ---@param value any - The value to check
-  ---@param message string? - The message to return if the value is nil
-  ---@return boolean, string? # The condition and message, or nil if the condition is true
-  function conditions.is_not_nil(value, message) end
+      local ok, err = pcall(func)
+      if ok then
+        return self.is(false,
+          message or "Expected function to throw an error but it did not.")
+      end
 
-  --- Checks if a function throws an error.
-  ---
-  ---@example
-  ---```lua
-  ---conditions.is_error(function() error("Expected error") end, "Expected error")
-  ----- false, "Expected error"
-  ---```
-  ---
-  ---@name is_error
-  ---@param func function - The function to check
-  ---@param message string? - The message to return if the function does not throw an error
-  ---@param check function? - The function to check the error message against
-  ---@return boolean, string? # The condition and message, or nil if the condition is true
-  function conditions.is_error(func, message, check) end
+      if check then
+        local check_ok, check_result = pcall(check, err, self)
+        if not check_ok then
+          return self.is(false,
+            message or ("Error checker failed: " .. tostring(check_result)))
+        end
+        if check_result == false then
+          return self.is(false,
+            message or "Error checker rejected the error message.")
+        end
+      end
 
-  --- Checks if two values are equal.
-  ---
-  ---@example
-  ---```lua
-  ---conditions.is_eq(1, 1)
-  ----- true, nil
-  ---conditions.is_eq(1, 2, "Expected values to be equal")
-  ----- false, "Expected values to be equal"
-  ---```
-  ---
-  ---@name is_eq
-  ---@param a any - The first value to check
-  ---@param b any - The second value to check
-  ---@param message string? - The message to return if the values are not equal
-  ---@return boolean, string? # The condition and message, or nil if the condition is true
-  function conditions.is_eq(a, b, message) end
+      return self.is(true)
+    end
 
-  --- Checks if two values are not equal.
-  ---
-  ---@example
-  ---```lua
-  ---conditions.is_ne(1, 2)
-  ----- true, nil
-  ---conditions.is_ne(1, 1, "Expected values to not be equal")
-  ----- false, "Expected values to not be equal"
-  ---```
-  ---
-  ---@name is_ne
-  ---@param a any - The first value to check
-  ---@param b any - The second value to check
-  ---@param message string? - The message to return if the values are equal
-  ---@return boolean, string? # The condition and message, or nil if the condition is true
-  function conditions.is_ne(a, b, message) end
+    --- Checks if two values are equal.
+    --- @param a any - The first value to check
+    --- @param b any - The second value to check
+    --- @param message string|nil - The message to return if the values are not equal
+    --- @return boolean - The condition
+    --- @return string|nil - The message
+    function self.is_eq(a, b, message)
+      return self.is(a == b,
+        message or f "Expected `{a}` to equal `{b}`\n")
+    end
+
+    --- Checks if two values are not equal.
+    --- @param a any - The first value to check
+    --- @param b any - The second value to check
+    --- @param message string|nil - The message to return if the values are equal
+    --- @return boolean - The condition
+    --- @return string|nil - The message
+    function self.is_ne(a, b, message)
+      return self.is(a ~= b,
+        message or f "Expected `{a}` to not equal `{b}`\n")
+    end
+
+    --- Checks if a value is less than another value.
+    --- @param a any - The first value to check
+    --- @param b any - The second value to check
+    --- @param message string|nil - The message to return if the values are not less than
+    --- @return boolean - The condition
+    --- @return string|nil - The message
+    function self.is_lt(a, b, message)
+      return self.is(a < b,
+        message or f "Expected `{a}` to be less than `{b}`\n")
+    end
+
+    --- Checks if a value is less than or equal to another value.
+    --- @param a any - The first value to check
+    --- @param b any - The second value to check
+    --- @param message string|nil - The message to return if the values are not less than or equal to
+    --- @return boolean - The condition
+    --- @return string|nil - The message
+    function self.is_le(a, b, message)
+      return self.is(a <= b,
+        message or f "Expected `{a}` to be less than or equal to `{b}`\n")
+    end
+
+    --- Checks if a value is greater than another value.
+    --- @param a any - The first value to check
+    --- @param b any - The second value to check
+    --- @param message string|nil - The message to return if the values are not greater than
+    --- @return boolean - The condition
+    --- @return string|nil - The message
+    function self.is_gt(a, b, message)
+      return self.is(a > b,
+        message or f "Expected `{a}` to be greater than `{b}`\n")
+    end
+
+    --- Checks if a value is greater than or equal to another value.
+    --- @param a any - The first value to check
+    --- @param b any - The second value to check
+    --- @param message string|nil - The message to return if the values are not greater than or equal to
+    --- @return boolean - The condition
+    --- @return string|nil - The message
+    function self.is_ge(a, b, message)
+      return self.is(a >= b, message or f "Expected `{a}` to be greater than or equal to `{b}`\n")
+    end
+
+    --- Checks if a value is of a specific type.
+    --- @param value any - The value to check
+    --- @param type string - The type to check against
+    --- @param message string|nil - The message to return if the values are not of the specified type
+    --- @return boolean - The condition
+    --- @return string|nil - The message
+    function self.is_type(value, expected_type, message)
+      return self.is(type(value) == expected_type, message or f "Expected `{value}` to be of type `{expected_type}`\n")
+    end
+
+    --- Checks if two values are deeply equal.
+    --- @param a any - The first value to check
+    --- @param b any - The second value to check
+    --- @param message string|nil - The message to return if the values are not deeply equal
+    --- @return boolean - The condition
+    --- @return string|nil - The message
+    function self.is_deeply(a, b, message)
+      local result, mess
+
+      local function deep_compare(first, second, visited)
+        visited = visited or {}
+
+        -- If both values are not tables, use is_eq for proper state tracking
+        if type(first) ~= "table" or type(second) ~= "table" then
+          result, mess = self.is_eq(first, second, message or f "Expected `{first}` to equal `{second}`")
+
+          return result, result and nil or mess
+        end
+
+        -- If we've seen this pair of tables before, they're equal
+        for v1, v2 in pairs(visited) do
+          if v1 == first and v2 == second then
+            return true
+          end
+        end
+
+        -- Mark these tables as being compared
+        visited[first] = second
+
+        -- Compare all keys and values
+        for k, v in pairs(first) do
+          if second[k] == nil then
+            return false, f "Key `{k}` missing in second table"
+          end
+
+          local equal, err = deep_compare(v, second[k], visited)
+          if not equal then
+            return false, err
+          end
+        end
+
+        -- Check for extra keys in second
+        for k in pairs(second) do
+          if first[k] == nil then
+            return false, f "Extra key `{k}` in second table"
+          end
+        end
+
+        return true
+      end
+
+      return deep_compare(a, b, {})
+    end
   end
-
-  --- Checks if a value is less than another value.
-  ---
-  ---@example
-  ---```lua
-  ---conditions.is_lt(1, 2)
-  ----- true, nil
-  ---conditions.is_lt(2, 1, "Expected values to be less than")
-  ----- false, "Expected values to be less than"
-  ---```
-  ---
-  ---@name is_lt
-  ---@param a any - The first value to check
-  ---@param b any - The second value to check
-  ---@param message string? - The message to return if the values are not less than
-  ---@return boolean, string? # The condition and message, or nil if the condition is true
-  function conditions.is_lt(a, b, message) end
-
-  --- Checks if a value is less than or equal to another value.
-  ---
-  ---@example
-  ---```lua
-  ---conditions.is_le(1, 2)
-  ----- true, nil
-  ---conditions.is_le(2, 1, "Expected values to be less than or equal to")
-  ----- false, "Expected values to be less than or equal to"
-  ---```
-  ---
-  ---@name is_le
-  ---@param a any - The first value to check
-  ---@param b any - The second value to check
-  ---@param message string? - The message to return if the values are not less than or equal to
-  ---@return boolean, string? # The condition and message, or nil if the condition is true
-  function conditions.is_le(a, b, message) end
-
-  --- Checks if a value is greater than another value.
-  ---
-  ---@example
-  ---```lua
-  ---conditions.is_gt(2, 1)
-  ----- true, nil
-  ---conditions.is_gt(1, 2, "Expected values to be greater than")
-  ----- false, "Expected values to be greater than"
-  ---```
-  ---
-  ---@name is_gt
-  ---@param a any - The first value to check
-  ---@param b any - The second value to check
-  ---@param message string? - The message to return if the values are not greater than
-  ---@return boolean, string? # The condition and message, or nil if the condition is true
-  function conditions.is_gt(a, b, message) end
-
-  --- Checks if a value is greater than or equal to another value.
-  ---
-  ---@example
-  ---```lua
-  ---conditions.is_ge(2, 1)
-  ----- true, nil
-  ---conditions.is_ge(1, 2, "Expected values to be greater than or equal to")
-  ----- false, "Expected values to be greater than or equal to"
-  ---```
-  ---
-  ---@name is_ge
-  ---@param a any - The first value to check
-  ---@param b any - The second value to check
-  ---@param message string? - The message to return if the values are not greater than or equal to
-  ---@return boolean, string? # The condition and message, or nil if the condition is true
-  function conditions.is_ge(a, b, message) end
-
-  --- Checks if a value is of a specific type.
-  ---
-  ---@example
-  ---```lua
-  ---conditions.is_type(1, "number")
-  ----- true, nil
-  ---conditions.is_type(1, "string", "Expected value to be a string")
-  ----- false, "Expected value to be a string"
-  ---```
-  ---
-  ---@name is_type
-  ---@param value any - The value to check
-  ---@param type string - The type to check against
-  ---@param message string? - The message to return if the values are not of the specified type
-  ---@return boolean, string? # The condition and message, or nil if the condition is true
-  function conditions.is_type(value, type, message) end
-
-  --- Checks if two values are deeply equal.
-  ---
-  ---@example
-  ---```lua
-  ---conditions.is_deeply({a = 1}, {a = 1})
-  ----- true, nil
-  ---```
-  ---
-  ---@name is_deeply
-  ---@param a any - The first value to check
-  ---@param b any - The second value to check
-  ---@param message string? - The message to return if the values are not deeply equal
-  ---@return boolean, string? # The condition and message, or nil if the condition is true
-  function conditions.is_deeply(a, b, message) end
-
-end
+})

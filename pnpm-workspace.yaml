@@ -1,0 +1,3 @@
+overrides:
+  '@gesslar/actioneer': link:../Actioneer
+  '@gesslar/negotiator': link:../Negotiator
