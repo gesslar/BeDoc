@@ -26,7 +26,6 @@
   "engines": {
     "node": ">=22"
   },
-  "main": "./src/BeDoc.js",
   "bin": {
     "bedoc": "src/cli.js"
   },

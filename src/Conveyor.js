@@ -1,13 +1,24 @@
 import {ActionBuilder, ActionRunner, ACTIVITY} from "@gesslar/actioneer"
-import {FileObject, Sass} from "@gesslar/toolkit"
+import {DirectoryObject, FileObject, Sass} from "@gesslar/toolkit"
+
+/**
+ * @import {Glog} from "@gesslar/toolkit"
+ * @import {Contract} from "@gesslar/negotiator"
+ */
 
 const {IF} = ACTIVITY
 
 export default class Conveyor {
   #parse
   #print
+
+  /** @type {Glog} */
   #glog
+
+  /** @type {DirectoryObject} */
   #output
+
+  /** @type {Contract} */
   #contract
 
   constructor({parse, print, glog, contract, output}) {
@@ -36,12 +47,22 @@ export default class Conveyor {
    * Processes files through the parse→print pipeline with concurrency.
    *
    * @param {Array<FileObject>} files - List of files to process.
-   * @param {number} maxConcurrent - Maximum number of concurrent tasks.
+   * @param {number} [maxConcurrent] - Maximum number of files to process at a time.
    * @returns {Promise<object>} - Resolves with {succeeded, errored, warned}.
    */
   async convey(files, maxConcurrent = 10) {
+    const glog = this.#glog
+
     const builder = new ActionBuilder(this)
     const runner = new ActionRunner(builder)
+      .addSetup(async() => {
+        if(!await this.#output.exists) {
+          glog.info(`Directory '${this.#output.path}' does not exist. Creating.`)
+
+          await this.#output.assureExists({recursive: true})
+        }
+      })
+
     const contexts = files.map(file => ({file}))
     const settled = await runner.pipe(contexts, maxConcurrent)
 

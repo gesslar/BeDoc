@@ -62,7 +62,7 @@
       "args": [
         "--debug",
         "--debugLevel",
-        "5",
+        "4",
         "--input",
         "examples/source/lpc/**/*.c",
         "--output",
@@ -131,7 +131,7 @@
       "console": "integratedTerminal"
     },
     {
-      "name": "CLI - LuaDocs to Markdown (Lang, Format, Hooks)",
+      "name": "CLI - LuaDocs to Markdown (Lang, Format)",
       "type": "node",
       "request": "launch",
       "skipFiles": [
@@ -150,13 +150,11 @@
         "lua",
         "--format",
         "markdown",
-        "--hooks",
-        "examples/hooks/lua-markdown-hooks.js"
       ],
       "console": "integratedTerminal",
     },
     {
-      "name": "CLI - LuaDocs to Wikitext (Lang, Format, Hooks)",
+      "name": "CLI - LuaDocs to Wikitext (Lang, Format)",
       "type": "node",
       "request": "launch",
       "skipFiles": [
@@ -175,8 +173,6 @@
         "lua",
         "--format",
         "wikitext",
-        "--hooks",
-        "examples/hooks/lua-wikitext-hooks.js",
       ],
       "console": "integratedTerminal",
     },

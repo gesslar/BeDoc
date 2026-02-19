@@ -3,12 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "packageManager": "pnpm@10.27.0",
-  "license": "Unlicense",
+  "license": "Tattooine",
   "author": "you",
   "type": "module",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Hello, world!\" && exit 1"
   },
   "dependencies": {
     "chokidar": "^5.0.0"
