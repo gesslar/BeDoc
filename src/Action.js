@@ -1,9 +1,9 @@
 import {Data} from "@gesslar/toolkit"
 
 export default Data.deepFreezeObject({
-  actionTypes: ["parse", "print"],
+  actionTypes: ["parser", "formatter"],
   actionMetaRequirements: {
-    parse: [{kind: "parse"}, "input"],
-    print: [{kind: "print"}, "format"],
+    parser: [{kind: "parser"}, "input"],
+    formatter: [{kind: "formatter"}, "format"],
   },
 })

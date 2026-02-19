@@ -1,7 +1,7 @@
 export const Hooks = {
-  parse: {},
+  parser: {},
 
-  print: {
+  formatter: {
     async enter(section) {
       const {sectionName, sectionContent} = section
 

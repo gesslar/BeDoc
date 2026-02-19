@@ -9,8 +9,8 @@ import {DirectoryObject, FileObject, Sass} from "@gesslar/toolkit"
 const {IF} = ACTIVITY
 
 export default class Conveyor {
-  #parse
-  #print
+  #parser
+  #formatter
 
   /** @type {Glog} */
   #glog
@@ -21,9 +21,9 @@ export default class Conveyor {
   /** @type {Contract} */
   #contract
 
-  constructor({parse, print, glog, contract, output}) {
-    this.#parse = parse
-    this.#print = print
+  constructor({parser, formatter, glog, contract, output}) {
+    this.#parser = parser
+    this.#formatter = formatter
     this.#glog = glog
     this.#output = output
     this.#contract = contract
@@ -39,12 +39,12 @@ export default class Conveyor {
       .do("read", this.#readFile)
       .do("parse", this.#parseFile)
       .do("validate", this.#validateContracts)
-      .do("print", this.#printFile)
+      .do("format", this.#formatFile)
       .do("write", IF, this.#shouldWrite, this.#writeOutput)
   }
 
   /**
-   * Processes files through the parse→print pipeline with concurrency.
+   * Processes files through the parser→formatter pipeline with concurrency.
    *
    * @param {Array<FileObject>} files - List of files to process.
    * @param {number} [maxConcurrent] - Maximum number of files to process at a time.
@@ -83,7 +83,7 @@ export default class Conveyor {
   #parseFile = async ctx => {
     try {
       const {content} = ctx
-      const builder = new ActionBuilder(new this.#parse())
+      const builder = new ActionBuilder(new this.#parser())
       const runner = new ActionRunner(builder)
       const result = await runner.run(content)
 
@@ -110,17 +110,17 @@ export default class Conveyor {
     return ctx
   }
 
-  #printFile = async ctx => {
+  #formatFile = async ctx => {
     const {functions} = ctx
-    const builder = new ActionBuilder(new this.#print())
+    const builder = new ActionBuilder(new this.#formatter())
     const runner = new ActionRunner(builder)
-    const printResult = await runner.run(functions)
+    const formatResult = await runner.run(functions)
 
-    return Object.assign(ctx, {printResult})
+    return Object.assign(ctx, {formatResult})
   }
 
   #shouldWrite = ctx => {
-    const result = this.#output != null && ctx?.printResult
+    const result = this.#output != null && ctx?.formatResult
 
     if(result)
       return result
@@ -132,13 +132,13 @@ export default class Conveyor {
 
   #writeOutput = async ctx => {
     const glog = this.#glog
-    const {file, printResult} = ctx
-    const destExtension = this.#print.meta.extension ?? "txt"
+    const {file, formatResult} = ctx
+    const destExtension = this.#formatter.meta.extension ?? "txt"
     const outputFile = new FileObject(`${file.module}.${destExtension}`, this.#output)
 
-    await outputFile.write(printResult)
+    await outputFile.write(formatResult)
 
-    glog.debug("Wrote output %o (%o bytes)", 2, outputFile.path, printResult.length)
+    glog.debug("Wrote output %o (%o bytes)", 2, outputFile.path, formatResult.length)
 
     return {...ctx, status: "success", outputFile}
   }

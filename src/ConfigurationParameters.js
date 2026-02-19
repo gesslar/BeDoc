@@ -32,7 +32,7 @@ const ConfigurationParameters = Data.deepFreezeObject({
     description: "Output format",
     type: Data.newTypeSpec("string"),
     required: false,
-    exclusiveOf: "printer",
+    exclusiveOf: "formatter",
   },
   maxConcurrent: {
     short: "C",
@@ -76,10 +76,10 @@ const ConfigurationParameters = Data.deepFreezeObject({
       mustExist: true,
     },
   },
-  printer: {
+  formatter: {
     short: "P",
     param: "file",
-    description: "Custom printer JS file",
+    description: "Custom formatter JS file",
     type: Data.newTypeSpec("string"),
     required: false,
     exclusiveOf: "format",
@@ -99,7 +99,7 @@ const ConfigurationParameters = Data.deepFreezeObject({
   mock: {
     short: "m",
     param: "dir",
-    description: "Path to mock parsers and printers",
+    description: "Path to mock parsers and formatters",
     type: Data.newTypeSpec("string"),
     required: false,
     path: {

@@ -1,7 +1,15 @@
-export const Hooks = {
-  parse: {},
+export class Parse {
 
-  print: {
+}
+
+export class Format {
+
+}
+
+export const Hooks = {
+  parser: {},
+
+  formatter: {
 
     name: "lpc-markdown-hooks",
     jokes: [],
@@ -47,6 +55,7 @@ export const Hooks = {
 
     /**
      * Fetches a dad joke from the icanhazdadjoke API.
+     *
      * @param {number} number - The number of jokes to fetch.
      * @returns {Promise<object>} The result of the fetch operation.
      */
@@ -67,6 +76,7 @@ export const Hooks = {
           `${response.statusText}`)
 
         const data = await response.json()
+
         return {
           status: "success",
           message: "Jokes fetched successfully",

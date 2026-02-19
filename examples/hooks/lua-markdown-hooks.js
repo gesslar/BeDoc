@@ -1,7 +1,7 @@
 export const Hooks = {
-  parse: {},
+  parser: {},
 
-  print: {
+  formatter: {
     async enter({name, section}) {
       if(name === "return")
         this.log.debug("section: %j", 1, section)

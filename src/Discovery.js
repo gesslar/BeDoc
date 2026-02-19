@@ -31,8 +31,8 @@ export default class Discovery {
    * Discover actions from local or global node_modules
    *
    * @param {object} [specific] Configuration options for action discovery
-   * @param {FileObject} [specific.print] Print-related configuration options
-   * @param {FileObject} [specific.parse] Parse-related configuration options
+   * @param {FileObject} [specific.formatter] Print-related configuration options
+   * @param {FileObject} [specific.parser] Parse-related configuration options
    * @param {Function} validateBeDocSchema - The validator function for BeDoc's action schema
    * @returns {Promise<object>} A map of discovered modules
    */
@@ -52,7 +52,7 @@ export default class Discovery {
 
       files.push(
         ...(await FS.getFiles([
-          `${options.mockPath}/bedoc-*-printer.js`,
+          `${options.mockPath}/bedoc-*-formatter.js`,
           `${options.mockPath}/bedoc-*-parser.js`,
         ])),
       )
@@ -181,7 +181,7 @@ export default class Discovery {
    * respective contracts.
    *
    * @param {Array<FileObject>} moduleFiles - The module file objects to process
-   * @param {{parse: FileObject, print: FileObject}} specificModules - The specific modules to load
+   * @param {{parser: FileObject, formatter: FileObject}} specificModules - The specific modules to load
    * @returns {Promise<object>} The discovered actions
    */
   async #loadActionsAndContracts(moduleFiles, specificModules) {
@@ -223,7 +223,6 @@ export default class Discovery {
         if(!action.default?.meta)
           return null
 
-        // const {kind, terms: actionTerms} = action.default.meta
         const {terms: actionTerms} = action.default.meta
 
         const terms = await Terms.parse(actionTerms, file.parent)
@@ -328,10 +327,11 @@ export default class Discovery {
 
     glog.debug("Available actions to check %o", 4, actions)
 
-    const satisfied = {parse: [], print: []}
+    const satisfied = {parser: [], formatter: []}
     const toMatch = {
-      parse: {metaKey: "input", configKey: "language", config: "parser"},
-      print: {metaKey: "format", configKey: "format", config: "printer"},
+      // TODO: investigate
+      parser: {metaKey: "input", configKey: "language", config: "parser"},
+      formatter: {metaKey: "format", configKey: "format", config: "formatter"},
     }
 
     glog.debug("Satisfying criteria for actions", 2)

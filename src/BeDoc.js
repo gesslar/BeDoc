@@ -34,6 +34,7 @@ export default class BeDoc {
    * @returns {Promise<BeDoc>} A new instance of Core
    */
   static async new({options, source, glog, validateBeDocSchema}) {
+    debugger
     const bedoc = new this()
 
     await bedoc.#configure({options, source, glog, validateBeDocSchema})
@@ -92,8 +93,8 @@ export default class BeDoc {
     const discovery = new Discovery({options, glog})
 
     this.#actionDefs = await discovery.discoverActions({
-      print: options.printer,
-      parse: options.parser,
+      parser: options.parser,
+      formatter: options.formatter,
     }, this.#validateBeDocSchema)
 
     this.#validCrit = discovery.satisfyCriteria(this.#actionDefs, options)
@@ -104,20 +105,20 @@ export default class BeDoc {
   }
 
   /**
-   * Negotiate contracts between discovered parsers and printers.
+   * Negotiate contracts between discovered parsers and formatters.
    */
   async #negotiate() {
     const glog = this.#glog
-    const validSchemas = {print: [], parse: []}
+    const validSchemas = {parser: [], formatter: []}
 
-    let printers = this.#validCrit.print.length
+    let formatters = this.#validCrit.formatter.length
 
-    while(printers--) {
-      const printer = this.#validCrit.print[printers]
-      const {terms: consumes} = printer
+    while(formatters--) {
+      const formatter = this.#validCrit.formatter[formatters]
+      const {terms: consumes} = formatter
       const satisfied = []
 
-      for(const parser of this.#validCrit.parse) {
+      for(const parser of this.#validCrit.parser) {
         try {
           const {terms: provides} = parser
 
@@ -129,14 +130,14 @@ export default class BeDoc {
 
           glog.debug("%o action incompatible with %o action", 3,
             parser.action.default.meta.input,
-            printer.action.default.meta.format
+            formatter.action.default.meta.format
           )
         }
       }
 
       if(satisfied.length > 0) {
-        validSchemas.print.push(printer)
-        validSchemas.parse.push(...satisfied)
+        validSchemas.formatter.push(formatter)
+        validSchemas.parser.push(...satisfied)
       }
     }
 
@@ -163,9 +164,9 @@ export default class BeDoc {
     }
 
     this.#validSchemas = schemas
-    this.#contract = schemas.parse.contract
+    this.#contract = schemas.parser.contract
 
-    glog.debug("Contracts satisfied between parser and printer", 2)
+    glog.debug("Contracts satisfied between parser and formatter", 2)
 
     const actions = {}
 
@@ -191,8 +192,8 @@ export default class BeDoc {
       throw Sass.new("No input files specified")
 
     const conveyor = new Conveyor({
-      parse: this.#actions.parse,
-      print: this.#actions.print,
+      parser: this.#actions.parser,
+      formatter: this.#actions.formatter,
       contract: this.#contract,
       glog,
       output,
