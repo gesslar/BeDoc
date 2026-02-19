@@ -67,6 +67,11 @@ export default class BeDoc {
 
     const validConfig = await config.validate({options, source})
 
+    if(validConfig.debug && validConfig.debugLevel > 0)
+      glog.withLogLevel(validConfig.debugLevel)
+    else
+      glog.withLogLevel(0)
+
     if(validConfig.status === "error")
       throw Tantrum.new("BeDoc configuration failed", validConfig.errors)
 

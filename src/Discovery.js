@@ -48,7 +48,7 @@ export default class Discovery {
     const options = this.#options
 
     if(options?.mockPath) {
-      glog.debug("Discovering mock actions in `%s`", 2, options.mockPath)
+      glog.debug("Discovering mock actions in %o", 2, options.mockPath)
 
       files.push(
         ...(await FS.getFiles([
@@ -152,7 +152,7 @@ export default class Discovery {
     const loaded = await this.#loadActionsAndContracts(files, specific)
 
     for(const [kind, actions] of Object.entries(loaded)) {
-      glog.debug(kind, actions)
+      glog.debug(kind, 4, actions)
 
       for(const {file, terms} of actions) {
 
@@ -258,16 +258,16 @@ export default class Discovery {
 
         matchingActions.push(found)
       } else {
-        glog.debug("No specific action required for `%s`", 2, actionType)
+        glog.debug("No specific action required for %o", 2, actionType)
 
         const found = loadedActions.filter(
-          e => e.action.meta.kind === actionType
+          e => e.action.default.meta.kind === actionType
         )
 
         matchingActions.push(...found)
       }
 
-      glog.debug("Filtered %o actions for `%s`", 2,
+      glog.debug("Filtered %o actions for %o", 2,
         matchingActions.length, actionType
       )
 
@@ -300,7 +300,7 @@ export default class Discovery {
           terms,
         })
       } else {
-        glog.debug("Action is not a valid `%s` action", 3, kind)
+        glog.debug("Action is not a valid %o action", 3, kind)
       }
 
       glog.debug("Processed %o action", 2, kind)
@@ -331,7 +331,7 @@ export default class Discovery {
     const satisfied = {parse: [], print: []}
     const toMatch = {
       parse: {metaKey: "input", configKey: "language", config: "parser"},
-      print: {metaKey: "output", configKey: "format", config: "printer"},
+      print: {metaKey: "format", configKey: "format", config: "printer"},
     }
 
     glog.debug("Satisfying criteria for actions", 2)
@@ -355,19 +355,19 @@ export default class Discovery {
           continue
         }
 
-        glog.debug("No specific `%s` action found", 3, actionType)
+        glog.debug("No specific %o action found", 3, actionType)
       }
 
       // Hmm! We didn't find anything specific. Let's check the criterion
       glog.debug("Checking for %o actions with meta key %o", 3, actionType, metaKey)
-      glog.debug("Validated config to check against: %o", 3, validatedConfig)
+      glog.debug("Validated config to check against: %O", 3, validatedConfig)
+
       const found = actions[actionType].filter(a => {
-        glog.debug("Meta criterion value: %o", 4, a.action.meta[metaKey])
+        glog.debug("Meta criterion value: %o", 4, a.action.default.meta[metaKey])
         glog.debug("Config criterion value: %o", 4, validatedConfig[configKey])
 
-        return a.action.meta[metaKey] === validatedConfig[configKey]
+        return a.action.default.meta[metaKey] === validatedConfig[configKey]
       })
-
       glog.debug("Found %o %o actions with criterion %o", 3, found.length, actionType, metaKey)
 
       // Shove them into the result!

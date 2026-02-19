@@ -119,7 +119,16 @@ export default class Conveyor {
     return Object.assign(ctx, {printResult})
   }
 
-  #shouldWrite = ctx => this.#output != null && ctx?.printResult
+  #shouldWrite = ctx => {
+    const result = this.#output != null && ctx?.printResult
+
+    if(result)
+      return result
+
+    Object.assign(ctx, {status: "warning", warning: `No output content for ${ctx.file.path}`})
+
+    return false
+  }
 
   #writeOutput = async ctx => {
     const glog = this.#glog

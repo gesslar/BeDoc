@@ -18,7 +18,6 @@ void (async() => {
       .withName("BeDoc")
       .withStackTrace()
       .noDisplayName()
-      .withLogLevel(3)
 
     // Get package info
     const thisPath = new DirectoryObject(url.fileURLToPath(new url.URL("..", import.meta.url)))
@@ -111,7 +110,7 @@ void (async() => {
 
     process.exit(0)
   } catch(error) {
-    Sass.new("Starting BeDoc", error).report(false)
+    Sass.new("Starting BeDoc", error).report(true)
 
     process.exit(1)
   }

@@ -7,6 +7,10 @@ settings:
 overrides:
   '@gesslar/actioneer': link:../Actioneer
   '@gesslar/negotiator': link:../Negotiator
+  bedoc-lpc-parser: link:./examples/node_modules_test/bedoc-lpc-parser
+  bedoc-lua-parser: link:./examples/node_modules_test/bedoc-lua-parser
+  bedoc-markdown-printer: link:./examples/node_modules_test/bedoc-markdown-printer
+  bedoc-wikitext-printer: link:./examples/node_modules_test/bedoc-wikitext-printer
 
 importers:
 
@@ -22,8 +26,20 @@ importers:
         specifier: link:../Negotiator
         version: link:../Negotiator
       '@gesslar/toolkit':
-        specifier: ^3.34.0
-        version: 3.34.0
+        specifier: ^3.35.1
+        version: 3.35.1
+      bedoc-lpc-parser:
+        specifier: link:examples/node_modules_test/bedoc-lpc-parser
+        version: link:examples/node_modules_test/bedoc-lpc-parser
+      bedoc-lua-parser:
+        specifier: link:examples/node_modules_test/bedoc-lua-parser
+        version: link:examples/node_modules_test/bedoc-lua-parser
+      bedoc-markdown-printer:
+        specifier: link:examples/node_modules_test/bedoc-markdown-printer
+        version: link:examples/node_modules_test/bedoc-markdown-printer
+      bedoc-wikitext-printer:
+        specifier: link:examples/node_modules_test/bedoc-wikitext-printer
+        version: link:examples/node_modules_test/bedoc-wikitext-printer
       commander:
         specifier: ^14.0.3
         version: 14.0.3
@@ -55,6 +71,42 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+
+  examples/node_modules_test/bedoc-lpc-parser:
+    dependencies:
+      '@gesslar/actioneer':
+        specifier: link:../../../../Actioneer
+        version: link:../../../../Actioneer
+      '@gesslar/toolkit':
+        specifier: ^3.35.1
+        version: 3.35.1
+
+  examples/node_modules_test/bedoc-lua-parser:
+    dependencies:
+      '@gesslar/actioneer':
+        specifier: link:../../../../Actioneer
+        version: link:../../../../Actioneer
+      '@gesslar/toolkit':
+        specifier: ^3.35.1
+        version: 3.35.1
+
+  examples/node_modules_test/bedoc-markdown-printer:
+    dependencies:
+      '@gesslar/actioneer':
+        specifier: link:../../../../Actioneer
+        version: link:../../../../Actioneer
+      '@gesslar/toolkit':
+        specifier: ^3.35.1
+        version: 3.35.1
+
+  examples/node_modules_test/bedoc-wikitext-printer:
+    dependencies:
+      '@gesslar/actioneer':
+        specifier: link:../../../../Actioneer
+        version: link:../../../../Actioneer
+      '@gesslar/toolkit':
+        specifier: ^3.35.1
+        version: 3.35.1
 
 packages:
 
@@ -101,8 +153,8 @@ packages:
     engines: {node: '>=22'}
     hasBin: true
 
-  '@gesslar/toolkit@3.34.0':
-    resolution: {integrity: sha512-NUqXMO0aHplgNqm0fWDIkkSYxPQQVyPv3ULPsZ2GJHfTvSew+69x8fZbGGfz83CSNysEtSBaHvDASr2HiZdonQ==}
+  '@gesslar/toolkit@3.35.1':
+    resolution: {integrity: sha512-NJhcEmyYNawwULbduSEzZt3Ioe1hFp5F2RLtitfoPFKdwGl3ozKlFVEMWDeCH6lP+HfW9j9nXUGErjvrE8e1zA==}
     engines: {node: '>=24.13.0'}
 
   '@gesslar/uglier@1.4.1':
@@ -630,7 +682,7 @@ snapshots:
 
   '@gesslar/colours@0.8.0': {}
 
-  '@gesslar/toolkit@3.34.0':
+  '@gesslar/toolkit@3.35.1':
     dependencies:
       '@gesslar/colours': 0.8.0
       ajv: 8.18.0
@@ -641,7 +693,7 @@ snapshots:
   '@gesslar/uglier@1.4.1(eslint@10.0.0)':
     dependencies:
       '@gesslar/colours': 0.8.0
-      '@gesslar/toolkit': 3.34.0
+      '@gesslar/toolkit': 3.35.1
       '@skarab/detect-package-manager': 1.0.0
       '@stylistic/eslint-plugin': 5.8.0(eslint@10.0.0)
       eslint: 10.0.0

@@ -1,3 +1,13 @@
+packages:
+  - examples/node_modules_test/*
+
+onlyBuiltDependencies:
+  - '@gesslar/toolkit'
+
 overrides:
   '@gesslar/actioneer': link:../Actioneer
   '@gesslar/negotiator': link:../Negotiator
+  bedoc-lpc-parser: link:./examples/node_modules_test/bedoc-lpc-parser
+  bedoc-lua-parser: link:./examples/node_modules_test/bedoc-lua-parser
+  bedoc-markdown-printer: link:./examples/node_modules_test/bedoc-markdown-printer
+  bedoc-wikitext-printer: link:./examples/node_modules_test/bedoc-wikitext-printer
