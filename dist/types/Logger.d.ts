@@ -34,8 +34,8 @@ export default class Logger {
         debugLevel: number;
     };
     setOptions(options: any): void;
-    lastStackLine(error?: Error, stepsRemoved?: number): any;
-    extractFileFunction(level?: number): any;
+    lastStackLine(error?: Error, stepsRemoved?: number): ErrorStackParser.StackFrame;
+    extractFileFunction(level?: number): string;
     newDebug(tag: any): any;
     debug(message: any, level?: number, ...arg: any[]): void;
     warn(message: any, ...arg: any[]): void;
@@ -43,4 +43,5 @@ export default class Logger {
     error(message: any, ...arg: any[]): void;
     #private;
 }
+import ErrorStackParser from "error-stack-parser";
 //# sourceMappingURL=Logger.d.ts.map

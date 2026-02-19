@@ -36,6 +36,7 @@
     "node_modules",
     "tests",
     "work",
-    "src/types"
+    "src/types",
+    "examples/"
   ]
 }

@@ -26,18 +26,18 @@
   "engines": {
     "node": ">=22"
   },
-  "main": "./src/core/Core.js",
+  "main": "./src/BeDoc.js",
   "bin": {
     "bedoc": "src/cli.js"
   },
   "exports": {
     ".": {
-      "import": "./src/core/Core.js",
-      "types": "./dist/types/core/Core.d.ts"
+      "import": "./src/BeDoc.js",
+      "types": "./dist/types/BeDoc.d.ts"
     },
     "./BeDoc": {
-      "import": "./src/core/Core.js",
-      "types": "./dist/types/core/Core.d.ts"
+      "import": "./src/BeDoc.js",
+      "types": "./dist/types/BeDoc.d.ts"
     },
     "./*": {
       "import": "./src/*",
@@ -47,7 +47,7 @@
   "type": "module",
   "types": "dist/types/index.d.ts",
   "scripts": {
-    "types:build": "tsc -p tsconfig.types.json",
+    "types": "tsc -p tsconfig.types.json",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "update": "pnpm up --latest --recursive",
