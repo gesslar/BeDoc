@@ -1,0 +1,23 @@
+{
+  "name": "chokidar-as-cli",
+  "version": "1.0.0",
+  "description": "",
+  "packageManager": "pnpm@10.27.0",
+  "license": "Unlicense",
+  "author": "you",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "chokidar": "^5.0.0"
+  },
+  "bedoc": {
+    "output": "../output/wikitext/",
+    "language": "lpc",
+    "format": "wikitext",
+    "hooks": "./hooks/lpc-wikitext-hooks.js",
+    "maxConcurrent": 5
+  }
+}
