@@ -52,6 +52,33 @@
       "console": "integratedTerminal"
     },
     {
+      "name": "CLI - LPCDocs to Markdown (Discovery, Hooks)",
+      "type": "node",
+      "request": "launch",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "program": "${workspaceFolder}/src/cli.js",
+      "args": [
+        "--debug",
+        "--debugLevel",
+        "4",
+        "-C",
+        "100",
+        "--input",
+        "examples/source/lpc/**/*.c",
+        "--output",
+        "examples/output/markdown/",
+        "--language",
+        "lpc",
+        "--format",
+        "markdown",
+        "--hooks",
+        "examples/hooks/lpc-markdown-hooks.js"
+      ],
+      "console": "integratedTerminal"
+    },
+    {
       "name": "CLI - LuaDocs to Markdown (Discovery)",
       "type": "node",
       "request": "launch",

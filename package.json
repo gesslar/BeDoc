@@ -7,7 +7,7 @@
   },
   "version": "1.11.0",
   "license": "Unlicense",
-  "homepage": "https://github.com/gesslar/lpc-mcp#readme",
+  "homepage": "https://github.com/gesslar/BeDoc#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gesslar/BeDoc.git"
@@ -22,7 +22,6 @@
     "format",
     "hooks"
   ],
-  "packageManager": "pnpm@10.27.0",
   "engines": {
     "node": ">=22"
   },
@@ -49,33 +48,28 @@
     "types": "tsc -p tsconfig.types.json",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "update": "pnpm up --latest --recursive",
-    "submit": "pnpm publish --access public --//registry.npmjs.org/:_authToken=\"${NPM_ACCESS_TOKEN}\"",
+    "update": "npx npm-check-updates -u && npm install",
+    "submit": "npm publish --access public --//registry.npmjs.org/:_authToken=\"${NPM_ACCESS_TOKEN}\"",
     "pr": "gt submit -p --ai",
-    "patch": "pnpm version patch",
-    "minor": "pnpm version minor",
-    "major": "pnpm version major"
+    "patch": "npm version patch",
+    "minor": "npm version minor",
+    "major": "npm version major"
   },
   "dependencies": {
-    "@gesslar/actioneer": "link:../Actioneer",
+    "@gesslar/actioneer": "^2.3.1",
     "@gesslar/colours": "^0.8.0",
-    "@gesslar/negotiator": "link:../Negotiator",
-    "@gesslar/toolkit": "^3.35.1",
-    "bedoc-lpc-parser": "link:examples/node_modules_test/bedoc-lpc-parser",
-    "bedoc-lua-parser": "link:examples/node_modules_test/bedoc-lua-parser",
-    "bedoc-markdown-formatter": "link:examples/node_modules_test/bedoc-markdown-formatter",
-    "bedoc-wikitext-formatter": "link:examples/node_modules_test/bedoc-wikitext-formatter",
-    "commander": "^14.0.3",
-    "dotenv": "^17.3.1",
-    "error-stack-parser": "^2.1.4",
-    "json5": "^2.2.3"
+    "@gesslar/negotiator": "^0.4.0",
+    "@gesslar/toolkit": "^3.37.0",
+    "commander": "^14.0.3"
   },
   "devDependencies": {
     "@gesslar/uglier": "^1.4.1",
-    "axios": "^1.13.5",
-    "chokidar": "^5.0.0",
+    "bedoc-lpc-parser": "file:examples/node_modules_test/bedoc-lpc-parser",
+    "bedoc-lua-parser": "file:examples/node_modules_test/bedoc-lua-parser",
+    "bedoc-markdown-formatter": "file:examples/node_modules_test/bedoc-markdown-formatter",
+    "bedoc-wikitext-formatter": "file:examples/node_modules_test/bedoc-wikitext-formatter",
+    "dotenv": "^17.3.1",
     "eslint": "^10.0.0",
-    "form-data": "^4.0.5",
     "typescript": "^5.9.3"
   }
 }

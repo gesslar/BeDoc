@@ -21,12 +21,15 @@ export default class Conveyor {
   /** @type {Contract} */
   #contract
 
-  constructor({parser, formatter, glog, contract, output}) {
+  #hooks
+
+  constructor({parser, formatter, hooks, glog, contract, output}) {
     this.#parser = parser
     this.#formatter = formatter
     this.#glog = glog
     this.#output = output
     this.#contract = contract
+    this.#hooks = hooks
   }
 
   /**
@@ -84,6 +87,10 @@ export default class Conveyor {
     try {
       const {content} = ctx
       const builder = new ActionBuilder(new this.#parser())
+
+      if(this.#hooks.Parse)
+        builder.withHooks(new this.#hooks.Parse())
+
       const runner = new ActionRunner(builder)
       const result = await runner.run(content)
 
@@ -113,6 +120,10 @@ export default class Conveyor {
   #formatFile = async ctx => {
     const {functions} = ctx
     const builder = new ActionBuilder(new this.#formatter())
+
+    if(this.#hooks.Format)
+      builder.withHooks(new this.#hooks.Format())
+
     const runner = new ActionRunner(builder)
     const formatResult = await runner.run(functions)
 

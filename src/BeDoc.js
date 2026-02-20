@@ -1,5 +1,5 @@
 import {Contract} from "@gesslar/negotiator"
-import {Sass, Tantrum} from "@gesslar/toolkit"
+import {Data, Sass, Tantrum} from "@gesslar/toolkit"
 import {hrtime} from "node:process"
 
 import Configuration from "./Configuration.js"
@@ -7,7 +7,7 @@ import Conveyor from "./Conveyor.js"
 import Discovery from "./Discovery.js"
 
 /**
- * @import {Glog} from "@gesslar/toolkit"
+ * @import {FileObject, Glog} from "@gesslar/toolkit"
  */
 
 export default class BeDoc {
@@ -19,6 +19,7 @@ export default class BeDoc {
   #contract
   #actions
   #validateBeDocSchema
+  #hooks
 
   constructor(glog) {
     this.#glog = glog
@@ -34,7 +35,6 @@ export default class BeDoc {
    * @returns {Promise<BeDoc>} A new instance of Core
    */
   static async new({options, source, glog, validateBeDocSchema}) {
-    debugger
     const bedoc = new this()
 
     await bedoc.#configure({options, source, glog, validateBeDocSchema})
@@ -50,6 +50,7 @@ export default class BeDoc {
 
     await bedoc.#negotiate()
     bedoc.#validateActions()
+    await bedoc.#setupHooks()
 
     return bedoc
   }
@@ -181,6 +182,45 @@ export default class BeDoc {
     this.#actions = actions
   }
 
+  async #setupHooks() {
+    /** @type {Glog} */
+    const glog = this.#glog
+
+    if(!this.#options.hooks)
+      return
+
+    /** @type {FileObject} */
+    const hooksFile = this.#options.hooks
+
+    if(!hooksFile)
+      return
+
+    if(!await hooksFile.exists) {
+      glog.warn(`File not found: ${hooksFile.path}`)
+
+      return
+    }
+
+    const loaded = await hooksFile.import()
+    if(!loaded)
+      return
+
+    const hooks = {}
+    if(loaded.Parse && Data.isType(loaded.Parse, "Function"))
+      hooks.Parse = loaded.Parse
+
+    if(loaded.Format && Data.isType(loaded.Format, "Function"))
+      hooks.Format = loaded.Format
+
+    if(Data.isEmpty(hooks)) {
+      glog.warn(`No hooks found in ${hooksFile.path}`)
+
+      return
+    }
+
+    this.#hooks = hooks
+  }
+
   async processFiles() {
     const glog = this.#glog
 
@@ -195,6 +235,7 @@ export default class BeDoc {
       parser: this.#actions.parser,
       formatter: this.#actions.formatter,
       contract: this.#contract,
+      hooks: this.#hooks,
       glog,
       output,
     })
