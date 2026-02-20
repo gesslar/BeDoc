@@ -3,8 +3,6 @@ export class Parse {
     // NO EXAMPLES! Figure it out on your own.
 
     delete ctx.tag.example
-
-    return ctx
   }
 }
 
@@ -26,8 +24,6 @@ export class Format {
 
     if(joke)
       ctx.description.push("", joke)
-
-    return ctx
   }
 
   /**

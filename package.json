@@ -1,10 +1,7 @@
 {
   "name": "@gesslar/bedoc",
   "description": "Pluggable documentation engine for any language and format",
-  "author": {
-    "name": "gesslar",
-    "url": "https://gesslar.dev"
-  },
+  "author": "gesslar (https://gesslar.dev)",
   "version": "1.11.0",
   "license": "Unlicense",
   "homepage": "https://github.com/gesslar/BeDoc#readme",
@@ -23,7 +20,7 @@
     "hooks"
   ],
   "engines": {
-    "node": ">=22"
+    "node": ">=24.13.0"
   },
   "bin": {
     "bedoc": "src/cli.js"
@@ -64,6 +61,7 @@
   },
   "devDependencies": {
     "@gesslar/uglier": "^1.4.1",
+    "@gesslar/wikid": "^2.2.0",
     "bedoc-lpc-parser": "file:examples/node_modules_test/bedoc-lpc-parser",
     "bedoc-lua-parser": "file:examples/node_modules_test/bedoc-lua-parser",
     "bedoc-markdown-formatter": "file:examples/node_modules_test/bedoc-markdown-formatter",
@@ -71,5 +69,12 @@
     "dotenv": "^17.3.1",
     "eslint": "^10.0.0",
     "typescript": "^5.9.3"
+  },
+  "main": "eslint.config.js",
+  "directories": {
+    "example": "examples"
+  },
+  "bugs": {
+    "url": "https://github.com/gesslar/BeDoc/issues"
   }
 }
