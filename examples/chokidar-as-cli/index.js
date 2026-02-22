@@ -36,6 +36,7 @@ const processFile = (path, event) => {
   exec(`cd ../.. && bedoc ${standardOptions.join(" ")} --input "${path}"`, (error, stdout, stderr) => {
     if(error) {
       console.error(`Error processing file ${path}:`, error.message)
+
       return
     }
 
