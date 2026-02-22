@@ -1,7 +1,7 @@
 export const Hooks = {
-  parse: {},
+  parser: {},
 
-  print: {
+  formatter: {
     async end(module) {
       const {moduleContent} = module
 

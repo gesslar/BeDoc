@@ -1,0 +1,10 @@
+{
+  "language": "lpc",
+  "format": "markdown",
+  "output": "output/markdown",
+  "input": [
+    "examples/source/lpc/arrays.c",
+    "examples/source/lpc/base64.c"
+  ],
+  "hooks": "examples/hooks/lpc-wikitext-hooks.js"
+}
