@@ -7,14 +7,14 @@
 
 **BeDoc** is a powerful, pluggable documentation generator designed to handle
 any programming language and output format. With its extensible framework, you
-can easily create custom parsers and printers to generate structured
+can easily create custom parsers and formatters to generate structured
 documentation for your projects.
 
 ---
 
 ## Key Features
 
-- **Pluggable Design**: BeDoc works seamlessly with custom parsers and printers
+- **Pluggable Design**: BeDoc works seamlessly with custom parsers and formatters
   to fit your unique needs. BeDoc also supports async operations, allowing for
   efficient handling of large projects.
 - **Customizable Input**: Accommodate any text input, whether it’s a well-known
