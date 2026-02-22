@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schema.gesslar.dev/v1/bedoc-action.json",
+  "title": "BeDoc Action Schema",
+  "type": "object",
+  "properties": {
+    "accepts": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "object"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "provides": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "const": "object"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "required": [
+        "accepts"
+      ]
+    },
+    {
+      "required": [
+        "provides"
+      ]
+    }
+  ]
+}
