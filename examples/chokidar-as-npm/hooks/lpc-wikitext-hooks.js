@@ -1,30 +1,31 @@
-export const Hooks = {
-  parse: {},
+export class Format {
+  // Trim leading and trailing blank lines from the description before it is
+  // rendered (mirrors the old object-hook `enter` behaviour).
+  before$formatFunction = ctx => {
+    const description = ctx.description
 
-  print: {
-    async enter(section) {
-      const {sectionName, sectionContent} = section
+    if(Array.isArray(description)) {
+      while(description.length && !description.at(0)?.trim())
+        description.shift()
 
-      if(sectionName === "description") {
-        // Trim leading and trailing empty lines.
-        const content = sectionContent
-        while(content.length && !content.at(0))
-          content.shift()
+      while(description.length && !description.at(-1)?.trim())
+        description.pop()
+    }
+  }
 
-        while(content.length && !content.at(-1))
-          content.pop()
-      }
+  // Convert Markdown ```c fences in the rendered sections into Wikitext
+  // syntaxhighlight blocks (mirrors the old `end` behaviour). Hooks are
+  // mutation-only — the return value is ignored — so the formatted sections
+  // are rewritten in place on the result object.
+  after$formatFunction = (ctx, result) => {
+    if(!Array.isArray(result?.formatted))
+      return
 
-      return section
-    },
-
-    async end(module) {
-      const {moduleContent} = module
-
-      return moduleContent.replace(
+    result.formatted = result.formatted.map(section =>
+      section.replace(
         /```c\n([\s\S]+?)```/g,
-        '<syntaxhighlight lang="c">\n$1</syntaxhighlight>\n',
-      )
-    },
-  },
+        "<syntaxhighlight lang=\"c\">\n$1</syntaxhighlight>\n",
+      ),
+    )
+  }
 }
