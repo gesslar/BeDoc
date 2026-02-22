@@ -1,0 +1,7 @@
+{
+  "language": "lpc",
+  "format": "wikitext",
+  "output": "output/",
+  "input": ["wip/sample/arrays.c", "wip/sample/base64.c"],
+  "hooks": "wip/wikitext-hooks.js"
+}

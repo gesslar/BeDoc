@@ -1,0 +1,13 @@
+{
+  "name": "hooks",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "author": "",
+  "license": "NPH",
+  "type": "module",
+  "dependencies": {
+    "@gesslar/toolkit": "^3.37.0",
+    "@gesslar/wikid": "^2.3.0"
+  }
+}
