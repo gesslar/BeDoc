@@ -31,7 +31,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr # Gives this step an ID so we can reference its outputs later
-        uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # Uses peter-evans PR creation action
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # Uses peter-evans PR creation action
         with:
           branch: dev-to-main # Name of the temporary branch for the PR
           token: ${{ secrets.GITHUB_TOKEN }} # Uses default GitHub token for authentication
