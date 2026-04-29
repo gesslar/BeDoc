@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest # Specifies the runner environment
     steps:
       # Step 1: Check out repository
-      - uses: actions/checkout@v4 # Official GitHub checkout action
+      - uses: actions/checkout@v6 # Official GitHub checkout action
         with:
           ref: main # Checks out the main branch as we'll be creating a PR into it
 
