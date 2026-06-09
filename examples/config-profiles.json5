@@ -1,0 +1,60 @@
+// ─────────────────────────────────────────────────────────────────────────
+// PATTERN: One file, many named profiles (subconfigurations)
+//
+// A single config can carry a `sub` array of named profiles. The top level
+// holds the shared defaults; each entry in `sub` is a named override layer.
+// You pick one at run time with `--sub <name>`, and its keys are merged ON TOP
+// of the shared defaults. Run with no `--sub` and you just get the defaults.
+//
+// This keeps the common bits (input root, output dir, concurrency) written
+// once, while each profile changes only what makes it distinct — here, the
+// output format and, for the Lua profile, the language and sources.
+//
+// Because the profiles need to switch parser/formatter per run, this file uses
+// the EXPLICIT plugin style throughout (parser + formatter). Mixing in
+// `language`/`format` would collide — they are mutually exclusive with their
+// explicit counterparts.
+//
+// Run the default profile (lpc → markdown):
+//   node src/cli.js --config examples/config-profiles.json5
+//
+// Run a named profile:
+//   node src/cli.js --config examples/config-profiles.json5 --sub wikitext
+//   node src/cli.js --config examples/config-profiles.json5 --sub lua
+// ─────────────────────────────────────────────────────────────────────────
+{
+  // ── Shared defaults (every profile inherits these) ──────────────────────
+  parser: "examples/node_modules_test/bedoc-lpc-parser/bedoc-lpc-parser.js",
+  formatter: "examples/node_modules_test/bedoc-markdown-formatter/bedoc-markdown-formatter.js",
+  input: ["examples/source/lpc/*.c"],
+  output: "examples/output/markdown",
+  maxConcurrent: 25,
+
+  // ── Profiles: each overrides only what differs from the defaults ────────
+  sub: [
+    {
+      // The plain default rendering. Inherits everything above; overrides
+      // nothing but its own input selection for a tidier run.
+      name: "markdown",
+      input: ["examples/source/lpc/base64.c", "examples/source/lpc/arrays.c"],
+    },
+    {
+      // Same LPC sources, but emit wikitext instead of markdown. Only the
+      // formatter and output directory change.
+      name: "wikitext",
+      formatter: "examples/node_modules_test/bedoc-wikitext-formatter/bedoc-wikitext-formatter.js",
+      output: "examples/output/wikitext",
+    },
+    {
+      // A different language entirely: swap in the Lua parser and point at
+      // Lua sources. Still renders markdown via the inherited formatter.
+      name: "lua",
+      parser: "examples/node_modules_test/bedoc-lua-parser/bedoc-lua-parser.js",
+      input: [
+        "examples/source/lua/colour.lua",
+        "examples/source/lua/conditions.lua",
+        "examples/source/lua/dependency_queue.lua",
+      ],
+    },
+  ],
+}

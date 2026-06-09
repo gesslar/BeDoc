@@ -141,6 +141,13 @@ const ConfigurationParameters = Data.deepFreezeObject({
     required: false,
     default: 0,
   },
+  terse: {
+    short: "t",
+    description: "Terse output (hide per-stage progress lines)",
+    type: Data.newTypeSpec("boolean"),
+    required: false,
+    default: false,
+  },
 })
 
 const ConfigurationPriorityKeys = Data.deepFreezeObject(["exclude", "input"])

@@ -85,7 +85,19 @@ Contributions are welcome! Feel free to open an issue or submit a pull request.
 
 ## License
 
-This project is licensed under the [Unlicense](./LICENSE).
+`@gesslar/bedoc` is released into the public domain under the [Unlicense](LICENSE.txt).
+
+This package includes or depends on third-party components under their own
+licenses:
+
+| Dependency | License |
+| --- | --- |
+| [@gesslar/actioneer](https://github.com/gesslar/actioneer) | 0BSD |
+| [@gesslar/colours](https://github.com/gesslar/colours) | 0BSD |
+| [@gesslar/negotiator](https://github.com/gesslar/Negotiator) | 0BSD |
+| [@gesslar/toolkit](https://github.com/gesslar/toolkit) | 0BSD |
+| [commander](https://github.com/tj/commander.js) | MIT |
+| [error-stack-parser](https://github.com/stacktracejs/error-stack-parser) | MIT |
 
 ---
 

@@ -10,7 +10,7 @@
       ],
       "program": "${workspaceFolder}/src/cli.js",
       "args": [
-        "--debug",
+        // "--debug",
         "--debugLevel",
         "4",
         "-C",

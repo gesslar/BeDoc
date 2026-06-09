@@ -1,0 +1,33 @@
+// ─────────────────────────────────────────────────────────────────────────
+// PATTERN: Pin exact parser + formatter files (skip discovery)
+//
+// Instead of asking BeDoc to FIND a plugin by language/format, you hand it the
+// exact JS module to use for each role. This is the pattern to reach for when:
+//   - the plugin isn't published / installed as a node module,
+//   - you're developing a parser or formatter and want to point at your
+//     working copy,
+//   - or two installed plugins claim the same language/format and you need to
+//     break the tie deterministically.
+//
+// `parser` replaces `language`; `formatter` replaces `format`. (They're
+// mutually exclusive with their discovery counterparts — don't set both.)
+//
+// Run it (from the repo root):
+//   node src/cli.js --config examples/config-explicit.json5
+// ─────────────────────────────────────────────────────────────────────────
+{
+  // The exact parser module — no discovery, no guessing.
+  parser: "examples/node_modules_test/bedoc-lpc-parser/bedoc-lpc-parser.js",
+
+  // The exact formatter module.
+  formatter: "examples/node_modules_test/bedoc-markdown-formatter/bedoc-markdown-formatter.js",
+
+  // A glob this time, to show input is not limited to a hand-listed array.
+  input: ["examples/source/lpc/*.c"],
+
+  output: "examples/output/markdown",
+
+  // How many files to process in parallel. Handy when a glob matches many
+  // sources. Defaults to 10 if omitted.
+  maxConcurrent: 25,
+}

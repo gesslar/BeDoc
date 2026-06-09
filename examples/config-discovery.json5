@@ -1,0 +1,40 @@
+// ─────────────────────────────────────────────────────────────────────────
+// PATTERN: Auto-discovery by language + format
+//
+// The simplest, most declarative way to drive BeDoc. You name a `language`
+// and a `format`, and BeDoc finds a parser that speaks that language and a
+// formatter that emits that format — you never name a file.
+//
+// Discovery normally scans installed node modules (anything whose package.json
+// declares a `bedoc` section). For a self-contained example we instead point
+// `mock` at a folder of loose plugin files. BeDoc globs that folder for files
+// named `bedoc-*-parser.js` and `bedoc-*-formatter.js` and reads their
+// declared language/format from the matching `.yaml` sidecar.
+//
+// Run it (from the repo root):
+//   node src/cli.js --config examples/config-discovery.json5
+//
+// Note: `language` is mutually exclusive with `parser`, and `format` with
+// `formatter`. Pick the discovery style (here) OR the explicit style — see
+// config-explicit.json5 — but not both for the same role.
+// ─────────────────────────────────────────────────────────────────────────
+{
+  // What the source is written in. BeDoc matches this against each parser's
+  // declared language.
+  language: "lpc",
+
+  // What to emit. Matched against each formatter's declared format.
+  format: "markdown",
+
+  // Folder of mock plugins to discover instead of scanning node_modules.
+  // Drop this line in a real project and BeDoc will use your installed
+  // bedoc-* packages instead.
+  mock: "examples/mock",
+
+  // Files to document. A string or an array of glob patterns, resolved
+  // relative to the directory you run BeDoc from (the repo root here).
+  input: ["examples/source/lpc/*.c"],
+
+  // Where the rendered docs land. The directory must already exist.
+  output: "examples/output/markdown",
+}
