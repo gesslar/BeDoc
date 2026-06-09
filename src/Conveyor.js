@@ -1,8 +1,8 @@
 import {ActionBuilder, ActionRunner, ACTIVITY} from "@gesslar/actioneer"
-import {DirectoryObject, FileObject, Sass} from "@gesslar/toolkit"
+import {DirectoryObject, FileObject, Notify, Sass} from "@gesslar/toolkit"
 
 /**
- * @import {Glog} from "@gesslar/toolkit"
+ * @import {CLIOutput} from "./CLIOutput.js"
  * @import {Contract} from "@gesslar/negotiator"
  */
 
@@ -11,9 +11,8 @@ const {IF} = ACTIVITY
 export default class Conveyor {
   #parser
   #formatter
-
-  /** @type {Glog} */
-  #glog
+  /** An instance of CLIOutput @type {CLIOutput} */
+  #cli
 
   /** @type {DirectoryObject} */
   #output
@@ -24,15 +23,33 @@ export default class Conveyor {
   #hooks
   #basePath
 
-  constructor({basePath, parser, formatter, hooks, glog, contract, output}) {
+  constructor({
+    basePath,
+    parser,
+    formatter,
+    hooks,
+    contract,
+    output,
+    cli
+  }) {
+    this.#basePath = basePath
     this.#parser = parser
     this.#formatter = formatter
-    this.#glog = glog
-    this.#output = output
-    this.#contract = contract
     this.#hooks = hooks
-    this.#basePath = basePath
+    this.#contract = contract
+    this.#output = output
+    this.#cli = cli
   }
+
+  /**
+   * Emits a pipeline stage transition for a file.
+   *
+   * @param {FileObject} file - The file the stage pertains to.
+   * @param {string} stage - The stage name (read|parse|validate|format|write).
+   * @param {string} state - The new state (active|done|warning|error).
+   */
+  #emitStage = (file, stage, state) =>
+    Notify.emit("update-data", {file, message: {kind: "stage", stage, state}})
 
   /**
    * Defines the per-file processing pipeline.
@@ -56,19 +73,21 @@ export default class Conveyor {
    * @returns {Promise<object>} - Resolves with {succeeded, errored, warned}.
    */
   async convey(files, maxConcurrent = 10) {
-    const glog = this.#glog
-
     const builder = new ActionBuilder(this)
     const runner = new ActionRunner(builder)
       .addSetup(async() => {
-        if(this.#output && !await this.#output.exists) {
-          glog.info(`Directory '${this.#output.path}' does not exist. Creating.`)
-
+        if(this.#output && !await this.#output.exists)
           await this.#output.assureExists({recursive: true})
-        }
       })
 
-    const contexts = files.map(file => ({file}))
+    const destExtension = this.#formatter.meta.extension ?? "txt"
+    const contexts = files.map(file => ({
+      file,
+      output: new FileObject(`${file.module}.${destExtension}`, this.#output)
+    }))
+
+    Notify.emit("conveyor-start", contexts)
+
     const settled = await runner.pipe(contexts, maxConcurrent)
 
     return this.#categorize(settled, files)
@@ -77,21 +96,22 @@ export default class Conveyor {
   // -- Pipeline activities --------------------------------------------------
 
   #readFile = async ctx => {
-    const glog = this.#glog
+    this.#emitStage(ctx.file, "read", "active")
+
     const content = await ctx.file.read()
 
-    const local = ctx.file.relativeTo(this.#basePath)
-    const size = await ctx.file.size()
-
-    glog.info(`Wrote output ${local} (${size.toLocaleString()} bytes)`)
+    Notify.emit("update-data", {file: ctx.file, message: {kind: "input-size", value: content.length}})
+    this.#emitStage(ctx.file, "read", "done")
 
     return {...ctx, content}
   }
 
   #parseFile = async ctx => {
+    if(ctx.error)
+      return ctx
+
     try {
-      if(ctx.error)
-        return ctx
+      this.#emitStage(ctx.file, "parse", "active")
 
       const {content} = ctx
       const builder = new ActionBuilder(new this.#parser())
@@ -102,8 +122,12 @@ export default class Conveyor {
       const runner = new ActionRunner(builder)
       const result = await runner.run(content)
 
+      this.#emitStage(ctx.file, "parse", "done")
+
       return Object.assign(ctx, {...result})
     } catch(error) {
+      this.#emitStage(ctx.file, "parse", "error")
+
       return {...ctx, status: "error", error: Sass.new(`Parsing file ${ctx.file}`, error)}
     }
   }
@@ -113,9 +137,15 @@ export default class Conveyor {
       return ctx
 
     try {
+      this.#emitStage(ctx.file, "validate", "active")
+
       this.#contract.validate(ctx)
+
+      this.#emitStage(ctx.file, "validate", "done")
     } catch(err) {
       if(err) {
+        this.#emitStage(ctx.file, "validate", "error")
+
         throw Sass.new(`Parser validation for ${ctx.file.path}`, err)
       }
     }
@@ -127,6 +157,8 @@ export default class Conveyor {
     if(ctx.error)
       return ctx
 
+    this.#emitStage(ctx.file, "format", "active")
+
     const {functions} = ctx
     const builder = new ActionBuilder(new this.#formatter())
 
@@ -135,6 +167,8 @@ export default class Conveyor {
 
     const runner = new ActionRunner(builder)
     const formatResult = await runner.run(functions)
+
+    this.#emitStage(ctx.file, "format", "done")
 
     return Object.assign(ctx, {formatResult})
   }
@@ -150,6 +184,9 @@ export default class Conveyor {
 
     Object.assign(ctx, {status: "warning", warning: `No output content for ${ctx.file.path}`})
 
+    Notify.emit("update-data", {file: ctx.file, message: {kind: "output-size", value: 0}})
+    this.#emitStage(ctx.file, "write", "warning")
+
     return false
   }
 
@@ -157,18 +194,16 @@ export default class Conveyor {
     if(ctx.error)
       return ctx
 
-    const glog = this.#glog
-    const {file, formatResult} = ctx
-    const destExtension = this.#formatter.meta.extension ?? "txt"
-    const outputFile = new FileObject(`${file.module}.${destExtension}`, this.#output)
-    await outputFile.write(formatResult)
+    this.#emitStage(ctx.file, "write", "active")
 
-    const local = outputFile.relativeTo(this.#basePath)
-    const size = formatResult.length
+    const {formatResult: content, output} = ctx
 
-    glog.info(`Wrote output ${local} (${size.toLocaleString()} bytes)`)
+    await output.write(content)
 
-    return {...ctx, status: "success", outputFile}
+    Notify.emit("update-data", {file: ctx.file, message: {kind: "output-size", value: content.length}})
+    this.#emitStage(ctx.file, "write", "done")
+
+    return {...ctx, status: "success", output}
   }
 
   // -- Result categorization ------------------------------------------------
@@ -191,7 +226,7 @@ export default class Conveyor {
 
       switch(val?.status) {
         case "success":
-          succeeded.push({input: file, output: val.outputFile})
+          succeeded.push({input: file, output: val.output})
           break
         case "warning":
           warned.push({input: file, warning: val.warning})

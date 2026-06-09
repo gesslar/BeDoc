@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import {Schemer} from "@gesslar/negotiator"
 import {Data, DirectoryObject, FileObject, Glog, Sass, Tantrum, Term} from "@gesslar/toolkit"
 import {program} from "commander"
 import process from "node:process"
@@ -9,7 +10,7 @@ import BeDoc from "./BeDoc.js"
 import {ConfigurationParameters} from "./ConfigurationParameters.js"
 import Environment from "./Environment.js"
 import Schema from "./Schema.js"
-import {Schemer} from "@gesslar/negotiator"
+import CLIOutput from "./CLIOutput.js"
 
 // Main entry point
 void (async() => {
@@ -72,6 +73,10 @@ void (async() => {
 
     // Create core instance with validated config
     const prjPath = new DirectoryObject()
+    const cliOutput = new CLIOutput({
+      basePath: prjPath,
+      terse: Boolean(options.terse),
+    })
     const prjPkJsonFile = new FileObject("package.json", prjPath)
     const prjPkjJson = await prjPkJsonFile.loadData()
     const pkjBedoc = prjPkjJson?.bedoc ?? {}
@@ -87,6 +92,7 @@ void (async() => {
         source: Environment.CLI,
         glog,
         validateBeDocSchema,
+        cliOutput
       })
 
     if(!(bedoc instanceof BeDoc)) {
@@ -96,7 +102,14 @@ void (async() => {
       }
     }
 
+    Term.altScreen()
+
     const result = await bedoc.processFiles()
+
+    Term.mainScreen()
+
+    cliOutput.render(false)
+
     const errored = result.errored
     const warned = result.warned
 
@@ -110,6 +123,8 @@ void (async() => {
 
     process.exit(0)
   } catch(error) {
+    Term.mainScreen()
+
     Sass.new("Starting BeDoc", error).report(true)
 
     process.exit(1)

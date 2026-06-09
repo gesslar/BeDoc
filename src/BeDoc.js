@@ -21,25 +21,27 @@ export default class BeDoc {
   #validateBeDocSchema
   #hooks
   #basePath
+  #cli
 
-  constructor({basePath, glog}) {
+  constructor({basePath, glog, cliOutput}) {
     this.#glog = glog
     this.#basePath = basePath
+    this.#cli = cliOutput
   }
 
   /**
-   * Create a new instance of Core.
+   * Create a new instance of BeDoc.
    *
    * @param {object} args
    * @param {object} args.options - The options passed into BeDoc
    * @param {string} args.source - The environment BeDoc is running in
    * @param {Glog} args.glog - The Glog logger instance
-   * @returns {Promise<BeDoc>} A new instance of Core
+   * @returns {Promise<BeDoc>} A new instance of BeDoc
    */
-  static async new({options, source, glog, validateBeDocSchema}) {
+  static async new({options, source, glog, validateBeDocSchema, cliOutput}) {
     const {basePath} = options
 
-    const bedoc = new this({basePath, glog})
+    const bedoc = new this({basePath, glog, cliOutput})
 
     await bedoc.#configure({options, source, glog, validateBeDocSchema})
 
@@ -249,7 +251,8 @@ export default class BeDoc {
       hooks: this.#hooks,
       glog,
       output,
-      basePath: this.#basePath
+      basePath: this.#basePath,
+      cli: this.#cli
     })
 
     const processStart = hrtime.bigint()

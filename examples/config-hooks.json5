@@ -1,0 +1,35 @@
+// ─────────────────────────────────────────────────────────────────────────
+// PATTERN: Inject a hooks file into the pipeline
+//
+// Hooks let you reach into the parse → format pipeline without writing a whole
+// plugin. The hooks module exports `Parse` and/or `Format` classes whose
+// methods run at named points (e.g. `after$extractTags`, `before$formatFunction`,
+// `setup`). Use them to scrub fields, enrich descriptions, call out to an API,
+// or upload the result — all while reusing stock parsers and formatters.
+//
+// This config combines discovery (language/format) with a hooks file. The
+// referenced hooks (examples/hooks/lpc-markdown-hooks.js) strip `@example`
+// tags during parsing and sprinkle a dad joke into each function's
+// description during formatting — a deliberately silly demonstration that the
+// hook actually mutates the output.
+//
+// Run it (from the repo root):
+//   node src/cli.js --config examples/config-hooks.json5
+//
+// `hookTimeout` caps how long any single hook may run (ms) — relevant because
+// these hooks make a network call.
+// ─────────────────────────────────────────────────────────────────────────
+{
+  language: "lpc",
+  format: "markdown",
+  mock: "examples/mock",
+
+  input: ["examples/source/lpc/base64.c", "examples/source/lpc/data.c"],
+  output: "examples/output/markdown",
+
+  // The star of this example: a module of Parse/Format hook classes.
+  hooks: "examples/hooks/lpc-markdown-hooks.js",
+
+  // Give the network-calling hook room to finish (default is 5000).
+  hookTimeout: 15000,
+}
