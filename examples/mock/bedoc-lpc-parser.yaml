@@ -47,8 +47,10 @@ provides:
                   ]
               name:
                 type: string
-              parms:
-                type: string
+              parameters:
+                type: array
+                items:
+                  type: string
           description:
             type: array
             items:

@@ -145,6 +145,13 @@ export default class LpcParser {
     const {function: func} = ctx
     const signature = this.#gimme(func?.groups ?? {})
 
+    // Normalize parameters to an array, matching the shared parser→formatter
+    // contract (the Lua parser emits `parameters` the same way).
+    signature.parameters = signature.parms
+      ? signature.parms.split(",").map(p => p.trim()).filter(Boolean)
+      : []
+    delete signature.parms
+
     return Object.assign(ctx, {signature})
   }
 

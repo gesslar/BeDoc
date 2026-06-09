@@ -96,14 +96,20 @@ export default class Conveyor {
   // -- Pipeline activities --------------------------------------------------
 
   #readFile = async ctx => {
-    this.#emitStage(ctx.file, "read", "active")
+    try {
+      this.#emitStage(ctx.file, "read", "active")
 
-    const content = await ctx.file.read()
+      const content = await ctx.file.read()
 
-    Notify.emit("update-data", {file: ctx.file, message: {kind: "input-size", value: content.length}})
-    this.#emitStage(ctx.file, "read", "done")
+      Notify.emit("update-data", {file: ctx.file, message: {kind: "input-size", value: Buffer.byteLength(content)}})
+      this.#emitStage(ctx.file, "read", "done")
 
-    return {...ctx, content}
+      return {...ctx, content}
+    } catch(error) {
+      this.#emitStage(ctx.file, "read", "error")
+
+      return {...ctx, status: "error", error: Sass.new(`Reading file ${ctx.file}`, error)}
+    }
   }
 
   #parseFile = async ctx => {
@@ -194,16 +200,22 @@ export default class Conveyor {
     if(ctx.error)
       return ctx
 
-    this.#emitStage(ctx.file, "write", "active")
+    try {
+      this.#emitStage(ctx.file, "write", "active")
 
-    const {formatResult: content, output} = ctx
+      const {formatResult: content, output} = ctx
 
-    await output.write(content)
+      await output.write(content)
 
-    Notify.emit("update-data", {file: ctx.file, message: {kind: "output-size", value: content.length}})
-    this.#emitStage(ctx.file, "write", "done")
+      Notify.emit("update-data", {file: ctx.file, message: {kind: "output-size", value: Buffer.byteLength(content)}})
+      this.#emitStage(ctx.file, "write", "done")
 
-    return {...ctx, status: "success", output}
+      return {...ctx, status: "success", output}
+    } catch(error) {
+      this.#emitStage(ctx.file, "write", "error")
+
+      return {...ctx, status: "error", error: Sass.new(`Writing file ${ctx.file}`, error)}
+    }
   }
 
   // -- Result categorization ------------------------------------------------
