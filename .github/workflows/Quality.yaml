@@ -13,6 +13,8 @@ jobs:
   Quality:
     uses: gesslar/Maint/.github/workflows/Quality.yaml@main
     secrets: inherit
+    permissions:
+      contents: read
     with:
       package_manager: "auto"
       perform_linting: "${{ vars.PERFORM_LINTING }}"
