@@ -93,8 +93,8 @@ export default class Markdownformatter {
         ctx.signature.modifier2 ?? "",
         ctx.signature.type ?? "",
         ctx.signature.name ?? "",
-        ctx.signature.parms
-          ? `(${ctx.signature.parms})`
+        ctx.signature.parameters?.length
+          ? `(${ctx.signature.parameters.join(", ")})`
           : "()"
       ].filter(Boolean)
 
