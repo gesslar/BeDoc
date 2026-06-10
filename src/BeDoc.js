@@ -69,7 +69,7 @@ export default class BeDoc {
     config, options, source, basePath, glog, validateBeDocSchema, cliOutput
   }) {
     const resolved = config ?? await BeDoc.resolveConfig({options, source})
-    const base = basePath ?? options?.basePath
+    const base = basePath ?? resolved.basePath ?? options?.basePath
 
     const bedoc = new this({basePath: base, glog, cliOutput})
 

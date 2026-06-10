@@ -142,6 +142,7 @@ export default class Configuration {
     return {
       status: "success",
       validated: true,
+      basePath: base,
       ...finalOptions,
     }
   }
