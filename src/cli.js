@@ -71,28 +71,37 @@ void (async() => {
       optionsWithSources[key] = element
     }
 
-    // Create core instance with validated config
+    // Resolve and validate configuration up front, before constructing
+    // anything that depends on it. Everything downstream — CLIOutput, BeDoc,
+    // the logger — consumes this single validated config object.
     const prjPath = new DirectoryObject()
-    const cliOutput = new CLIOutput({
-      basePath: prjPath,
-      terse: Boolean(options.terse),
-    })
     const prjPkJsonFile = new FileObject("package.json", prjPath)
     const prjPkjJson = await prjPkJsonFile.loadData()
     const pkjBedoc = prjPkjJson?.bedoc ?? {}
+
+    const config = await BeDoc.resolveConfig({
+      options: {
+        ...optionsWithSources,
+        basePath: prjPath,
+        project: pkjBedoc,
+      },
+      source: Environment.CLI,
+    })
+
+    const cliOutput = new CLIOutput({
+      basePath: prjPath,
+      config,
+    })
+
     const validateBeDocSchema = await loadSchemaValidator(thisPath)
 
     const bedoc = await BeDoc
       .new({
-        options: {
-          ...optionsWithSources,
-          basePath: prjPath,
-          project: pkjBedoc,
-        },
-        source: Environment.CLI,
+        config,
+        basePath: prjPath,
         glog,
         validateBeDocSchema,
-        cliOutput
+        cliOutput,
       })
 
     if(!(bedoc instanceof BeDoc)) {
