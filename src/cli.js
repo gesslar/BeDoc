@@ -88,17 +88,13 @@ void (async() => {
       source: Environment.CLI,
     })
 
-    const cliOutput = new CLIOutput({
-      basePath: prjPath,
-      config,
-    })
+    const cliOutput = new CLIOutput({config})
 
     const validateBeDocSchema = await loadSchemaValidator(thisPath)
 
     const bedoc = await BeDoc
       .new({
         config,
-        basePath: prjPath,
         glog,
         validateBeDocSchema,
         cliOutput,
