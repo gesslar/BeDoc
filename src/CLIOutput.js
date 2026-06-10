@@ -66,9 +66,9 @@ export default class CLIOutput  {
    */
   #files = new Map()
 
-  constructor({basePath, terse = false}) {
+  constructor({basePath, config}) {
     this.#basePath = basePath
-    this.#terse = terse
+    this.#terse = Boolean(config.terse)
 
     Notify.on("conveyor-start", this.#conveyorStart)
     Notify.on("update-data", this.#updateData)

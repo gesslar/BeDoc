@@ -7,7 +7,7 @@ import Conveyor from "./Conveyor.js"
 import Discovery from "./Discovery.js"
 
 /**
- * @import {FileObject, Glog} from "@gesslar/toolkit"
+ * @import {DirectoryObject, FileObject, Glog} from "@gesslar/toolkit"
  */
 
 export default class BeDoc {
@@ -30,20 +30,50 @@ export default class BeDoc {
   }
 
   /**
-   * Create a new instance of BeDoc.
+   * Resolve and validate configuration from all sources (CLI, environment,
+   * package.json, config file). This runs independently of any BeDoc instance
+   * so the resulting config object can be built first and shared with other
+   * consumers (e.g. CLIOutput) before a BeDoc instance exists.
    *
    * @param {object} args
-   * @param {object} args.options - The options passed into BeDoc
+   * @param {object} args.options - The raw options (with sources) to resolve
    * @param {string} args.source - The environment BeDoc is running in
+   * @returns {Promise<object>} The validated configuration object
+   */
+  static async resolveConfig({options, source}) {
+    const config = new Configuration()
+
+    return await config.validate({options, source})
+  }
+
+  /**
+   * Create a new instance of BeDoc.
+   *
+   * Configuration may be supplied pre-resolved (via {@link resolveConfig}) when
+   * a caller needs the config object before the instance exists — e.g. the CLI
+   * resolves it first to share with CLIOutput. Otherwise pass raw `options` and
+   * `source` and BeDoc resolves them itself, so any environment can construct a
+   * BeDoc in a single call.
+   *
+   * @param {object} args
+   * @param {object} [args.config] - Pre-validated configuration (see resolveConfig)
+   * @param {object} [args.options] - Raw options to resolve, if config is absent
+   * @param {string} [args.source] - The environment BeDoc is running in
+   * @param {DirectoryObject} [args.basePath] - The project base path
    * @param {Glog} args.glog - The Glog logger instance
+   * @param {Function} args.validateBeDocSchema - The action schema validator
+   * @param {object} args.cliOutput - The CLI output instance
    * @returns {Promise<BeDoc>} A new instance of BeDoc
    */
-  static async new({options, source, glog, validateBeDocSchema, cliOutput}) {
-    const {basePath} = options
+  static async new({
+    config, options, source, basePath, glog, validateBeDocSchema, cliOutput
+  }) {
+    const resolved = config ?? await BeDoc.resolveConfig({options, source})
+    const base = basePath ?? options?.basePath
 
-    const bedoc = new this({basePath, glog, cliOutput})
+    const bedoc = new this({basePath: base, glog, cliOutput})
 
-    await bedoc.#configure({options, source, glog, validateBeDocSchema})
+    bedoc.#configure({config: resolved, glog, validateBeDocSchema})
 
     const discovered = await bedoc.#discover()
 
@@ -60,29 +90,27 @@ export default class BeDoc {
   }
 
   /**
-   * Validate configuration and store as options.
+   * Apply validated configuration to this instance.
    *
-   * @param {object} options - The raw options passed into BeDoc
-   * @param {string} source - The environment BeDoc is running in
+   * @param {object} config - The validated configuration object
+   * @param {Glog} glog - The Glog logger instance
+   * @param {Function} validateBeDocSchema - The action schema validator
    */
-  async #configure({options, source, glog, validateBeDocSchema}) {
+  #configure({config, glog, validateBeDocSchema}) {
     this.#glog = glog
     this.#validateBeDocSchema = validateBeDocSchema
 
-    const config = new Configuration()
-    const validConfig = await config.validate({options, source})
-
-    if(validConfig.debug && validConfig.debugLevel > 0)
-      glog.withLogLevel(validConfig.debugLevel)
+    if(config.debug && config.debugLevel > 0)
+      glog.withLogLevel(config.debugLevel)
     else
       glog.withLogLevel(0)
 
-    if(validConfig.status === "error")
-      throw Tantrum.new("BeDoc configuration failed", validConfig.errors)
+    if(config.status === "error")
+      throw Tantrum.new("BeDoc configuration failed", config.errors)
 
-    glog.debug("Creating new BeDoc instance with options: `%o`", 4, validConfig)
+    glog.debug("Creating new BeDoc instance with options: `%o`", 4, config)
 
-    this.#options = validConfig
+    this.#options = config
   }
 
   /**
