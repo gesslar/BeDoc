@@ -42,7 +42,7 @@
     "major": "npm version major"
   },
   "dependencies": {
-    "@gesslar/actioneer": "^3.1.0",
+    "@gesslar/actioneer": "^3.1.1",
     "@gesslar/colours": "^1.0.0",
     "@gesslar/negotiator": "^1.0.0",
     "@gesslar/toolkit": "^5.6.0",
