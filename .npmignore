@@ -9,3 +9,4 @@ TODO/
 examples/
 **/*.tgz
 eslint.config.js
+jsconfig.js
