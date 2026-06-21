@@ -10,3 +10,4 @@ examples/
 **/*.tgz
 eslint.config.js
 jsconfig.json
+tsconfig.types.json
